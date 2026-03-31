@@ -1,0 +1,77 @@
+'use client';
+import { useState } from 'react';
+import { Search, ShieldBan, ArrowUpCircle } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
+import { MOCK_ALL_USERS } from '@/lib/mock-data';
+import { formatDate } from '@/lib/utils';
+import type { UserRole, User } from '@/types';
+
+const ALL_ROLES: (UserRole | 'all')[] = ['all','consumer','employee','hr','therapist','admin'];
+const ROLE_VARIANT: Record<UserRole, string> = {
+  consumer: 'info', employee: 'default', hr: 'warning', therapist: 'success', admin: 'danger',
+};
+
+export default function AdminUsersPage() {
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const [users, setUsers] = useState<User[]>(MOCK_ALL_USERS);
+
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase();
+    return (
+      (roleFilter === 'all' || u.role === roleFilter) &&
+      (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    );
+  });
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <PageHeader title="User Management" subtitle={`${users.length} total users`} />
+
+      <div className="space-y-3 mb-5">
+        <Input placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} icon={<Search size={15}/>} />
+        <div className="flex gap-2 flex-wrap">
+          {ALL_ROLES.map(r => (
+            <button key={r} onClick={() => setRoleFilter(r)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-all duration-200 ${
+                roleFilter === r ? 'bg-brand text-white border-transparent' : 'border-border text-muted hover:border-violet/40 hover:text-text'
+              }`}
+            >{r}</button>
+          ))}
+        </div>
+      </div>
+
+      <StaggerList className="space-y-2">
+        {filtered.map(user => (
+          <StaggerItem key={user.id}>
+            <Card className="py-3">
+              <div className="flex items-center gap-4">
+                <Avatar name={user.name} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text text-sm truncate">{user.name}</p>
+                  <p className="text-xs text-muted truncate">{user.email}</p>
+                </div>
+                <Badge variant={ROLE_VARIANT[user.role] as never} size="sm" className="capitalize flex-shrink-0">{user.role}</Badge>
+                <span className="text-xs text-muted hidden sm:block flex-shrink-0">{formatDate(user.createdAt)}</span>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" title="Promote to Admin"><ArrowUpCircle size={14}/></Button>
+                  <Button variant="danger" size="sm" title="Ban user"><ShieldBan size={14}/></Button>
+                </div>
+              </div>
+            </Card>
+          </StaggerItem>
+        ))}
+      </StaggerList>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-muted text-sm">No users found.</div>
+      )}
+    </div>
+  );
+}
