@@ -54,9 +54,9 @@ export default function HRSettingsPage() {
                 </div>
                 <button
                   onClick={() => toggle(key as keyof HRSettings)}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${(settings as Record<string,unknown>)[key] ? 'bg-brand' : 'bg-border'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${(settings as any)[key] ? 'bg-brand' : 'bg-border'}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${(settings as Record<string,unknown>)[key] ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${(settings as any)[key] ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
             ))}
