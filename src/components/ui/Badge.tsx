@@ -3,14 +3,13 @@
  * Small pill labels for status, severity, categories, emotions.
  */
 
+import React, { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import type { ReactNode } from 'react';
 
-interface BadgeProps {
-  children: ReactNode;
+interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  children?: ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
   size?: 'sm' | 'md';
-  className?: string;
 }
 
 const variants = {
@@ -27,12 +26,21 @@ const sizes = {
   md: 'px-3 py-1 text-sm',
 };
 
-export function Badge({ children, variant = 'default', size = 'sm', className }: BadgeProps) {
+export function Badge({ 
+  children, 
+  variant = 'default', 
+  size = 'sm', 
+  className,
+  ...props 
+}: BadgeProps) {
   return (
-    <span className={cn(
-      'inline-flex items-center rounded-full border font-medium',
-      variants[variant], sizes[size], className
-    )}>
+    <span 
+      className={cn(
+        'inline-flex items-center rounded-full border font-medium transition-all',
+        variants[variant], sizes[size], className
+      )}
+      {...props}
+    >
       {children}
     </span>
   );
