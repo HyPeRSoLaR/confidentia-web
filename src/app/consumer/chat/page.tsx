@@ -99,13 +99,13 @@ export default function ChatPage() {
                   : 'glass text-text rounded-bl-sm'
               }`}>
                 {msg.role === 'assistant' && mode === 'video' && msg.videoUrl && (
-                  <div className="mb-3 rounded-xl overflow-hidden bg-black/40 aspect-video flex items-center justify-center text-muted text-xs">
-                    [Video avatar: {msg.videoUrl}]
+                  <div className="mb-3 rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                    <video src={msg.videoUrl} autoPlay controls className="w-full h-full object-cover" />
                   </div>
                 )}
                 {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
-                  <div className="mb-2 flex items-center gap-2 text-xs text-muted">
-                    <Mic size={12}/> Audio playing: {msg.audioUrl}
+                  <div className="mb-2">
+                    <audio src={msg.audioUrl} controls autoPlay className="h-8 w-full max-w-[220px]" />
                   </div>
                 )}
                 {msg.content}

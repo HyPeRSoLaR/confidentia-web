@@ -1,8 +1,9 @@
 /**
  * lib/heygen.ts — HeyGen Video Avatar Service
- * Replace the function bodies with real API calls when ready.
+ * Client module that polls Server Actions to avoid serverless timeouts.
  * Docs: https://docs.heygen.com/reference/streaming-api
  */
+import { createHeyGenVideo, checkHeyGenStatus } from './heygen-actions';
 
 export interface AvatarVideoResponse {
   videoUrl: string;
@@ -18,19 +19,32 @@ export interface AvatarVideoResponse {
  */
 export async function generateAvatarVideo(
   prompt: string,
-  avatarId = 'default'
+  avatarId = 'Anna_public_3_20240108'
 ): Promise<AvatarVideoResponse> {
-  // TODO: Replace with real HeyGen Streaming API call
-  // const response = await fetch('https://api.heygen.com/v1/streaming.new', {
-  //   method: 'POST',
-  //   headers: { 'X-Api-Key': process.env.HEYGEN_API_KEY!, 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ avatar_id: avatarId, voice: { text: prompt } }),
-  // });
-  await new Promise(r => setTimeout(r, 1200)); // simulate latency
-  console.log('[HeyGen STUB] generateAvatarVideo', { prompt: prompt.slice(0, 40), avatarId });
-  return {
-    videoUrl: '/mock/avatar-response.mp4',
-    thumbnailUrl: '/mock/avatar-thumb.jpg',
-    durationSec: 8,
-  };
+  try {
+    const videoId = await createHeyGenVideo(prompt, avatarId);
+    if (!videoId) {
+      console.warn('Missing HEYGEN_API_KEY, falling back to mock video.');
+      return { videoUrl: '/mock/avatar-response.mp4', thumbnailUrl: '/mock/avatar-thumb.jpg', durationSec: 8 };
+    }
+
+    console.log('[HeyGen] Started generation, polling status...', videoId);
+
+    // Poll up to 60 times (x 3s = 3 minutes)
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const res = await checkHeyGenStatus(videoId);
+      console.log(`[HeyGen] Poll ${i}: status = ${res.status}`);
+      
+      if ((res.status === 'completed' || res.status === 'success') && res.videoUrl) {
+        return { videoUrl: res.videoUrl, thumbnailUrl: res.thumbnailUrl || '', durationSec: 8 };
+      } else if (res.status === 'failed') {
+        throw new Error('HeyGen generated failed status');
+      }
+    }
+    throw new Error('HeyGen generation polling timed out');
+  } catch (err) {
+    console.error('[HeyGen] generateAvatarVideo failed:', err);
+    return { videoUrl: '/mock/avatar-response.mp4', thumbnailUrl: '/mock/avatar-thumb.jpg', durationSec: 8 };
+  }
 }
