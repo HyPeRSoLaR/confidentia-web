@@ -35,7 +35,7 @@ export function Card({
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
         className={base}
-        {...props}
+        {...(props as any)}
       >
         {children}
       </motion.div>
