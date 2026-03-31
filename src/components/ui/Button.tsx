@@ -49,7 +49,7 @@ export function Button({
         className
       )}
       disabled={disabled || loading}
-      {...(props as never)}
+      {...(props as any)}
     >
       {loading && (
         <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
