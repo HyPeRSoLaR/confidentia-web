@@ -1,13 +1,22 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, ShieldCheck } from 'lucide-react';
+import { Send, Loader2, ShieldCheck, Mic, Video, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MOCK_MESSAGES, MOCK_AI_RESPONSES } from '@/lib/mock-data';
-import type { Message } from '@/types';
+import { synthesize } from '@/lib/elevenlabs';
+import { generateAvatarVideo } from '@/lib/heygen';
+import type { Message, ConversationMode } from '@/types';
+
+const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] = [
+  { id: 'text',  label: 'Text',         icon: MessageCircle },
+  { id: 'audio', label: 'Audio',        icon: Mic },
+  { id: 'video', label: 'Video Avatar', icon: Video },
+];
 
 export default function EmployeeSupportPage() {
+  const [mode, setMode] = useState<ConversationMode>('text');
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,15 +32,48 @@ export default function EmployeeSupportPage() {
     setMessages(m => [...m, userMsg]);
     setInput('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000 + Math.random() * 700));
+
+    await new Promise(r => setTimeout(r, 1000 + Math.random() * 800));
     const text = MOCK_AI_RESPONSES[Math.floor(Math.random() * MOCK_AI_RESPONSES.length)];
-    setMessages(m => [...m, { id: (Date.now() + 1).toString(), role: 'assistant', content: text, timestamp: new Date().toISOString() }]);
+
+    let audioUrl: string | undefined;
+    let videoUrl: string | undefined;
+    if (mode === 'audio') {
+      const res = await synthesize(text);
+      audioUrl = res.audioUrl;
+    } else if (mode === 'video') {
+      const res = await generateAvatarVideo(text);
+      videoUrl = res.videoUrl;
+    }
+
+    setMessages(m => [...m, { id: (Date.now() + 1).toString(), role: 'assistant', content: text, audioUrl, videoUrl, timestamp: new Date().toISOString() }]);
     setLoading(false);
   }
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto">
-      <PageHeader title="Well-being Support" subtitle="Confidential AI support provided by your employer" />
+      <PageHeader 
+        title="Well-being Support" 
+        subtitle="Confidential AI support provided by your employer" 
+        actions={
+          <div className="flex bg-surface rounded-xl p-1 border border-border gap-1">
+            {MODES.map(m => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    mode === m.id ? 'bg-brand text-white shadow-brand' : 'text-muted hover:text-text'
+                  }`}
+                >
+                  <Icon size={13} />{m.label}
+                </button>
+              );
+            })}
+          </div>
+        }
+      />
 
       {/* Privacy guarantee banner */}
       <motion.div
@@ -62,6 +104,16 @@ export default function EmployeeSupportPage() {
               <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user' ? 'bg-brand text-white rounded-br-sm' : 'glass text-text rounded-bl-sm'
               }`}>
+                {msg.role === 'assistant' && mode === 'video' && msg.videoUrl && (
+                  <div className="mb-3 rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
+                    <video src={msg.videoUrl} autoPlay controls className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
+                  <div className="mb-2">
+                    <audio src={msg.audioUrl} controls autoPlay className="h-8 w-full max-w-[220px]" />
+                  </div>
+                )}
                 {msg.content}
               </div>
             </motion.div>
