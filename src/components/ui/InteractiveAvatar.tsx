@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import StreamingAvatar, { AvatarQuality, StreamingEvents, VoiceChatManager } from '@heygen/streaming-avatar';
+import StreamingAvatar, { AvatarQuality, StreamingEvents } from '@heygen/streaming-avatar';
 import { Loader2, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
