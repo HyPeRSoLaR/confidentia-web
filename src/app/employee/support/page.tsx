@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { MOCK_MESSAGES, MOCK_AI_RESPONSES } from '@/lib/mock-data';
 import { synthesize } from '@/lib/elevenlabs';
 import { generateAvatarVideo } from '@/lib/heygen';
+import { InteractiveAvatar, type InteractiveAvatarRef } from '@/components/ui/InteractiveAvatar';
 import type { Message, ConversationMode } from '@/types';
 
 const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] = [
@@ -21,6 +22,7 @@ export default function EmployeeSupportPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<InteractiveAvatarRef>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -42,8 +44,9 @@ export default function EmployeeSupportPage() {
       const res = await synthesize(text);
       audioUrl = res.audioUrl;
     } else if (mode === 'video') {
-      const res = await generateAvatarVideo(text);
-      videoUrl = res.videoUrl;
+      if (avatarRef.current) {
+        avatarRef.current.speak(text).catch(console.error);
+      }
     }
 
     setMessages(m => [...m, { id: (Date.now() + 1).toString(), role: 'assistant', content: text, audioUrl, videoUrl, timestamp: new Date().toISOString() }]);
@@ -89,6 +92,12 @@ export default function EmployeeSupportPage() {
           </p>
         </div>
       </motion.div>
+
+      {mode === 'video' && (
+        <div className="mb-4">
+          <InteractiveAvatar ref={avatarRef} />
+        </div>
+      )}
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin space-y-4 pr-1 mb-4">
