@@ -113,7 +113,7 @@ export default function TherapistMarketplace() {
               </div>
 
               <div className="pt-2 flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl h-10 text-xs font-bold gap-2">
+                <Button variant="secondary" className="flex-1 rounded-xl h-10 text-xs font-bold gap-2">
                   <Calendar className="w-3.5 h-3.5" /> Book Session
                 </Button>
                 <Button className="flex-1 rounded-xl h-10 text-xs font-bold gap-2 bg-black/5 dark:bg-white/5 text-text border-0 hover:bg-brand hover:text-white transition-all shadow-none">

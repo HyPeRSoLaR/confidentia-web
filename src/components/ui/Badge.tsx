@@ -3,10 +3,10 @@
  * Small pill labels for status, severity, categories, emotions.
  */
 
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, type HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   children?: ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'brand';
   size?: 'sm' | 'md';
@@ -26,25 +26,28 @@ const sizes = {
   md: 'px-3 py-1 text-sm',
 };
 
-export function Badge({ 
+export const Badge = ({ 
   children, 
   variant = 'default', 
   size = 'sm', 
   className,
   ...props 
-}: BadgeProps) {
+}: BadgeProps) => {
+  const variantClass = variants[variant as keyof typeof variants] || variants.default;
+  const sizeClass = sizes[size as keyof typeof sizes] || sizes.sm;
+
   return (
     <span 
       className={cn(
         'inline-flex items-center rounded-full border font-medium transition-all',
-        variants[variant], sizes[size], className
+        variantClass, sizeClass, className
       )}
       {...props}
     >
       {children}
     </span>
   );
-}
+};
 
 /** Map severity string to Badge variant */
 export function SeverityBadge({ severity }: { severity: 'info' | 'warning' | 'critical' }) {
