@@ -1,24 +1,26 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: 'class',
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
-        // Confidentia brand palette — derived from logo gradient
+        // Confidentia brand palette
         cyan:   "#45D8D4",
         violet: "#9B6FE8",
         pink:   "#E879BC",
         coral:  "#FF8C6B",
-        bg:     "#07090F",
-        surface:"#0F1120",
-        panel:  "#151830",
-        border: "#1E2240",
-        text:   "#F0F2FF",
-        muted:  "#8A8FAD",
+        bg:     "var(--bg)",
+        surface:"var(--surface)",
+        panel:  "var(--panel)",
+        border: "var(--border)",
+        text:   "var(--text)",
+        muted:  "var(--muted)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-nunito)", "sans-serif"],
+        serif: ["var(--font-lora)", "serif"],
       },
       backgroundImage: {
         // The logo's full gradient — use on buttons, badges, accents

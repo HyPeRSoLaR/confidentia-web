@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
+import { Lora, Nunito } from 'next/font/google';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import './globals.css';
+
+const lora = Lora({ subsets: ['latin'], variable: '--font-lora' });
+const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
 
 export const metadata: Metadata = {
   title: 'Confidentia — AI-Powered Well-being Platform',
@@ -8,14 +13,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      </head>
-      <body className="min-h-screen bg-bg text-text font-sans antialiased">
-        {children}
+    <html lang="en" suppressHydrationWarning className={`${nunito.variable} ${lora.variable}`}>
+      <body className="min-h-screen bg-bg text-text font-sans antialiased transition-colors duration-500">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

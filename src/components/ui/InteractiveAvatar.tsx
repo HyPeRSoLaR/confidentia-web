@@ -26,13 +26,21 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     // Request local camera and microphone permissions
     useEffect(() => {
       let active = true;
+      let currentStream: MediaStream | null = null;
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         .then((mediaStream) => {
+          currentStream = mediaStream;
           if (active) setLocalStream(mediaStream);
+          else {
+            mediaStream.getTracks().forEach(t => t.stop());
+          }
         })
         .catch(console.error);
       return () => {
         active = false;
+        if (currentStream) {
+          currentStream.getTracks().forEach(t => t.stop());
+        }
       };
     }, []);
 

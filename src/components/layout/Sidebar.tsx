@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clearSession } from '@/lib/session';
 import { Avatar } from '@/components/ui/Avatar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { UserRole } from '@/types';
 import type { LucideIcon } from 'lucide-react';
 
@@ -70,21 +71,23 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: 'auto' }}
               exit={{ opacity: 0, width: 0 }}
-              className="font-bold text-text text-lg whitespace-nowrap overflow-hidden"
+              className="font-bold font-serif text-text text-lg whitespace-nowrap overflow-hidden"
             >
               Confidentia
             </motion.span>
           )}
         </AnimatePresence>
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          className={cn(
-            'ml-auto flex-shrink-0 w-6 h-6 rounded-md text-muted hover:text-text hover:bg-white/5 transition-colors flex items-center justify-center',
-            collapsed && 'mx-auto'
-          )}
-        >
-          {collapsed ? <ChevronRight size={14}/> : <ChevronLeft size={14}/>}
-        </button>
+        
+        <div className={cn("ml-auto flex items-center gap-2", collapsed && "mx-auto flex-col-reverse mt-2")}>
+          <ThemeToggle />
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="w-8 h-8 rounded-full text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center flex-shrink-0"
+            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {collapsed ? <ChevronRight size={16}/> : <ChevronLeft size={16}/>}
+          </button>
+        </div>
       </div>
 
       {/* Nav items */}

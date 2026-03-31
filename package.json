@@ -17,7 +17,8 @@
     "lucide-react": "^0.378.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
-    "@heygen/streaming-avatar": "latest"
+    "@heygen/streaming-avatar": "latest",
+    "next-themes": "latest"
   },
   "devDependencies": {
     "@types/node": "^20",
