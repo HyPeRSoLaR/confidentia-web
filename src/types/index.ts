@@ -10,6 +10,9 @@ export interface User {
   avatarUrl?: string;
   companyId?: string;   // for employee/HR users
   createdAt: string;
+  // Pillar 3: Memory Engine settings
+  memoryEnabled: boolean;
+  memoryRetentionDays?: number; // null for forever
 }
 
 export interface AuthSession {
@@ -58,6 +61,7 @@ export interface Message {
   audioUrl?: string;   // for audio mode (ElevenLabs)
   videoUrl?: string;   // for video mode (HeyGen)
   timestamp: string;
+  isPinned?: boolean;   // Pillar 3: User-controlled memory
 }
 
 export interface Conversation {
@@ -103,6 +107,8 @@ export interface SessionRequest {
 
 export interface TherapistProfile {
   userId: string;
+  name: string;        // Added for UI convenience
+  avatarUrl?: string;  // Added for UI convenience
   bio: string;
   specialties: string[];
   languages: string[];
@@ -110,6 +116,7 @@ export interface TherapistProfile {
   rating: number;         // 0–5
   sessionCount: number;
   availability: AvailabilitySlot[];
+  isVerified?: boolean; // For ADELI/Diploma badge
 }
 
 export interface AvailabilitySlot {

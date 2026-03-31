@@ -6,15 +6,17 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { getSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
-import { MessageCircle, BookOpen, Lightbulb, Smile, CreditCard } from 'lucide-react';
+import { MessageCircle, BookOpen, Lightbulb, Smile, CreditCard, User, Users } from 'lucide-react';
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
-  { label: 'AI Chat',    href: '/consumer/chat',     icon: MessageCircle },
-  { label: 'Journal',   href: '/consumer/journal',  icon: BookOpen },
-  { label: 'Insights',  href: '/consumer/insights', icon: Lightbulb },
-  { label: 'Check-in',  href: '/consumer/checkin',  icon: Smile },
-  { label: 'Plans',     href: '/consumer/pricing',  icon: CreditCard },
+  { label: 'AI Chat',      href: '/consumer/chat',       icon: MessageCircle },
+  { label: 'Marketplace',  href: '/consumer/therapists', icon: Users },
+  { label: 'Journal',      href: '/consumer/journal',    icon: BookOpen },
+  { label: 'Insights',     href: '/consumer/insights',   icon: Lightbulb },
+  { label: 'Check-in',     href: '/consumer/checkin',    icon: Smile },
+  { label: 'Plans',        href: '/consumer/pricing',    icon: CreditCard },
+  { label: 'Profile',      href: '/consumer/profile',    icon: User },
 ];
 
 export default function ConsumerLayout({ children }: { children: React.ReactNode }) {

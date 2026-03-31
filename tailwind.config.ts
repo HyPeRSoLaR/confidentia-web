@@ -6,17 +6,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Confidentia brand palette
-        cyan:   "#45D8D4",
+        // Confidentia brand palette — derived from logo gradient
+        cyan: "#45D8D4",
         violet: "#9B6FE8",
-        pink:   "#E879BC",
-        coral:  "#FF8C6B",
-        bg:     "var(--bg)",
-        surface:"var(--surface)",
-        panel:  "var(--panel)",
-        border: "var(--border)",
-        text:   "var(--text)",
-        muted:  "var(--muted)",
+        pink: "#E879BC",
+        coral: "#FF8C6B",
+        bg: "#07090F",
+        surface: "#0F1120",
+        panel: "#151830",
+        border: "#1E2240",
+        text: "var(--text)",
+        muted: "var(--muted)",
       },
       fontFamily: {
         sans: ["var(--font-nunito)", "sans-serif"],

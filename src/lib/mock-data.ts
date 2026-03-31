@@ -149,6 +149,8 @@ export const MOCK_HR_SETTINGS: HRSettings = {
 
 export const MOCK_THERAPIST_PROFILE: TherapistProfile = {
   userId: 'demo-therapist',
+  name: 'Dr. Sam Patel',
+  avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200&h=200',
   bio: 'Specialising in anxiety, burnout, and life transitions. I use an integrative approach drawing from CBT, ACT and mindfulness practices.',
   specialties: ['Anxiety', 'Burnout', 'CBT', 'ACT', 'Mindfulness', 'Life transitions'],
   languages: ['English', 'Hindi'],
@@ -189,14 +191,14 @@ export const MOCK_EARNINGS_DATA = [
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
 export const MOCK_ALL_USERS: User[] = [
-  { id: 'u1', name: 'Alex Rivera',   email: 'alex@demo.com',       role: 'consumer',  createdAt: '2026-01-10T00:00:00Z' },
-  { id: 'u2', name: 'Jordan Kim',    email: 'jordan@techcorp.com', role: 'employee',  companyId: 'company-1', createdAt: '2026-01-15T00:00:00Z' },
-  { id: 'u3', name: 'Morgan Lee',    email: 'morgan@techcorp.com', role: 'hr',        companyId: 'company-1', createdAt: '2026-01-20T00:00:00Z' },
-  { id: 'u4', name: 'Dr. Sam Patel', email: 'sam@therapists.com',  role: 'therapist', createdAt: '2025-11-01T00:00:00Z' },
-  { id: 'u5', name: 'Casey M.',      email: 'casey@demo.com',      role: 'consumer',  createdAt: '2026-02-05T00:00:00Z' },
-  { id: 'u6', name: 'Robin T.',      email: 'robin@startup.io',    role: 'employee',  companyId: 'company-2', createdAt: '2026-02-14T00:00:00Z' },
-  { id: 'u7', name: 'Dana P.',       email: 'dana@acme.com',       role: 'hr',        companyId: 'company-2', createdAt: '2026-02-20T00:00:00Z' },
-  { id: 'u8', name: 'Dr. Ellis J.',  email: 'ellis@therapists.com',role: 'therapist', createdAt: '2025-10-01T00:00:00Z' },
+  { id: 'u1', name: 'Alex Rivera',   email: 'alex@demo.com',       role: 'consumer',  createdAt: '2026-01-10T00:00:00Z', memoryEnabled: true, memoryRetentionDays: 30 },
+  { id: 'u2', name: 'Jordan Kim',    email: 'jordan@techcorp.com', role: 'employee',  companyId: 'company-1', createdAt: '2026-01-15T00:00:00Z', memoryEnabled: true, memoryRetentionDays: 90 },
+  { id: 'u3', name: 'Morgan Lee',    email: 'morgan@techcorp.com', role: 'hr',        companyId: 'company-1', createdAt: '2026-01-20T00:00:00Z', memoryEnabled: false },
+  { id: 'u4', name: 'Dr. Sam Patel', email: 'sam@therapists.com',  role: 'therapist', createdAt: '2025-11-01T00:00:00Z', memoryEnabled: false },
+  { id: 'u5', name: 'Casey M.',      email: 'casey@demo.com',      role: 'consumer',  createdAt: '2026-02-05T00:00:00Z', memoryEnabled: true },
+  { id: 'u6', name: 'Robin T.',      email: 'robin@startup.io',    role: 'employee',  companyId: 'company-2', createdAt: '2026-02-14T00:00:00Z', memoryEnabled: true },
+  { id: 'u7', name: 'Dana P.',       email: 'dana@acme.com',       role: 'hr',        companyId: 'company-2', createdAt: '2026-02-20T00:00:00Z', memoryEnabled: false },
+  { id: 'u8', name: 'Dr. Ellis J.',  email: 'ellis@therapists.com',role: 'therapist', createdAt: '2025-10-01T00:00:00Z', memoryEnabled: false },
 ];
 
 export const MOCK_COMPANIES: Company[] = [
@@ -208,4 +210,56 @@ export const MOCK_COMPANIES: Company[] = [
 export const MOCK_CONVERSATIONS: Conversation[] = [
   { id: 'conv1', userId: 'u1', mode: 'text',  messages: MOCK_MESSAGES, summary: 'Discussed work deadline anxiety and coping strategies.', themes: ['work', 'anxiety'], createdAt: '2026-03-30T09:00:00Z', updatedAt: '2026-03-30T09:15:00Z' },
   { id: 'conv2', userId: 'u5', mode: 'audio', messages: [], summary: 'Explored relationship challenges and setting healthy boundaries.', themes: ['relationships', 'boundaries'], createdAt: '2026-03-29T14:00:00Z', updatedAt: '2026-03-29T14:25:00Z' },
+];
+
+export const MOCK_THERAPISTS: TherapistProfile[] = [
+  {
+    userId: 't1',
+    name: 'Dr. Sarah Chen',
+    avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71f1536780?auto=format&fit=crop&q=80&w=200&h=200',
+    bio: 'Specializing in cognitive behavioral therapy and workplace stress management. 10+ years of experience helping professionals find balance.',
+    specialties: ['Anxiety', 'Workplace Stress', 'CBT'],
+    languages: ['English', 'Mandarin'],
+    ratePerSession: 85,
+    rating: 4.9,
+    sessionCount: 1240,
+    isVerified: true,
+    availability: [
+       { day: 1, hour: 9, available: true },
+       { day: 1, hour: 10, available: true },
+       { day: 2, hour: 14, available: true },
+    ]
+  },
+  {
+    userId: 't2',
+    name: 'Marcus Thorne',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200',
+    bio: 'Dedicated to helping individuals navigate life transitions and emotional fatigue. Focused on empathetic, person-centered therapy.',
+    specialties: ['Grief', 'Relationships', 'Depression'],
+    languages: ['English', 'Spanish'],
+    ratePerSession: 95,
+    rating: 4.8,
+    sessionCount: 890,
+    isVerified: true,
+    availability: [
+       { day: 3, hour: 11, available: true },
+       { day: 4, hour: 15, available: true },
+    ]
+  },
+  {
+    userId: 't3',
+    name: 'Elena Rodriguez',
+    avatarUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&q=80&w=200&h=200',
+    bio: 'Integrative therapist with a focus on mindfulness and emotional regulation. Passionate about providing a safe space for all.',
+    specialties: ['Mindfulness', 'Trauma', 'Self-Esteem'],
+    languages: ['English', 'Spanish', 'Portuguese'],
+    ratePerSession: 75,
+    rating: 5.0,
+    sessionCount: 450,
+    isVerified: true,
+    availability: [
+       { day: 5, hour: 10, available: true },
+       { day: 5, hour: 11, available: true },
+    ]
+  }
 ];
