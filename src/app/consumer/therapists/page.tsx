@@ -97,7 +97,7 @@ export default function TherapistMarketplacePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <h3 className="font-semibold text-text text-sm truncate">{therapist.name}</h3>
-                        {therapist.isVerified && <ShieldCheck size={12} className="text-cyan flex-shrink-0" title="Verified Confidentia Partner" />}
+                        {therapist.isVerified && <ShieldCheck size={12} className="text-cyan flex-shrink-0" aria-label="Verified Confidentia Partner" />}
                       </div>
                       <div className="flex items-center gap-0.5 mb-2">
                         {[1,2,3,4,5].map(star => (
