@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MOCK_MESSAGES, MOCK_AI_RESPONSES } from '@/lib/mock-data';
 import { synthesize } from '@/lib/elevenlabs';
-import { generateAvatarVideo } from '@/lib/heygen';
 import { InteractiveAvatar, type InteractiveAvatarRef } from '@/components/ui/InteractiveAvatar';
 import type { Message, ConversationMode } from '@/types';
 
@@ -137,11 +136,7 @@ export default function ChatPage() {
                   ? 'bg-brand text-white rounded-br-sm'
                   : 'glass text-text rounded-bl-sm'
               }`}>
-                {msg.role === 'assistant' && mode === 'video' && msg.videoUrl && (
-                  <div className="mb-3 rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center">
-                    <video src={msg.videoUrl} autoPlay controls className="w-full h-full object-cover" />
-                  </div>
-                )}
+                {/* Video messages render as text only — the avatar speaks via WebRTC */}
                 {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
                   <div className="mb-2">
                     <audio src={msg.audioUrl} controls autoPlay className="h-8 w-full max-w-[220px]" />
@@ -172,9 +167,15 @@ export default function ChatPage() {
           placeholder="Share what's on your mind…"
           className="flex-1 bg-transparent text-text text-sm placeholder:text-muted/60 outline-none"
         />
-        <Button onClick={sendMessage} loading={loading} size="sm" disabled={!input.trim()}>
-          <Send size={14} />
-        </Button>
+        <Button
+            onClick={sendMessage}
+            loading={loading}
+            size="sm"
+            disabled={!input.trim()}
+            aria-label="Send message"
+          >
+            <Send size={14} />
+          </Button>
       </div>
       </>
       )}

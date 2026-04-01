@@ -21,6 +21,8 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [users, setUsers] = useState<User[]>(MOCK_ALL_USERS);
+  const [bannedIds,   setBannedIds]   = useState<string[]>([]);
+  const [promotedIds, setPromotedIds] = useState<string[]>([]);
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase();
@@ -60,8 +62,25 @@ export default function AdminUsersPage() {
                 <Badge variant={ROLE_VARIANT[user.role] as never} size="sm" className="capitalize flex-shrink-0">{user.role}</Badge>
                 <span className="text-xs text-muted hidden sm:block flex-shrink-0">{formatDate(user.createdAt)}</span>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" title="Promote to Admin"><ArrowUpCircle size={14}/></Button>
-                  <Button variant="danger" size="sm" title="Ban user"><ShieldBan size={14}/></Button>
+                  <Button
+                    variant={promotedIds.includes(user.id) ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setPromotedIds(ids => ids.includes(user.id) ? ids.filter(i => i !== user.id) : [...ids, user.id])}
+                    aria-label={`Promote ${user.name} to admin`}
+                    title={promotedIds.includes(user.id) ? 'Undo promote' : 'Promote to Admin'}
+                  >
+                    <ArrowUpCircle size={14} className={promotedIds.includes(user.id) ? 'text-violet' : ''}/>
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => setBannedIds(ids => ids.includes(user.id) ? ids.filter(i => i !== user.id) : [...ids, user.id])}
+                    aria-label={`${bannedIds.includes(user.id) ? 'Unban' : 'Ban'} ${user.name}`}
+                    title={bannedIds.includes(user.id) ? 'Click to unban' : 'Ban user'}
+                    className={bannedIds.includes(user.id) ? 'opacity-60' : ''}
+                  >
+                    <ShieldBan size={14}/>
+                  </Button>
                 </div>
               </div>
             </Card>

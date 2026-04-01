@@ -118,12 +118,18 @@ export const MOCK_WELLBEING_TRENDS: WellbeingTrend[] = [
 export const MOCK_HEATMAP: HeatmapCell[] = (() => {
   const emotions = ['calm','happy','anxious','stressed','neutral','energized','sad'] as const;
   const cells: HeatmapCell[] = [];
+  // Seeded LCG PRNG for deterministic output (no hydration mismatch)
+  let seed = 42;
+  function rand() {
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  }
   for (let day = 0; day < 7; day++) {
     for (let hour = 0; hour < 24; hour++) {
-      const count = Math.floor(Math.random() * 12);
+      const count = Math.floor(rand() * 12);
       cells.push({
         day, hour,
-        dominantEmotion: emotions[Math.floor(Math.random() * emotions.length)],
+        dominantEmotion: emotions[Math.floor(rand() * emotions.length)],
         participantCount: count,
       });
     }

@@ -25,6 +25,9 @@
     --gradient-brand-reverse: linear-gradient(315deg, #45D8D4 0%, #9B6FE8 45%, #E879BC 75%, #FF8C6B 100%);
     --shadow-brand: 0 0 24px -4px rgba(155, 111, 232, 0.2);
     --radius-card: 1.25rem;
+
+    /* Surface glow — light mode: soft upward lavender tint */
+    --surface-glow: radial-gradient(ellipse at top, #eef2ff 0%, #F8FAFC 70%);
   }
 
   /* DARK MODE (Midnight, Sleek, Tech-focused) */
@@ -37,6 +40,9 @@
     --muted:   #8A8FAD;
     
     --shadow-brand: 0 0 24px -4px rgba(155, 111, 232, 0.4);
+
+    /* Surface glow — dark mode: deep midnight upward gradient */
+    --surface-glow: radial-gradient(ellipse at top, #1a1535 0%, #07090F 70%);
   }
 }
 
@@ -66,11 +72,17 @@ body {
 
   /* Glass card adapts based on theme */
   .glass {
+    background: rgba(248, 250, 252, 0.85); /* light fallback for Chrome <111, Safari <16.1 */
     background: color-mix(in srgb, var(--surface) 60%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
+  }
+
+  .dark .glass {
+    background: rgba(15, 17, 32, 0.7); /* dark fallback for older browsers */
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
   }
 
   .surface {

@@ -1,7 +1,8 @@
 'use client';
+import { useTheme } from 'next-themes';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Users, Smile } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -34,6 +35,20 @@ const STAT_CARDS = [
 ];
 
 export default function HRAnalyticsPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const chartTheme = {
+    grid:  isDark ? '#1E2240' : '#E2E8F0',
+    tick:  isDark ? '#8A8FAD' : '#64748B',
+    tooltip: {
+      background: isDark ? '#0F1120' : '#FFFFFF',
+      border:     isDark ? '1px solid #1E2240' : '1px solid #E2E8F0',
+      color:      isDark ? '#F0F2FF' : '#0F172A',
+      borderRadius: '0.75rem',
+    },
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
@@ -65,20 +80,20 @@ export default function HRAnalyticsPage() {
         })}
       </StaggerList>
 
-      {/* Trend line */}
+      {/* Charts */}
       <StaggerList className="space-y-5">
         <StaggerItem>
           <Card>
             <h3 className="font-semibold text-text mb-4">Well-being Score Trend</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={MOCK_WELLBEING_TRENDS}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1E2240" />
-                <XAxis dataKey="week" tickFormatter={v => v.slice(5)} tick={{ fill: '#8A8FAD', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 10]} tick={{ fill: '#8A8FAD', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: '#0F1120', border: '1px solid #1E2240', borderRadius: '0.75rem', color: '#F0F2FF' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                <XAxis dataKey="week" tickFormatter={v => v.slice(5)} tick={{ fill: chartTheme.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 10]} tick={{ fill: chartTheme.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={chartTheme.tooltip} />
                 <defs>
                   <linearGradient id="hrGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#45D8D4" />
+                    <stop offset="0%"   stopColor="#45D8D4" />
                     <stop offset="100%" stopColor="#9B6FE8" />
                   </linearGradient>
                 </defs>
@@ -93,10 +108,10 @@ export default function HRAnalyticsPage() {
             <h3 className="font-semibold text-text mb-4">Weekly Participants</h3>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={MOCK_WELLBEING_TRENDS}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1E2240" />
-                <XAxis dataKey="week" tickFormatter={v => v.slice(5)} tick={{ fill: '#8A8FAD', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#8A8FAD', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={{ background: '#0F1120', border: '1px solid #1E2240', borderRadius: '0.75rem', color: '#F0F2FF' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                <XAxis dataKey="week" tickFormatter={v => v.slice(5)} tick={{ fill: chartTheme.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: chartTheme.tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={chartTheme.tooltip} />
                 <Bar dataKey="participantCount" fill="#E879BC" radius={[4, 4, 0, 0]} name="Participants" />
               </BarChart>
             </ResponsiveContainer>

@@ -6,17 +6,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Confidentia brand palette — derived from logo gradient
-        cyan: "#45D8D4",
+        // Brand palette — static, never change with theme
+        cyan:   "#45D8D4",
         violet: "#9B6FE8",
-        pink: "#E879BC",
-        coral: "#FF8C6B",
-        bg: "#07090F",
-        surface: "#0F1120",
-        panel: "#151830",
-        border: "#1E2240",
-        text: "var(--text)",
-        muted: "var(--muted)",
+        pink:   "#E879BC",
+        coral:  "#FF8C6B",
+        // Theme-adaptive — must use CSS variables so light/dark toggle works
+        bg:     "var(--bg)",
+        surface:"var(--surface)",
+        panel:  "var(--panel)",
+        border: "var(--border)",
+        text:   "var(--text)",
+        muted:  "var(--muted)",
       },
       fontFamily: {
         sans: ["var(--font-nunito)", "sans-serif"],
@@ -26,7 +27,8 @@ const config: Config = {
         // The logo's full gradient — use on buttons, badges, accents
         brand: "linear-gradient(135deg, #45D8D4 0%, #9B6FE8 45%, #E879BC 75%, #FF8C6B 100%)",
         "brand-reverse": "linear-gradient(315deg, #45D8D4 0%, #9B6FE8 45%, #E879BC 75%, #FF8C6B 100%)",
-        "surface-glow": "radial-gradient(ellipse at top, #1a1535 0%, #07090F 70%)",
+        // Theme-aware via CSS variable (light/dark defined in globals.css)
+        "surface-glow": "var(--surface-glow)",
       },
       boxShadow: {
         brand: "0 0 24px -4px rgba(155, 111, 232, 0.4)",

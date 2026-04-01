@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { setSession, DEMO_USERS } from '@/lib/session';
+// TODO: import Supabase auth client here when backend is wired
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,8 +18,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
-    // TODO: replace with real auth
-    setSession({ user: DEMO_USERS.consumer, role: 'consumer', isDemo: false });
+    // TODO: verify credentials via Supabase auth, set session server-side.
+    // For demo: both login and demo flow go to /select-role so role is always chosen explicitly.
     router.push('/select-role');
   }
 

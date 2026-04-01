@@ -3,12 +3,15 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { getSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
 import { BarChart2, Grid3X3, Bell, Settings } from 'lucide-react';
+import { MOCK_ORG_ALERTS } from '@/lib/mock-data';
 import type { NavItem } from '@/components/layout/Sidebar';
+
+const UNREAD_ALERTS = MOCK_ORG_ALERTS.filter(a => !a.acknowledged).length;
 
 const NAV: NavItem[] = [
   { label: 'Analytics', href: '/hr/analytics', icon: BarChart2 },
   { label: 'Heatmap',   href: '/hr/heatmap',   icon: Grid3X3 },
-  { label: 'Alerts',    href: '/hr/alerts',     icon: Bell, badge: 2 },
+  { label: 'Alerts',    href: '/hr/alerts',     icon: Bell, badge: UNREAD_ALERTS },
   { label: 'Settings',  href: '/hr/settings',   icon: Settings },
 ];
 

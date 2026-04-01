@@ -19,6 +19,8 @@ export const DEMO_USERS: Record<UserRole, User> = {
     role: 'consumer',
     avatarUrl: '',
     createdAt: '2024-01-15T09:00:00Z',
+    memoryEnabled: true,
+    memoryRetentionDays: 30,
   },
   employee: {
     id: 'demo-employee',
@@ -27,6 +29,8 @@ export const DEMO_USERS: Record<UserRole, User> = {
     role: 'employee',
     companyId: 'company-1',
     createdAt: '2024-02-10T09:00:00Z',
+    memoryEnabled: true,
+    memoryRetentionDays: 90,
   },
   hr: {
     id: 'demo-hr',
@@ -35,6 +39,7 @@ export const DEMO_USERS: Record<UserRole, User> = {
     role: 'hr',
     companyId: 'company-1',
     createdAt: '2024-01-20T09:00:00Z',
+    memoryEnabled: false,
   },
   therapist: {
     id: 'demo-therapist',
@@ -43,6 +48,7 @@ export const DEMO_USERS: Record<UserRole, User> = {
     role: 'therapist',
     avatarUrl: '',
     createdAt: '2023-11-01T09:00:00Z',
+    memoryEnabled: false,
   },
   admin: {
     id: 'demo-admin',
@@ -50,6 +56,7 @@ export const DEMO_USERS: Record<UserRole, User> = {
     email: 'admin@confidentia.ai',
     role: 'admin',
     createdAt: '2023-10-01T09:00:00Z',
+    memoryEnabled: false,
   },
 };
 
@@ -88,9 +95,9 @@ export function startDemoSession(role: UserRole): void {
 
 export const ROLE_HOME: Record<UserRole, string> = {
   consumer:  '/consumer/chat',
-  employee:  '/employee/support',
+  employee:  '/employee/resources',
   hr:        '/hr/analytics',
-  therapist: '/therapist/profile',
+  therapist: '/therapist/requests',
   admin:     '/admin/users',
 };
 

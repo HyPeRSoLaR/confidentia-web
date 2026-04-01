@@ -1,7 +1,14 @@
 'use server';
 
+// Typed env helper — avoids @types/node requirement for process.env
+// Replace with `process.env.XYZ` directly once @types/node is installed
+function getEnv(key: string): string | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).process?.env?.[key];
+}
+
 export async function createHeyGenVideo(prompt: string, avatarId: string) {
-  const apiKey = process.env.HEYGEN_API_KEY;
+  const apiKey = getEnv('HEYGEN_API_KEY');
   if (!apiKey) return null;
 
   const response = await fetch('https://api.heygen.com/v2/video/generate', {
@@ -36,7 +43,7 @@ export async function createHeyGenVideo(prompt: string, avatarId: string) {
 }
 
 export async function checkHeyGenStatus(videoId: string) {
-  const apiKey = process.env.HEYGEN_API_KEY;
+  const apiKey = getEnv('HEYGEN_API_KEY');
   if (!apiKey) throw new Error('Missing HEYGEN_API_KEY');
 
   const response = await fetch(`https://api.heygen.com/v1/video_status.get?video_id=${videoId}`, {

@@ -27,9 +27,9 @@ export function formatDateTime(iso: string): string {
   });
 }
 
-/** Format currency */
-export function formatCurrency(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents);
+/** Format a dollar amount (e.g. 120 → '$120.00'). Pass dollars, not cents. */
+export function formatCurrency(amount: number, currency = 'USD'): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 }
 
 /** Relative time (e.g. "3 days ago") */
