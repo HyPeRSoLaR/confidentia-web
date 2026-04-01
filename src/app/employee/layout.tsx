@@ -2,10 +2,11 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { getSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
-import { MessageCircle, BookOpen, Shield } from 'lucide-react';
+import { Video, MessageCircle, BookOpen, Shield } from 'lucide-react';
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
+  { label: 'AI Chat',    href: '/employee/chat',      icon: Video },
   { label: 'Support',   href: '/employee/support',   icon: MessageCircle },
   { label: 'Resources', href: '/employee/resources',  icon: BookOpen },
   { label: 'Privacy',   href: '/employee/privacy',    icon: Shield },

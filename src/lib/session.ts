@@ -95,7 +95,7 @@ export function startDemoSession(role: UserRole): void {
 
 export const ROLE_HOME: Record<UserRole, string> = {
   consumer:  '/consumer/chat',
-  employee:  '/employee/resources',
+  employee:  '/employee/chat',
   hr:        '/hr/analytics',
   therapist: '/therapist/requests',
   admin:     '/admin/users',
