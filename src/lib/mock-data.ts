@@ -46,11 +46,20 @@ export const MOCK_EMOTION_ENTRIES: EmotionEntry[] = [
   { id: 'e7', userId: 'demo-consumer', emotion: 'calm',      intensity: 8, recordedAt: '2026-03-24T20:00:00Z' },
 ];
 
-// ─── AI Conversation ─────────────────────────────────────────────────────────
+// Opening message only — no fake user turn so new sessions feel genuine
+export const INITIAL_MESSAGES: Message[] = [
+  {
+    id: 'init-1',
+    role: 'assistant',
+    content: "Hello! I'm here to listen. How are you feeling today?",
+    timestamp: new Date(0).toISOString(),
+  },
+];
 
+// MOCK_MESSAGES kept for Storybook / demo purposes only
 export const MOCK_MESSAGES: Message[] = [
-  { id: 'm1', role: 'assistant', content: "Hello! I'm here to listen. How are you feeling today?", timestamp: '2026-03-30T09:00:00Z' },
-  { id: 'm2', role: 'user',      content: "I've been a bit anxious about an upcoming work deadline.", timestamp: '2026-03-30T09:01:00Z' },
+  { id: 'm1', role: 'assistant', content: "Hello! I'm here to listen. How are you feeling today?",                                                                                               timestamp: '2026-03-30T09:00:00Z' },
+  { id: 'm2', role: 'user',      content: "I've been a bit anxious about an upcoming work deadline.",                                                                                             timestamp: '2026-03-30T09:01:00Z' },
   { id: 'm3', role: 'assistant', content: "That's completely understandable. Deadlines can feel overwhelming. Would you like to explore what's driving that anxiety, or would you prefer some grounding techniques?", timestamp: '2026-03-30T09:01:30Z' },
 ];
 
@@ -60,6 +69,8 @@ export const MOCK_AI_RESPONSES = [
   "Have you noticed any physical sensations when that feeling arises?",
   "What would feel like a small, manageable step forward for you today?",
   "You're doing the right thing by checking in with yourself.",
+  "Can you tell me more about what triggered that? I'm fully here with you.",
+  "It's okay to not have all the answers. Let's just sit with this for a moment.",
 ];
 
 // ─── Insights ─────────────────────────────────────────────────────────────────
