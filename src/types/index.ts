@@ -189,6 +189,7 @@ export interface Company {
 // ─── Resources ───────────────────────────────────────────────────────────────
 
 export type ResourceCategory = 'article' | 'video' | 'exercise' | 'guide';
+export type ResourceDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 export interface Resource {
   id: string;
@@ -199,4 +200,10 @@ export interface Resource {
   readingTimeMin: number;
   imageUrl?: string;
   url: string;
+  /** Shown in the featured row at the top */
+  isFeatured?: boolean;
+  /** Skill level signal for the user */
+  difficulty?: ResourceDifficulty;
+  /** 2–3 bullet takeaways shown on hover / expanded card */
+  keyTakeaways?: string[];
 }
