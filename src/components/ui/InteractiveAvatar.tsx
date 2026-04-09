@@ -1,7 +1,7 @@
 'use client';
 
 import React, {
-  useEffect, useRef, useState, useImperativeHandle, forwardRef,
+  useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback,
 } from 'react';
 import StreamingAvatar, { AvatarQuality, ElevenLabsModel, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
 import { Loader2, Mic, MicOff } from 'lucide-react';
@@ -11,27 +11,87 @@ export interface InteractiveAvatarRef {
 }
 
 interface Props {
-  avatarId?:      string;
+  avatarId?:       string;
   onDisconnected?: () => void;
   /** Called once when the avatar stream is ready and playing. */
-  onReady?:       () => void;
+  onReady?:        () => void;
   /** Called if the WebRTC connection fails to establish. */
-  onError?:       () => void;
+  onError?:        () => void;
 }
+
+// ─── Chroma key ───────────────────────────────────────────────────────────────
+// HeyGen's green-screen colour is pure chroma-key green (~HSL 120°, 100%, 50%).
+// Thresholds are intentionally conservative to preserve skin-tone mid-greens.
+const GREEN_G_MIN   = 80;   // green channel must be high
+const GREEN_RB_MAX  = 120;  // red and blue must be comparatively low
+const GREEN_G_RATIO = 1.4;  // green must dominate by at least 40 %
+
+/** Zero the alpha of any pixel that falls within the green-screen range. */
+function applyChromaKey(data: Uint8ClampedArray) {
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    if (
+      g > GREEN_G_MIN &&
+      r < GREEN_RB_MAX &&
+      b < GREEN_RB_MAX &&
+      g > r * GREEN_G_RATIO &&
+      g > b * GREEN_G_RATIO
+    ) {
+      data[i + 3] = 0; // fully transparent
+    }
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
   ({ avatarId = 'Anna_public_3_20240108', onDisconnected, onReady, onError }, ref) => {
     const videoRef      = useRef<HTMLVideoElement>(null);
+    const canvasRef     = useRef<HTMLCanvasElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const avatarRef     = useRef<StreamingAvatar | null>(null);
+    const rafRef        = useRef<number>(0);
 
     const [stream,        setStream]        = useState<MediaStream | null>(null);
     const [localStream,   setLocalStream]   = useState<MediaStream | null>(null);
     const [loading,       setLoading]       = useState(true);
     const [isVoiceActive, setIsVoiceActive] = useState(false);
     const [hasError,      setHasError]      = useState(false);
-    // Camera/mic are NOT requested until the user explicitly clicks the mic button
     const [cameraRequested, setCameraRequested] = useState(false);
+
+    // ── Chroma key loop ────────────────────────────────────────────────────────
+    const startChromaLoop = useCallback(() => {
+      const video  = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+
+      function tick() {
+        if (!video || !canvas || !ctx) return;
+        if (video.readyState >= 2 && video.videoWidth > 0) {
+          // Sync canvas size lazily (only when it changes — avoids thrash)
+          if (canvas.width !== video.videoWidth) {
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          applyChromaKey(frame.data);
+          ctx.putImageData(frame, 0, 0);
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }, []);
+
+    const stopChromaLoop = useCallback(() => {
+      cancelAnimationFrame(rafRef.current);
+    }, []);
 
     // ── WebRTC avatar init ─────────────────────────────────────────────────────
     useEffect(() => {
@@ -58,19 +118,16 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
             if (mounted) {
               setStream(null);
+              stopChromaLoop();
               onDisconnected?.();
             }
           });
 
           await avatar.createStartAvatar({
-            // Low quality halves render latency; visually imperceptible in a chat bubble.
-            quality:    AvatarQuality.Low,
-            avatarName: avatarId,
-            // useSilencePrompt:false removes the ~0.5–1 s canned "I'm listening"
-            // filler before VAD fires, reducing round-trip latency.
+            quality:          AvatarQuality.Low,
+            avatarName:       avatarId,
             useSilencePrompt: false,
             voice: {
-              // eleven_flash_v2_5: fastest ElevenLabs model available in the SDK
               model: ElevenLabsModel.eleven_flash_v2_5,
             },
           });
@@ -93,28 +150,43 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
       return () => {
         mounted = false;
+        stopChromaLoop();
         avatarRef.current?.stopAvatar().catch(console.error);
         avatarRef.current = null;
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [avatarId]); // stable — onReady/onError are callbacks, don't need to re-init on change
+    }, [avatarId]);
 
-    // ── Sync avatar stream to video ────────────────────────────────────────────
+    // ── Sync avatar stream → hidden video → chroma canvas ─────────────────────
     useEffect(() => {
-      if (videoRef.current && stream) videoRef.current.srcObject = stream;
-    }, [stream]);
+      const video = videoRef.current;
+      if (!video || !stream) return;
+      video.srcObject = stream;
 
-    // ── Sync local camera to PiP ───────────────────────────────────────────────
+      // Start chroma loop once the video has enough data to play
+      const onCanPlay = () => {
+        video.play().catch(console.error);
+        startChromaLoop();
+      };
+      video.addEventListener('canplay', onCanPlay, { once: true });
+      return () => video.removeEventListener('canplay', onCanPlay);
+    }, [stream, startChromaLoop]);
+
+    // ── Sync local camera → PiP ────────────────────────────────────────────────
     useEffect(() => {
       if (localVideoRef.current && localStream) localVideoRef.current.srcObject = localStream;
     }, [localStream]);
 
     // ── Cleanup local camera on unmount ───────────────────────────────────────
     useEffect(() => {
-      return () => { localStream?.getTracks().forEach(t => t.stop()); };
+      return () => {
+        localStream?.getTracks().forEach(t => t.stop());
+        stopChromaLoop();
+      };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [localStream]);
 
-    // ── Voice toggle — camera/mic only requested on explicit user gesture ──────
+    // ── Voice toggle ──────────────────────────────────────────────────────────
     const toggleVoiceChat = async () => {
       if (!avatarRef.current) return;
       try {
@@ -141,12 +213,10 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       }
     };
 
-    // ── Expose speak() to parent ───────────────────────────────────────────────
+    // ── Expose speak() to parent ──────────────────────────────────────────────
     useImperativeHandle(ref, () => ({
       speak: async (text: string) => {
         if (avatarRef.current) {
-          // TaskType.TALK routes through HeyGen's optimised streaming TTS pipeline,
-          // cutting avatar speech latency vs the implicit default task type.
           await avatarRef.current.speak({ text, taskType: TaskType.TALK });
         } else {
           console.warn('[InteractiveAvatar] Avatar not yet connected.');
@@ -154,7 +224,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       },
     }));
 
-    // ── Error state ────────────────────────────────────────────────────────────
+    // ── Error state ───────────────────────────────────────────────────────────
     if (hasError) {
       return (
         <div className="w-full aspect-video bg-surface rounded-2xl border border-border/40 flex flex-col items-center justify-center gap-3 text-muted">
@@ -167,6 +237,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     return (
       <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center shadow-lg border border-border/40 group">
+
         {/* Loading overlay */}
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 gap-3 backdrop-blur-sm">
@@ -176,13 +247,21 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           </div>
         )}
 
-        {/* Avatar video */}
+        {/* Hidden raw video — feeds the chroma-key canvas */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
+          muted
+          aria-hidden
+          className="absolute opacity-0 pointer-events-none w-px h-px"
+        />
+
+        {/* Chroma-keyed canvas — the visible avatar output */}
+        <canvas
+          ref={canvasRef}
           aria-label="AI avatar video stream"
-          className={`w-full h-full object-cover transition-opacity duration-700 ${
+          className={`w-full h-full object-contain transition-opacity duration-700 ${
             stream && !loading ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -213,7 +292,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             {isVoiceActive ? <Mic className="w-4 h-4 text-white" /> : <MicOff className="w-4 h-4 text-white" />}
           </button>
           <div className="text-xs font-medium text-white/90 pr-2">
-            {loading         ? 'Connecting…'
+            {loading          ? 'Connecting…'
               : isVoiceActive ? 'Voice active — AI is listening…'
               : 'Hover & click mic to speak'}
           </div>
