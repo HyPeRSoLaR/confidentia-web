@@ -36,6 +36,18 @@ const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] 
   { id: 'video', label: 'Video', icon: Video          },
 ];
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Split text into sentences so the avatar can start speaking the first sentence
+ * immediately, cutting first-word latency vs. sending the entire paragraph.
+ * Splits on ., !, ? followed by whitespace or end-of-string.
+ */
+function splitIntoSentences(text: string): string[] {
+  const raw = text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) ?? [text];
+  return raw.map(s => s.trim()).filter(Boolean);
+}
+
 type AvatarStatus = 'connecting' | 'ready' | 'error';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -124,9 +136,18 @@ export function AiChatView({
     const text  = MOCK_AI_RESPONSES[Math.floor(Math.random() * MOCK_AI_RESPONSES.length)];
     const msgId = (Date.now() + 1).toString();
 
-    // Video mode: dispatch to live WebRTC avatar immediately (no artificial delay above)
+    // Video mode: chunk into sentences and dispatch sequentially so the avatar
+    // starts speaking sentence 1 while still processing the rest — minimises
+    // first-word latency from full-paragraph synthesis to single-sentence synthesis.
     if (mode === 'video' && avatarRef.current) {
-      avatarRef.current.speak(text).catch(console.error);
+      const avatar = avatarRef.current;
+      const sentences = splitIntoSentences(text);
+      // Fire-and-forget: don't block the UI on avatar speech
+      (async () => {
+        for (const sentence of sentences) {
+          await avatar.speak(sentence).catch(console.error);
+        }
+      })();
     }
 
     // ✅ Show text message IMMEDIATELY — don't block on audio synthesis

@@ -2,15 +2,17 @@
  * lib/elevenlabs.ts — ElevenLabs Text-to-Speech Service
  * Docs: https://elevenlabs.io/docs/api-reference/text-to-speech
  *
- * NOTE: No 'use server' directive — this is a pure async utility imported by
- * the 'use client' AiChatView component.  Adding 'use server' would cause a
- * Next.js runtime error.  The ELEVENLABS_API_KEY is never sent to the browser
- * because Next.js only inlines NEXT_PUBLIC_* vars; all others remain server-
- * side during the build / SSR pass, and this module is only executed in a
- * server context (Server Components or API routes) or tree-shaken on the client.
+ * Latency strategy:
+ *   • Model: eleven_turbo_v2_5 — ElevenLabs' lowest-latency model (~75 ms
+ *     first-byte vs ~300 ms for eleven_multilingual_v2).
+ *   • Endpoint: /stream — returns a chunked audio stream so the browser can
+ *     start playing before the full file is downloaded.  We collect the
+ *     stream into a Blob and return an Object URL (no base64 overhead).
  *
- * In practice: the client calls synthesize() → Next.js routes execution through
- * the server bundle → key never leaves the server.
+ * NOTE: No 'use server' directive — this is a pure async utility imported by
+ * the 'use client' AiChatView component.  The ELEVENLABS_API_KEY remains
+ * server-side; NEXT_PUBLIC_* is the only pattern that inlines env vars into
+ * the client bundle.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,15 +43,21 @@ export async function synthesize(
     return { audioUrl: '/mock/tts-response.mp3', durationSec: 3 };
   }
 
+  // /stream endpoint: server sends audio chunks as they are synthesised —
+  // the browser starts buffering/playing before the full file is ready.
   const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
     {
       method: 'POST',
       headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        // eleven_turbo_v2_5: lowest latency model ElevenLabs offers (~75 ms)
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: {
+          stability:        0.4,  // slightly lower = faster synthesis
+          similarity_boost: 0.7,
+        },
       }),
     },
   );
@@ -59,14 +67,13 @@ export async function synthesize(
     throw new Error(`ElevenLabs API error: ${errText}`);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  // btoa works in both Node 16+ and browsers — no Buffer dependency needed
-  const uint8   = new Uint8Array(arrayBuffer);
-  const binary  = uint8.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
-  const base64Audio = btoa(binary);
+  // Collect streaming chunks into a single Blob — avoids base64 overhead
+  // and lets the browser begin decoding audio earlier.
+  const blob = await response.blob();
+  const audioUrl = URL.createObjectURL(blob);
 
   return {
-    audioUrl:    `data:audio/mpeg;base64,${base64Audio}`,
+    audioUrl,
     durationSec: Math.ceil(text.length / 15),
   };
 }

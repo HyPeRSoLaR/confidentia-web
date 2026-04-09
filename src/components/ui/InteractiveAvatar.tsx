@@ -3,7 +3,7 @@
 import React, {
   useEffect, useRef, useState, useImperativeHandle, forwardRef,
 } from 'react';
-import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
+import StreamingAvatar, { AvatarQuality, ElevenLabsModel, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
 import { Loader2, Mic, MicOff } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
@@ -66,6 +66,13 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             // Low quality halves render latency; visually imperceptible in a chat bubble.
             quality:    AvatarQuality.Low,
             avatarName: avatarId,
+            // useSilencePrompt:false removes the ~0.5–1 s canned "I'm listening"
+            // filler before VAD fires, reducing round-trip latency.
+            useSilencePrompt: false,
+            voice: {
+              // eleven_flash_v2_5: fastest ElevenLabs model available in the SDK
+              model: ElevenLabsModel.eleven_flash_v2_5,
+            },
           });
 
           // Fallback: if STREAM_READY never fires, unlock UI after 12 s
@@ -126,9 +133,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
               console.warn('[InteractiveAvatar] Camera/mic denied — continuing without PiP');
             }
           }
-          // useSilencePrompt:false removes the ~0.5–1 s canned "I'm listening" filler
-          // before VAD fires, reducing round-trip latency.
-          await avatarRef.current.startVoiceChat({ useSilencePrompt: false });
+          await avatarRef.current.startVoiceChat();
           setIsVoiceActive(true);
         }
       } catch (err) {
