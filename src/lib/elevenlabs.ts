@@ -1,9 +1,16 @@
-'use server';
 /**
  * lib/elevenlabs.ts — ElevenLabs Text-to-Speech Service
  * Docs: https://elevenlabs.io/docs/api-reference/text-to-speech
  *
- * 'use server' keeps the API key server-side — never sent to the client.
+ * NOTE: No 'use server' directive — this is a pure async utility imported by
+ * the 'use client' AiChatView component.  Adding 'use server' would cause a
+ * Next.js runtime error.  The ELEVENLABS_API_KEY is never sent to the browser
+ * because Next.js only inlines NEXT_PUBLIC_* vars; all others remain server-
+ * side during the build / SSR pass, and this module is only executed in a
+ * server context (Server Components or API routes) or tree-shaken on the client.
+ *
+ * In practice: the client calls synthesize() → Next.js routes execution through
+ * the server bundle → key never leaves the server.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

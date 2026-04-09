@@ -115,12 +115,16 @@ export function AiChatView({
     setInput('');
     setLoading(true);
 
-    // Simulated AI response latency
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 700));
+    // In video mode skip the artificial delay — the WebRTC avatar renders in real-time
+    // so adding fake latency here directly worsens the user-perceived response time.
+    // Text/audio modes keep a realistic delay so the transition feels natural.
+    if (mode !== 'video') {
+      await new Promise(r => setTimeout(r, 900 + Math.random() * 700));
+    }
     const text  = MOCK_AI_RESPONSES[Math.floor(Math.random() * MOCK_AI_RESPONSES.length)];
     const msgId = (Date.now() + 1).toString();
 
-    // Video mode: dispatch to live WebRTC avatar in parallel
+    // Video mode: dispatch to live WebRTC avatar immediately (no artificial delay above)
     if (mode === 'video' && avatarRef.current) {
       avatarRef.current.speak(text).catch(console.error);
     }

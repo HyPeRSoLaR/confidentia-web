@@ -1,6 +1,18 @@
 /**
- * lib/heygen.ts — HeyGen Video Avatar Service
- * Client module that polls Server Actions to avoid serverless timeouts.
+ * lib/heygen.ts — HeyGen Batch Video Generation (pre-rendered MP4)
+ * ─────────────────────────────────────────────────────────────────
+ * ⚠️  DO NOT use this module for real-time conversation flows.
+ *
+ * This file calls `/v2/video/generate` which fully renders an MP4 server-side
+ * before returning.  Round-trip latency is typically 15–180 s — completely
+ * incompatible with live chat UX.
+ *
+ * For conversational / streaming avatar use cases, use:
+ *   components/ui/InteractiveAvatar.tsx  →  WebRTC streaming via @heygen/streaming-avatar
+ *
+ * This module is kept for future use cases where a polished, pre-rendered
+ * video clip is needed (e.g. onboarding explainers, async coaching summaries).
+ *
  * Docs: https://docs.heygen.com/reference/streaming-api
  */
 import { createHeyGenVideo, checkHeyGenStatus } from './heygen-actions';

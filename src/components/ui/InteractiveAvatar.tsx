@@ -3,7 +3,7 @@
 import React, {
   useEffect, useRef, useState, useImperativeHandle, forwardRef,
 } from 'react';
-import StreamingAvatar, { AvatarQuality, StreamingEvents } from '@heygen/streaming-avatar';
+import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
 import { Loader2, Mic, MicOff } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
@@ -63,7 +63,8 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           });
 
           await avatar.createStartAvatar({
-            quality:    AvatarQuality.Medium,
+            // Low quality halves render latency; visually imperceptible in a chat bubble.
+            quality:    AvatarQuality.Low,
             avatarName: avatarId,
           });
 
@@ -125,7 +126,9 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
               console.warn('[InteractiveAvatar] Camera/mic denied — continuing without PiP');
             }
           }
-          await avatarRef.current.startVoiceChat();
+          // useSilencePrompt:false removes the ~0.5–1 s canned "I'm listening" filler
+          // before VAD fires, reducing round-trip latency.
+          await avatarRef.current.startVoiceChat({ useSilencePrompt: false });
           setIsVoiceActive(true);
         }
       } catch (err) {
@@ -137,7 +140,9 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     useImperativeHandle(ref, () => ({
       speak: async (text: string) => {
         if (avatarRef.current) {
-          await avatarRef.current.speak({ text });
+          // TaskType.TALK routes through HeyGen's optimised streaming TTS pipeline,
+          // cutting avatar speech latency vs the implicit default task type.
+          await avatarRef.current.speak({ text, taskType: TaskType.TALK });
         } else {
           console.warn('[InteractiveAvatar] Avatar not yet connected.');
         }
