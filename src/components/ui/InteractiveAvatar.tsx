@@ -50,16 +50,14 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
   ({ avatarId = 'Anna_public_3_20240108', onDisconnected, onReady, onError }, ref) => {
     const videoRef      = useRef<HTMLVideoElement>(null);
     const canvasRef     = useRef<HTMLCanvasElement>(null);
-    const localVideoRef = useRef<HTMLVideoElement>(null);
     const avatarRef     = useRef<StreamingAvatar | null>(null);
     const rafRef        = useRef<number>(0);
 
     const [stream,        setStream]        = useState<MediaStream | null>(null);
-    const [localStream,   setLocalStream]   = useState<MediaStream | null>(null);
     const [loading,       setLoading]       = useState(true);
     const [isVoiceActive, setIsVoiceActive] = useState(false);
     const [hasError,      setHasError]      = useState(false);
-    const [cameraRequested, setCameraRequested] = useState(false);
+    const lastFrameRef    = useRef<number>(0);
 
     // ── Chroma key loop ────────────────────────────────────────────────────────
     const startChromaLoop = useCallback(() => {
@@ -70,18 +68,24 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return;
 
-      function tick() {
+      // Throttle to ~30 fps to reduce main-thread pressure during WebRTC audio
+      const TARGET_FPS = 30;
+      const FRAME_MS   = 1000 / TARGET_FPS;
+
+      function tick(now: number) {
         if (!video || !canvas || !ctx) return;
-        if (video.readyState >= 2 && video.videoWidth > 0) {
-          // Sync canvas size lazily (only when it changes — avoids thrash)
-          if (canvas.width !== video.videoWidth) {
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
+        if (now - lastFrameRef.current >= FRAME_MS) {
+          lastFrameRef.current = now;
+          if (video.readyState >= 2 && video.videoWidth > 0) {
+            if (canvas.width !== video.videoWidth) {
+              canvas.width  = video.videoWidth;
+              canvas.height = video.videoHeight;
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            applyChromaKey(frame.data);
+            ctx.putImageData(frame, 0, 0);
           }
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          applyChromaKey(frame.data);
-          ctx.putImageData(frame, 0, 0);
         }
         rafRef.current = requestAnimationFrame(tick);
       }
@@ -169,44 +173,28 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       return () => video.removeEventListener('canplay', onCanPlay);
     }, [stream, startChromaLoop]);
 
-    // ── Sync local camera → PiP ────────────────────────────────────────────────
+    // ── Cleanup on unmount ────────────────────────────────────────────────────
     useEffect(() => {
-      if (localVideoRef.current && localStream) localVideoRef.current.srcObject = localStream;
-    }, [localStream]);
-
-    // ── Cleanup local camera on unmount ───────────────────────────────────────
-    useEffect(() => {
-      return () => {
-        localStream?.getTracks().forEach(t => t.stop());
-        stopChromaLoop();
-      };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [localStream]);
+      return () => { stopChromaLoop(); };
+    }, [stopChromaLoop]);
 
     // ── Voice toggle ──────────────────────────────────────────────────────────
+    // NOTE: We do NOT call getUserMedia ourselves — HeyGen's startVoiceChat()
+    // handles mic access internally. Claiming the mic before calling startVoiceChat
+    // creates two competing audio capture contexts on the same device, which
+    // freezes the WebRTC pipeline and silences the avatar.
     const toggleVoiceChat = async () => {
       if (!avatarRef.current) return;
       try {
         if (isVoiceActive) {
           await avatarRef.current.closeVoiceChat();
           setIsVoiceActive(false);
-          localStream?.getTracks().forEach(t => t.stop());
-          setLocalStream(null);
         } else {
-          if (!cameraRequested) {
-            setCameraRequested(true);
-            try {
-              const media = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-              setLocalStream(media);
-            } catch {
-              console.warn('[InteractiveAvatar] Camera/mic denied — continuing without PiP');
-            }
-          }
-          await avatarRef.current.startVoiceChat();
+          await avatarRef.current.startVoiceChat({ useSilencePrompt: false });
           setIsVoiceActive(true);
         }
       } catch (err) {
-        console.error('Voice chat toggle failed', err);
+        console.error('[InteractiveAvatar] Voice chat toggle failed:', err);
       }
     };
 
@@ -263,18 +251,6 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           }`}
         />
 
-        {/* Picture-in-Picture local camera */}
-        {localStream && (
-          <div className="absolute bottom-4 right-4 w-28 aspect-[3/4] bg-black rounded-xl overflow-hidden border-2 border-white/10 shadow-2xl z-20 transition-transform duration-300 hover:scale-105">
-            <video
-              ref={localVideoRef}
-              autoPlay playsInline muted
-              aria-label="Your camera preview"
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-          </div>
-        )}
 
         {/* Voice chat controls — visible on hover */}
         <div className="absolute bottom-4 left-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
