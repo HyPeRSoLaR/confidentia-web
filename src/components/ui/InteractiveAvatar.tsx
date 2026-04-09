@@ -3,7 +3,7 @@
 import React, {
   useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback,
 } from 'react';
-import StreamingAvatar, { AvatarQuality, ElevenLabsModel, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
+import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
 import { Loader2, Mic, MicOff } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
@@ -127,9 +127,6 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             quality:          AvatarQuality.Low,
             avatarName:       avatarId,
             useSilencePrompt: false,
-            voice: {
-              model: ElevenLabsModel.eleven_flash_v2_5,
-            },
           });
 
           // Fallback: if STREAM_READY never fires, unlock UI after 12 s
