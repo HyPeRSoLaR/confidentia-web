@@ -23,7 +23,7 @@ export const MOCK_JOURNAL_ENTRIES: JournalEntry[] = [
   },
   {
     id: 'j2', userId: 'demo-consumer',
-    title: 'Trac avant la présentation', body: 'Grande revue trimestrielle aujourd'hui. Répété trois fois. Je sens la pression mais je suis prêt.',
+    title: 'Trac avant la présentation', body: "Grande revue trimestrielle aujourd'hui. Répété trois fois. Je sens la pression mais je suis prêt.",
     tags: ['travail', 'anxiété'], mood: 'anxious',
     createdAt: '2026-03-28T21:10:00Z', updatedAt: '2026-03-28T21:10:00Z',
   },
@@ -233,7 +233,7 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r1',
     title: 'Comprendre le burn-out professionnel',
-    description: 'Le burn-out n’est pas une marque de courage. Ce guide approfondi couvre les trois stades du burn-out, les signes précurseurs que vous pouvez auto-évaluer, et un plan de récupération étape par étape utilisé par des thérapeutes du travail.',
+    description: 'Le burn-out n\'est pas une marque de courage. Ce guide approfondi couvre les trois stades du burn-out, les signes précurseurs que vous pouvez auto-évaluer, et un plan de récupération étape par étape utilisé par des thérapeutes du travail.',
     category: 'article',
     tags: ['burn-out', 'travail', 'récupération'],
     readingTimeMin: 10,
@@ -242,7 +242,7 @@ export const MOCK_RESOURCES: Resource[] = [
     difficulty: 'beginner',
     keyTakeaways: [
       'Le burn-out comporte 3 stades : épuisement, cynisme et inefficacité — chacun requière une intervention différente.',
-      'Le levier de récupération le plus rapide est l’hygiène du sommeil, pas les hacks de productivité.',
+      'Le levier de récupération le plus rapide est l\'hygiène du sommeil, pas les hacks de productivité.',
       'Noter 3 choses accomplies (pas planifiées) reconfigure votre système de récompense en 2 semaines.',
     ],
   },
@@ -283,7 +283,7 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r4',
     title: 'Respiration carrée en 5 minutes',
-    description: 'La même technique utilisée par les forces spéciales pour contrôler l’anxiété en performance. Inspirez 4s, retenez 4s, expirez 4s, retenez 4s. Fonctionne dans n’importe quelle salle de réunion.',
+    description: 'La même technique utilisée par les forces spéciales pour contrôler l\'anxiété en performance. Inspirez 4s, retenez 4s, expirez 4s, retenez 4s. Fonctionne dans n\'importe quelle salle de réunion.',
     category: 'exercise',
     tags: ['respiration', 'anxiété', 'quick-win'],
     readingTimeMin: 5,
@@ -321,7 +321,7 @@ export const MOCK_RESOURCES: Resource[] = [
     difficulty: 'beginner',
     keyTakeaways: [
       'Abaisse directement la pression artérielle dès la première séance de 10 minutes.',
-      'Plus efficace que la méditation pour les personnes qui « n’arrivent pas à faire le vide ».',
+      'Plus efficace que la méditation pour les personnes qui « n\'arrivent pas à faire le vide ».',
       'Se combine parfaitement avec la respiration carrée avant un événement stressant.',
     ],
   },
@@ -337,7 +337,7 @@ export const MOCK_RESOURCES: Resource[] = [
     keyTakeaways: [
       'Insère une pause de 6 secondes entre stimulus et réponse — suffisant pour engager le cortex préfrontal.',
       'Réduit les e-mails regrettables, les répliques vives et les éclats en réunion.',
-      'Utilisez-le quand vous sentez votre mâchoire se contracter — premier signal d’alarme du corps.',
+      'Utilisez-le quand vous sentez votre mâchoire se contracter — premier signal d\'alarme du corps.',
     ],
   },
 
@@ -345,16 +345,16 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r8',
     title: 'La science du sommeil et de la santé mentale',
-    description: 'Comment l’architecture du sommeil — cycles REM, dette de sommeil et chronotype — contrôle directement votre régulation émotionnelle, la qualité de vos décisions et votre résilience au stress le lendemain.',
+    description: 'Comment l\'architecture du sommeil — cycles REM, dette de sommeil et chronotype — contrôle directement votre régulation émotionnelle, la qualité de vos décisions et votre résilience au stress le lendemain.',
     category: 'article',
     tags: ['sommeil', 'science', 'performance'],
     readingTimeMin: 12,
     url: '#',
     difficulty: 'intermediate',
     keyTakeaways: [
-      'Une dette de sommeil de 6 heures dégrade les performances cognitives autant qu’un état d’ivresse légale.',
+      'Une dette de sommeil de 6 heures dégrade les performances cognitives autant qu\'un état d\'ivresse légale.',
       'Le sommeil REM est le cycle de traitement émotionnel du cerveau — le sauter amplifie la réactivité du lendemain.',
-      'Une heure de réveil constante (même le week-end) est plus impactante qu’une heure de coucher fixée.',
+      'Une heure de réveil constante (même le week-end) est plus impactante qu\'une heure de coucher fixée.',
     ],
   },
   {
@@ -367,14 +367,14 @@ export const MOCK_RESOURCES: Resource[] = [
     url: '#',
     difficulty: 'intermediate',
     keyTakeaways: [
-      '« Mon chef m’a ignoré » → « Mon chef était distrait ». Même fait, souffrance différente.',
+      '« Mon chef m\'a ignoré » → « Mon chef était distrait ». Même fait, souffrance différente.',
       'Le triangle cognitif : les pensées influencent les émotions qui influencent les comportements — changez-en un, tout bouge.',
-      'Écrivez la pensée — l’extérioriser réduit son emprise jusqu’à 50 %.',
+      'Écrivez la pensée — l\'extérioriser réduit son emprise jusqu\'à 50 %.',
     ],
   },
   {
     id: 'r10',
-    title: 'Gérer son énergie d’introverti au travail',
+    title: 'Gérer son énergie d\'introverti au travail',
     description: 'Pour les introvertis dans des open spaces ou des cultures de réunions enchaînées : comment structurer votre journée autour de la récupération sociale et protéger le temps de travail profond sans paraître asocial.',
     category: 'article',
     tags: ['introverti', 'énergie', 'travail'],
@@ -383,7 +383,7 @@ export const MOCK_RESOURCES: Resource[] = [
     difficulty: 'beginner',
     keyTakeaways: [
       'Réservez 30 minutes de « décompression » après tout matin chargé en réunions — planifiez-le comme une tâche.',
-      'La communication asynchrone n’est pas de la paresse — c’est l’optimisation de performance de l’introverti.',
+      'La communication asynchrone n\'est pas de la paresse — c\'est l\'optimisation de performance de l\'introverti.',
       '« Avec plaisir — je vous confirme jeudi ? » vous donne du vrai temps de réflexion.',
     ],
   },
@@ -397,7 +397,7 @@ export const MOCK_RESOURCES: Resource[] = [
     url: '#',
     difficulty: 'beginner',
     keyTakeaways: [
-      'Tout employeur avec au moins 1 salarié est légalement obligé d’évaluer les risques psychosociaux annuellement.',
+      'Tout employeur avec au moins 1 salarié est légalement obligé d\'évaluer les risques psychosociaux annuellement.',
       'Le harcèlement moral est un délit pénal selon le code du travail français.',
       'Vous avez le droit de signaler une situation à risque sans accord préalable de la direction.',
     ],
@@ -405,7 +405,7 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r12',
     title: 'Manager vers le haut : améliorer sa relation avec un chef difficile',
-    description: 'Techniques basées sur la recherche pour améliorer la dynamique avec un responsable difficile — de la compréhension de ses motivations à la structuration d’interactions qui fonctionnent pour les deux parties.',
+    description: 'Techniques basées sur la recherche pour améliorer la dynamique avec un responsable difficile — de la compréhension de ses motivations à la structuration d\'interactions qui fonctionnent pour les deux parties.',
     category: 'article',
     tags: ['manager', 'relations', 'communication'],
     readingTimeMin: 11,
@@ -414,7 +414,7 @@ export const MOCK_RESOURCES: Resource[] = [
     keyTakeaways: [
       'Comprenez la pression principale de votre manager — la plupart des comportements difficiles sont motivés par la peur, pas par la malveillance.',
       'Adaptez votre style de communication à leur préférence (visuel, données, narratif).',
-      '« Manager vers le haut » n’est pas de la manipulation — c’est rendre la collaboration possible pour tous.',
+      '« Manager vers le haut » n\'est pas de la manipulation — c\'est rendre la collaboration possible pour tous.',
     ],
   },
 
@@ -430,13 +430,13 @@ export const MOCK_RESOURCES: Resource[] = [
     difficulty: 'intermediate',
     keyTakeaways: [
       '« Je peux prendre ça — quelle priorité actuelle dois-je déprioriser ? » est une limite claire et complète.',
-      'Les violations de limites se répètent jusqu’à ce qu’il y ait une conséquence — la bienveillance sans limite n’est pas de la bienveillance.',
-      'Les limites ne concernent pas le changement de l’autre ; elles concernent ce que VOUS ferez différemment.',
+      'Les violations de limites se répètent jusqu\'à ce qu\'il y ait une conséquence — la bienveillance sans limite n\'est pas de la bienveillance.',
+      'Les limites ne concernent pas le changement de l\'autre ; elles concernent ce que VOUS ferez différemment.',
     ],
   },
   {
     id: 'r14',
-    title: 'Ma première séance de thérapie : à quoi s’attendre',
+    title: 'Ma première séance de thérapie : à quoi s\'attendre',
     description: 'Un guide démystificateur pour quiconque envisage une thérapie pour la première fois. Couvre les types de thérapie existants, le déroulement de la première séance, et comment choisir le bon thérapeute.',
     category: 'guide',
     tags: ['thérapie', 'premiers-pas', 'santé-mentale'],
@@ -444,7 +444,7 @@ export const MOCK_RESOURCES: Resource[] = [
     url: '#',
     difficulty: 'beginner',
     keyTakeaways: [
-      'L’alliance thérapeutique (votre relation avec votre thérapeute) prédit 30 % des résultats.',
+      'L\'alliance thérapeutique (votre relation avec votre thérapeute) prédit 30 % des résultats.',
       'La première séance est mutuelle — vous les évaluez aussi.',
       'La thérapie progresse plus vite quand vous faites de micro-réflexions entre les séances.',
     ],
@@ -452,7 +452,7 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r15',
     title: 'Détoxication numérique au travail : un reset de 7 jours',
-    description: 'Un programme d’une semaine pour réduire l’anxiété des notifications, la réactivité aux e-mails, et le défilement compulsif des réseaux sociaux — tout en restant efficace et connecté au travail.',
+    description: 'Un programme d\'une semaine pour réduire l\'anxiété des notifications, la réactivité aux e-mails, et le défilement compulsif des réseaux sociaux — tout en restant efficace et connecté au travail.',
     category: 'guide',
     tags: ['numérique', 'attention', 'concentration'],
     readingTimeMin: 9,
@@ -460,7 +460,7 @@ export const MOCK_RESOURCES: Resource[] = [
     difficulty: 'beginner',
     keyTakeaways: [
       'Consulter ses e-mails moins de 3 fois par jour réduit le stress de 38 % (Gloria Mark, UCI).',
-      'Désactiver les notifications n’est possible qu’avec un accord explicite de l’équipe.',
+      'Désactiver les notifications n\'est possible qu\'avec un accord explicite de l\'équipe.',
       'Jour 1 : posez votre téléphone dans le tiroir pendant le déjeuner. Juste ça. Commencez là.',
     ],
   },
@@ -474,8 +474,8 @@ export const MOCK_RESOURCES: Resource[] = [
     url: '#',
     difficulty: 'advanced',
     keyTakeaways: [
-      'Séparez la personne du problème — attaquez l’enjeu, pas l’individu.',
-      'Demandez « pourquoi » derrière leur position pour révéler l’intérêt sous-jacent que vous pouvez satisfaire ensemble.',
+      'Séparez la personne du problème — attaquez l\'enjeu, pas l\'individu.',
+      'Demandez « pourquoi » derrière leur position pour révéler l\'intérêt sous-jacent que vous pouvez satisfaire ensemble.',
       'Inventez des options à gains mutuels avant de vous engager sur une position.',
     ],
   },
@@ -484,16 +484,16 @@ export const MOCK_RESOURCES: Resource[] = [
   {
     id: 'r17',
     title: 'TED Talk : Le pouvoir de la vulnérabilité — Brené Brown',
-    description: 'L’une des TED talks les plus regardées de tous les temps. Les recherches de Brown sur la honte, la vulnérabilité et la connexion ont aidé des millions de personnes à réduire le perfectionnisme et à se reconnecter à elles-mêmes et aux autres.',
+    description: 'L\'une des TED talks les plus regardées de tous les temps. Les recherches de Brown sur la honte, la vulnérabilité et la connexion ont aidé des millions de personnes à réduire le perfectionnisme et à se reconnecter à elles-mêmes et aux autres.',
     category: 'video',
     tags: ['vulnérabilité', 'honte', 'connexion'],
     readingTimeMin: 20,
     url: 'https://www.ted.com/talks/brene_brown_the_power_of_vulnerability',
     difficulty: 'beginner',
     keyTakeaways: [
-      'La vulnérabilité n’est pas une faiblesse — c’est le berceau de la créativité, de l’appartenance et de la joie.',
+      'La vulnérabilité n\'est pas une faiblesse — c\'est le berceau de la créativité, de l\'appartenance et de la joie.',
       'Engourdir la vulnérabilité engourdit aussi la joie — on ne peut pas sélectionner ses émotions.',
-      'Les personnes qui vivent pleinement embrassent l’imperfection ; les perfectionnistes se protègent de la honte.',
+      'Les personnes qui vivent pleinement embrassent l\'imperfection ; les perfectionnistes se protègent de la honte.',
     ],
   },
   {
@@ -595,7 +595,7 @@ export const MOCK_THERAPIST_PROFILE: TherapistProfile = {
   userId: 'demo-therapist',
   name: 'Dr. Sam Patel',
   avatarUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200&h=200',
-  bio: 'Spécialisé dans l'anxiété, le burn-out et les transitions de vie. J'utilise une approche intégrative combinant TCC, ACT et pratiques de pleine conscience.',
+  bio: "Spécialisé dans l'anxiété, le burn-out et les transitions de vie. J'utilise une approche intégrative combinant TCC, ACT et pratiques de pleine conscience.",
   specialties: ['Anxiété', 'Burn-out', 'TCC', 'ACT', 'Pleine conscience', 'Transitions de vie'],
   languages: ['Anglais', 'Hindi'],
   ratePerSession: 120,
