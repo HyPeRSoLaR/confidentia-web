@@ -9,9 +9,7 @@ import {
   SessionState,
   AgentEventsEnum,
 } from '@heygen/liveavatar-web-sdk';
-import { Loader2, Mic, MicOff, Camera, CameraOff, Zap } from 'lucide-react';
-
-// ─── Public API ────────────────────────────────────────────────────────────────
+import { Loader2, Mic, MicOff, Camera, CameraOff, Zap, Volume2 } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
   speak: (text: string) => void;
@@ -31,8 +29,6 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
   return ref;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
   ({ onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
 
@@ -46,30 +42,34 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     const onAvatarRef       = useCallbackRef(onAvatarResponse);
 
     const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
-    const [hasError,  setHasError]  = useState(false);
-    const sessionModeRef = useRef<'LITE' | 'FULL'>('FULL');
-    const [sessionMode,  setSessionMode] = useState<'LITE' | 'FULL'>('FULL');
+    const [hasError,     setHasError]     = useState(false);
 
-    // ── PTT (Push-to-Talk) state ──────────────────────────────────────────────
-    // In FULL mode, VAD is NOT started automatically.
-    // The user taps the mic button to start/stop listening.
-    // This avoids echo and gives a deliberate, human-feeling UX.
-    const [isListening,  setIsListening]  = useState(false);
-    const [isSpeaking,   setIsSpeaking]   = useState(false); // avatar is speaking
-    const isListeningRef = useRef(false);
-    const isSpeakingRef  = useRef(false);
-    const COOLDOWN_MS    = 800;
+    const sessionModeRef = useRef<'LITE' | 'FULL'>('FULL');
+    const [sessionMode,  setSessionMode]  = useState<'LITE' | 'FULL'>('FULL');
+
+    // ── Zoom-like mic state ───────────────────────────────────────────────────
+    // micActive:  user has clicked "activate" at least once (mic is ON)
+    // isMuted:    user explicitly muted (mic stays muted until clicked again)
+    // isSpeaking: avatar is currently speaking (VAD auto-paused)
+    const [micActive,  setMicActive]  = useState(false);
+    const [isMuted,    setIsMuted]    = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+
+    // Refs for access inside async callbacks (avoid stale closures)
+    const micActiveRef  = useRef(false);
+    const isMutedRef    = useRef(false);
+    const isSpeakingRef = useRef(false);
+
+    const COOLDOWN_MS = 800;
 
     // ── Webcam PiP ────────────────────────────────────────────────────────────
-    const [webcamOn,    setWebcamOn]    = useState(false);
+    const [webcamOn, setWebcamOn] = useState(false);
     const webcamRef    = useRef<HTMLVideoElement>(null);
     const webcamStream = useRef<MediaStream | null>(null);
 
     async function startWebcam() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 320, height: 240, facingMode: 'user' },
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
         webcamStream.current = stream;
         if (webcamRef.current) webcamRef.current.srcObject = stream;
         setWebcamOn(true);
@@ -83,6 +83,38 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     const isConnected  = sessionState === SessionState.CONNECTED;
     const isConnecting = sessionState === SessionState.CONNECTING;
+
+    // ── iOS audio unlock ──────────────────────────────────────────────────────
+    // iOS blocks audio autoplay. We must call video.play() from a user gesture.
+    function unlockIOSAudio() {
+      const vid = mediaRef.current;
+      if (!vid) return;
+      vid.muted = false;
+      vid.play().catch(() => {
+        // Still blocked — try with muted first, then unmute
+        vid.muted = true;
+        vid.play().then(() => { vid.muted = false; }).catch(() => {});
+      });
+    }
+
+    // ── Helper: start VAD in FULL mode ────────────────────────────────────────
+    function startVAD() {
+      const session = sessionRef.current;
+      if (!session) return;
+      if (sessionModeRef.current === 'FULL') {
+        try { session.startListening(); } catch (e) {
+          console.warn('[LiveAvatar] startListening failed:', e);
+        }
+      }
+    }
+
+    function stopVAD() {
+      const session = sessionRef.current;
+      if (!session) return;
+      if (sessionModeRef.current === 'FULL') {
+        try { session.stopListening(); } catch {}
+      }
+    }
 
     // ── Session init ──────────────────────────────────────────────────────────
     useEffect(() => {
@@ -115,22 +147,23 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
             if (!mounted) return;
             setSessionState(state);
-            // PTT: do NOT auto-start listening on connect.
-            // User must tap the mic button deliberately.
-            // (In LITE mode, ElevenLabs manages VAD anyway.)
+            // Do NOT auto-start VAD. User must click "Activer le micro" first.
           });
 
           session.on(SessionEvent.SESSION_DISCONNECTED, () => {
             if (!mounted) return;
-            setIsListening(false);
+            micActiveRef.current  = false;
+            isMutedRef.current    = false;
+            isSpeakingRef.current = false;
+            setMicActive(false);
+            setIsMuted(false);
             setIsSpeaking(false);
             onDisconnectedRef.current?.();
           });
 
-          // ── User transcript (only forwarded in FULL mode when listening) ───
           session.on(AgentEventsEnum.USER_TRANSCRIPTION, (event) => {
             if (!mounted || !event.text?.trim()) return;
-            if (!isListeningRef.current) return; // PTT gate
+            if (!micActiveRef.current || isMutedRef.current) return; // gate
             onVoiceRef.current?.(event.text.trim());
           });
 
@@ -138,24 +171,28 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             if (mounted && event.text?.trim()) onAvatarRef.current?.(event.text.trim());
           });
 
-          // ── Avatar starts speaking → stop listening (echo prevention) ──────
+          // Avatar starts speaking → pause VAD (echo prevention), keep mic "active" conceptually
           session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
             if (!mounted) return;
             isSpeakingRef.current = true;
             setIsSpeaking(true);
-            if (!isLite && isListeningRef.current) {
-              try { session.stopListening(); } catch {}
-              isListeningRef.current = false;
-              setIsListening(false);
+            if (!isLite && micActiveRef.current && !isMutedRef.current) {
+              stopVAD();
             }
           });
 
-          // ── Avatar finishes speaking → ready for next PTT tap ────────────
+          // Avatar finishes → auto-resume VAD if mic is still active and not muted
+          // This is the "Zoom call" behavior — mic comes back automatically
           session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
             if (!mounted) return;
             setTimeout(() => {
+              if (!mounted) return;
               isSpeakingRef.current = false;
               setIsSpeaking(false);
+              // Auto-resume listening if mic is active and not muted
+              if (!isLite && micActiveRef.current && !isMutedRef.current) {
+                startVAD();
+              }
             }, COOLDOWN_MS);
           });
 
@@ -176,58 +213,62 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── PTT toggle ────────────────────────────────────────────────────────────
-    const toggleListening = useCallback(async () => {
+    // ── Mic button handler (Zoom-like) ────────────────────────────────────────
+    const handleMicClick = useCallback(async () => {
       const session = sessionRef.current;
-      if (!session || !isConnected || isSpeakingRef.current) return;
+      if (!session || !isConnected) return;
 
-      if (sessionModeRef.current === 'LITE') {
-        // LITE: ElevenLabs controls VAD — mute/unmute instead
-        try {
-          if (isListeningRef.current) {
-            await session.voiceChat.mute();
-            isListeningRef.current = false;
-            setIsListening(false);
-          } else {
-            await session.voiceChat.unmute();
-            isListeningRef.current = true;
-            setIsListening(true);
-          }
-        } catch (e) { console.warn('[LiveAvatar] LITE mute toggle error:', e); }
-        return;
-      }
+      // iOS audio unlock on every user gesture — safe to call multiple times
+      unlockIOSAudio();
 
-      // FULL mode: startListening / stopListening
-      if (isListeningRef.current) {
-        try { session.stopListening(); } catch {}
-        isListeningRef.current = false;
-        setIsListening(false);
+      if (!micActiveRef.current) {
+        // First click: ACTIVATE the mic (like joining a Zoom call with mic on)
+        micActiveRef.current = true;
+        isMutedRef.current   = false;
+        setMicActive(true);
+        setIsMuted(false);
+
+        if (sessionModeRef.current === 'LITE') {
+          try { await session.voiceChat.unmute(); } catch {}
+        } else {
+          if (!isSpeakingRef.current) startVAD();
+        }
+      } else if (isMutedRef.current) {
+        // Was muted → UNMUTE
+        isMutedRef.current = false;
+        setIsMuted(false);
+
+        if (sessionModeRef.current === 'LITE') {
+          try { await session.voiceChat.unmute(); } catch {}
+        } else {
+          if (!isSpeakingRef.current) startVAD();
+        }
       } else {
-        try { session.startListening(); } catch {}
-        isListeningRef.current = true;
-        setIsListening(true);
+        // Active and not muted → MUTE
+        isMutedRef.current = true;
+        setIsMuted(true);
+
+        if (sessionModeRef.current === 'LITE') {
+          try { await session.voiceChat.mute(); } catch {}
+        } else {
+          stopVAD();
+        }
       }
     }, [isConnected]);
 
-    // ── speak() for typed text in FULL mode ───────────────────────────────────
+    // ── speak() ───────────────────────────────────────────────────────────────
     useImperativeHandle(ref, () => ({
       speak: (text: string) => {
         const session = sessionRef.current;
         if (!session || !isConnected) return;
-        if (sessionModeRef.current === 'LITE') return; // ElevenLabs controls TTS
-        // Stop listening before speaking to prevent echo
-        if (isListeningRef.current) {
-          try { session.stopListening(); } catch {}
-          isListeningRef.current = false;
-          setIsListening(false);
-        }
+        if (sessionModeRef.current === 'LITE') return;
+        if (!isSpeakingRef.current) stopVAD();
         try { session.message(text); } catch (e) {
           console.warn('[LiveAvatar] speak error', e);
         }
       },
     }), [isConnected]);
 
-    // ── Error state ───────────────────────────────────────────────────────────
     if (hasError) {
       return (
         <div className="w-full aspect-video bg-surface rounded-2xl border border-border/40 flex flex-col items-center justify-center gap-3 text-muted">
@@ -240,16 +281,31 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     const loading = !isConnected && !hasError;
 
-    // ── Mic button label ──────────────────────────────────────────────────────
-    function micLabel() {
-      if (isSpeaking)    return 'Aria parle…';
-      if (isListening)   return 'En écoute — touchez pour arrêter';
-      return 'Touchez pour parler';
+    // ── Mic button content ────────────────────────────────────────────────────
+    function micIcon() {
+      if (isSpeaking)            return <Loader2 size={16} className="animate-spin" />;
+      if (!micActive)            return <Volume2 size={16} />;
+      if (isMuted)               return <MicOff size={16} />;
+      return <Mic size={16} />;
+    }
+
+    function micText() {
+      if (isSpeaking)            return 'Aria parle…';
+      if (!micActive)            return 'Activer le micro';
+      if (isMuted)               return 'Micro coupé — toucher pour réactiver';
+      return 'Micro actif — toucher pour couper';
+    }
+
+    function micStyle() {
+      if (isSpeaking)  return 'bg-black/40 border-white/10 text-white/50 cursor-not-allowed';
+      if (!micActive)  return 'bg-brand/90 border-brand/60 text-white hover:scale-105 hover:shadow-brand/30 shadow-lg';
+      if (isMuted)     return 'bg-red-600/90 border-red-500/60 text-white hover:scale-105';
+      return 'bg-emerald-600/90 border-emerald-500/60 text-white hover:opacity-90';
     }
 
     return (
       <div
-        className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border border-border/40 group"
+        className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border border-border/40"
         style={{ background: 'radial-gradient(ellipse at 60% 40%, #1e1040 0%, #0d0820 60%, #07050f 100%)' }}
       >
         {/* Loading overlay */}
@@ -263,7 +319,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           </div>
         )}
 
-        {/* Avatar video */}
+        {/* Avatar video – playsInline is critical for iOS */}
         <video
           ref={mediaRef}
           autoPlay
@@ -274,7 +330,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           aria-label="AI avatar video stream"
         />
 
-        {/* LITE mode badge */}
+        {/* ElevenLabs badge (LITE mode) */}
         {isConnected && sessionMode === 'LITE' && (
           <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2 py-1 bg-violet/20 backdrop-blur-sm border border-violet/30 rounded-full">
             <Zap size={9} className="text-violet" />
@@ -282,30 +338,21 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           </div>
         )}
 
-        {/* ── PTT Mic button ── */}
+        {/* ── Zoom-style mic control ── */}
         {isConnected && (
           <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center">
             <button
-              onClick={toggleListening}
+              onClick={handleMicClick}
               disabled={isSpeaking}
-              aria-label={micLabel()}
+              aria-label={micText()}
               className={`
-                flex items-center gap-2.5 px-5 py-2.5 rounded-full border transition-all duration-200 backdrop-blur-md shadow-lg
-                ${isSpeaking
-                  ? 'bg-black/40 border-white/10 text-white/40 cursor-not-allowed'
-                  : isListening
-                    ? 'bg-red-500/90 border-red-400/60 text-white scale-105 shadow-red-500/30 animate-pulse-slow'
-                    : 'bg-brand/90 border-brand/60 text-white hover:scale-105 hover:shadow-brand/40'
-                }
+                flex items-center gap-2.5 px-5 py-2.5 rounded-full border
+                transition-all duration-200 backdrop-blur-md
+                ${micStyle()}
               `}
             >
-              {isSpeaking
-                ? <Loader2 size={16} className="animate-spin" />
-                : isListening
-                  ? <MicOff size={16} />
-                  : <Mic size={16} />
-              }
-              <span className="text-xs font-semibold">{micLabel()}</span>
+              {micIcon()}
+              <span className="text-xs font-semibold">{micText()}</span>
             </button>
           </div>
         )}
@@ -314,7 +361,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
         {webcamOn && (
           <div className="absolute bottom-16 right-4 z-20 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl">
             <video ref={webcamRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-            <button onClick={stopWebcam} className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-red-500/80 transition-colors">
+            <button onClick={stopWebcam} className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-red-500/80">
               <CameraOff size={8} />
             </button>
           </div>
