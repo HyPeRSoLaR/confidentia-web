@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Heart, Clock, AlertTriangle, CheckCircle2, RefreshCw,
+  Heart, Clock, CheckCircle2, RefreshCw,
   Mail, ChevronDown, ChevronUp, Inbox,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -145,12 +145,10 @@ function RequestCard({ request, onUpdate }: { request: DistressRequest; onUpdate
                       </Button>
                     )}
 
-                    {request.status !== 'resolved' && (
-                      <Button size="sm" onClick={handleResolve} className="rounded-xl text-xs bg-emerald-500/90 hover:bg-emerald-500 text-white border-0">
-                        <CheckCircle2 size={11} className="mr-1" />
-                        Resolve
-                      </Button>
-                    )}
+                    <Button size="sm" onClick={handleResolve} className="rounded-xl text-xs bg-emerald-500/90 hover:bg-emerald-500 text-white border-0">
+                      <CheckCircle2 size={11} className="mr-1" />
+                      Resolve
+                    </Button>
                   </div>
                 )}
               </div>
