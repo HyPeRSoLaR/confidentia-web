@@ -161,7 +161,7 @@ export default function EmployeeDashboardPage() {
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-[10px] uppercase tracking-widest text-violet font-semibold">{featuredResource.category}</span>
                 <Star size={10} className="text-amber-400" />
-                <span className="text-[10px] text-muted">{featuredResource.readingTimeMin} min read</span>
+                <span className="text-[10px] text-muted">{featuredResource.readingTimeMin} min de lecture</span>
               </div>
               <h3 className="font-semibold text-text text-sm mb-2 group-hover:text-violet transition-colors">
                 {featuredResource.title}

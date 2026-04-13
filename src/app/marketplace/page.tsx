@@ -2,8 +2,8 @@
 /**
  * app/marketplace/page.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Therapist marketplace — browse, filter, and book sessions.
- * Accessible from the "I want to speak with someone" CTA in chat.
+ * Annuaire des thérapeutes — parcourir, filtrer et réserver des séances.
+ * Accessible depuis le CTA « Je veux parler avec quelqu'un » dans le chat.
  */
 
 import { useState } from 'react';
@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/Badge';
 import { MOCK_THERAPISTS } from '@/lib/mock-data';
 import type { TherapistProfile } from '@/types';
 
-// ─── Enriched therapist data ─────────────────────────────────────────────────
+// ─── Données enrichies ────────────────────────────────────────────────────────
 
 const ENRICHED_THERAPISTS = [
   ...MOCK_THERAPISTS,
@@ -27,9 +27,9 @@ const ENRICHED_THERAPISTS = [
     userId: 't4',
     name: 'Dr. Yuki Tanaka',
     avatarUrl: 'https://images.unsplash.com/photo-1614132967153-77aac0af3e54?auto=format&fit=crop&w=200&h=200&q=80',
-    bio: 'Specialising in burn-out recovery, high-performer coaching, and trauma-informed care. Former corporate lawyer turned therapist.',
-    specialties: ['Burnout', 'Trauma', 'High-performers', 'CBT'],
-    languages: ['English', 'Japanese'],
+    bio: 'Spécialisée dans la récupération après burn-out, le coaching de haute performance et les soins tenant compte des traumatismes. Ancienne avocate d'affaires reconvertie en thérapeute.',
+    specialties: ['Burn-out', 'Trauma', 'Haute performance', 'TCC'],
+    languages: ['Anglais', 'Japonais'],
     ratePerSession: 110,
     rating: 4.7,
     sessionCount: 620,
@@ -40,9 +40,9 @@ const ENRICHED_THERAPISTS = [
     userId: 't5',
     name: 'Amadou Diallo',
     avatarUrl: 'https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?auto=format&fit=crop&w=200&h=200&q=80',
-    bio: 'Person-centered therapist with 15 years of experience helping people navigate career transitions, identity, and complex emotions.',
-    specialties: ['Career Transitions', 'Identity', 'Depression', 'ACT'],
-    languages: ['English', 'French', 'Wolof'],
+    bio: 'Thérapeute centré sur la personne avec 15 ans d'expérience pour aider les individus à traverser les transitions de carrière, les questions d'identité et les émotions complexes.',
+    specialties: ['Transitions de carrière', 'Identité', 'Dépression', 'ACT'],
+    languages: ['Anglais', 'Français', 'Wolof'],
     ratePerSession: 80,
     rating: 4.9,
     sessionCount: 1120,
@@ -54,10 +54,12 @@ const ENRICHED_THERAPISTS = [
 const ALL_SPECIALTIES = Array.from(new Set(ENRICHED_THERAPISTS.flatMap(t => t.specialties))).sort();
 const ALL_LANGUAGES   = Array.from(new Set(ENRICHED_THERAPISTS.flatMap(t => t.languages))).sort();
 
-// ─── Scheduling modal ─────────────────────────────────────────────────────────
+// ─── Labels des jours ─────────────────────────────────────────────────────────
 
-const DAYS_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 const HOURS = [9, 10, 11, 14, 15, 16, 17];
+
+// ─── Modal de réservation ─────────────────────────────────────────────────────
 
 function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; onClose: () => void }) {
   const [selectedSlot, setSelectedSlot] = useState<{ day: number; hour: number } | null>(null);
@@ -88,7 +90,7 @@ function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; 
             <img src={therapist.avatarUrl} alt={therapist.name} className="w-10 h-10 rounded-xl object-cover" />
             <div>
               <h2 className="font-bold text-text text-sm">{therapist.name}</h2>
-              <p className="text-xs text-muted">€{therapist.ratePerSession} / 50-min session</p>
+              <p className="text-xs text-muted">€{therapist.ratePerSession} · séance de 50 min</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-text">
@@ -102,18 +104,18 @@ function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; 
               <div className="w-14 h-14 rounded-full bg-emerald-400/15 border border-emerald-400/30 flex items-center justify-center mx-auto mb-4">
                 <Check size={24} className="text-emerald-400" />
               </div>
-              <h3 className="font-bold text-text mb-1">Session booked! 🎉</h3>
+              <h3 className="font-bold text-text mb-1">Séance réservée ! 🎉</h3>
               <p className="text-sm text-muted">
-                {selectedSlot ? `${DAYS_LABELS[selectedSlot.day]} at ${selectedSlot.hour}:00` : ''} with {therapist.name}.
-                You'll receive a confirmation by email.
+                {selectedSlot ? `${DAYS_LABELS[selectedSlot.day]} à ${selectedSlot.hour}h00` : ''} avec {therapist.name}.
+                Vous recevrez une confirmation par e-mail.
               </p>
-              <Button onClick={onClose} className="mt-5 rounded-2xl px-8">Done</Button>
+              <Button onClick={onClose} className="mt-5 rounded-2xl px-8">Fermer</Button>
             </motion.div>
           ) : (
             <>
-              <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Choose a slot</p>
+              <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Choisir un créneau</p>
               {availableSlots.length === 0 ? (
-                <p className="text-sm text-muted text-center py-6">No availability this week. Check back soon.</p>
+                <p className="text-sm text-muted text-center py-6">Aucune disponibilité cette semaine. Revenez bientôt.</p>
               ) : (
                 <div className="grid grid-cols-3 gap-2 mb-5">
                   {availableSlots.map(slot => {
@@ -129,7 +131,7 @@ function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; 
                         <p className="text-xs font-semibold text-text">{DAYS_LABELS[slot.day]}</p>
                         <div className="flex items-center justify-center gap-1 mt-1">
                           <Clock size={9} className="text-muted" />
-                          <p className="text-[10px] text-muted">{slot.hour}:00</p>
+                          <p className="text-[10px] text-muted">{slot.hour}h00</p>
                         </div>
                       </button>
                     );
@@ -141,13 +143,13 @@ function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; 
                 <div className="flex items-center gap-2 p-3 bg-violet/5 border border-violet/20 rounded-xl mb-4 text-xs text-muted">
                   <Calendar size={12} className="text-violet flex-shrink-0" />
                   <span>
-                    {DAYS_LABELS[selectedSlot.day]} at {selectedSlot.hour}:00 — 50 min · €{therapist.ratePerSession}
+                    {DAYS_LABELS[selectedSlot.day]} à {selectedSlot.hour}h00 — 50 min · €{therapist.ratePerSession}
                   </span>
                 </div>
               )}
 
               <Button onClick={book} disabled={!selectedSlot} loading={loading} className="w-full rounded-2xl py-3 shadow-brand">
-                Book session
+                Réserver la séance
               </Button>
             </>
           )}
@@ -157,7 +159,7 @@ function SchedulingModal({ therapist, onClose }: { therapist: TherapistProfile; 
   );
 }
 
-// ─── Therapist Card ───────────────────────────────────────────────────────────
+// ─── Carte thérapeute ─────────────────────────────────────────────────────────
 
 function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onBook: () => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -188,7 +190,7 @@ function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onB
             <div className="flex items-center gap-2 text-[11px] text-muted flex-wrap mb-2">
               <span className="flex items-center gap-0.5"><Star size={10} className="text-amber-400" /> {therapist.rating}</span>
               <span>·</span>
-              <span>{therapist.sessionCount.toLocaleString()} sessions</span>
+              <span>{therapist.sessionCount.toLocaleString('fr-FR')} séances</span>
               <span>·</span>
               <span className="flex items-center gap-0.5"><Globe size={9} /> {therapist.languages.join(' · ')}</span>
             </div>
@@ -203,7 +205,7 @@ function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onB
           </div>
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <span className="text-sm font-bold text-text">€{therapist.ratePerSession}</span>
-            <span className="text-[10px] text-muted">/session</span>
+            <span className="text-[10px] text-muted">/séance</span>
           </div>
         </div>
 
@@ -225,11 +227,11 @@ function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onB
             onClick={() => setExpanded(e => !e)}
             className="flex-1 flex items-center justify-center gap-1.5 text-xs text-muted hover:text-text border border-border rounded-xl py-2 hover:border-violet/30 transition-all"
           >
-            {expanded ? 'Less' : 'More info'}
+            {expanded ? 'Réduire' : 'En savoir plus'}
             <ChevronRight size={11} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
           </button>
           <Button size="sm" onClick={onBook} className="flex-1 rounded-xl">
-            <Calendar size={12} /> Book session
+            <Calendar size={12} /> Réserver
           </Button>
         </div>
       </div>
@@ -237,7 +239,7 @@ function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onB
   );
 }
 
-// ─── Marketplace Page ─────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 
 export default function MarketplacePage() {
   const [search,       setSearch]       = useState('');
@@ -257,17 +259,17 @@ export default function MarketplacePage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Booking modal */}
+      {/* Modal de réservation */}
       <AnimatePresence>
         {bookingFor && <SchedulingModal therapist={bookingFor} onClose={() => setBookingFor(null)} />}
       </AnimatePresence>
 
       <PageHeader
-        title="Find a Therapist"
-        subtitle={`${filtered.length} verified professionals available`}
+        title="Trouver un thérapeute"
+        subtitle={`${filtered.length} professionnel${filtered.length > 1 ? 's' : ''} certifié${filtered.length > 1 ? 's' : ''} disponible${filtered.length > 1 ? 's' : ''}`}
       />
 
-      {/* Search + filter bar */}
+      {/* Barre de recherche + filtres */}
       <div className="flex gap-2 mb-4">
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -275,7 +277,7 @@ export default function MarketplacePage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or specialty…"
+            placeholder="Rechercher par nom ou spécialité…"
             className="w-full bg-surface border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-violet/50 transition-colors"
           />
         </div>
@@ -283,12 +285,12 @@ export default function MarketplacePage() {
           onClick={() => setShowFilters(f => !f)}
           className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${showFilters ? 'bg-violet/10 border-violet text-violet' : 'border-border text-muted hover:border-violet/40 hover:text-violet'}`}
         >
-          <SlidersHorizontal size={13} /> Filters
+          <SlidersHorizontal size={13} /> Filtres
           {(filterSpec || filterLang || maxRate < 200) && <div className="w-1.5 h-1.5 rounded-full bg-violet" />}
         </button>
       </div>
 
-      {/* Filter panel */}
+      {/* Panneau de filtres */}
       <AnimatePresence>
         {showFilters && (
           <motion.div
@@ -298,9 +300,9 @@ export default function MarketplacePage() {
             className="overflow-hidden mb-4"
           >
             <div className="glass p-4 rounded-2xl space-y-4">
-              {/* Specialty */}
+              {/* Spécialité */}
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Specialty</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Spécialité</p>
                 <div className="flex flex-wrap gap-1.5">
                   {ALL_SPECIALTIES.map(s => (
                     <button
@@ -314,9 +316,9 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
-              {/* Language */}
+              {/* Langue */}
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Language</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Langue</p>
                 <div className="flex flex-wrap gap-1.5">
                   {ALL_LANGUAGES.map(l => (
                     <button
@@ -330,11 +332,11 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
-              {/* Max rate */}
+              {/* Tarif max */}
               <div>
                 <div className="flex justify-between mb-1">
-                  <p className="text-xs font-semibold text-muted uppercase tracking-wider">Max rate</p>
-                  <span className="text-xs font-semibold text-violet">€{maxRate}/session</span>
+                  <p className="text-xs font-semibold text-muted uppercase tracking-wider">Tarif max</p>
+                  <span className="text-xs font-semibold text-violet">€{maxRate}/séance</span>
                 </div>
                 <input
                   type="range" min={50} max={200} step={5} value={maxRate}
@@ -348,7 +350,7 @@ export default function MarketplacePage() {
                   onClick={() => { setFilterSpec(null); setFilterLang(null); setMaxRate(200); }}
                   className="text-xs text-red-400 hover:underline flex items-center gap-1"
                 >
-                  <X size={11} /> Clear filters
+                  <X size={11} /> Réinitialiser les filtres
                 </button>
               )}
             </div>
@@ -356,12 +358,12 @@ export default function MarketplacePage() {
         )}
       </AnimatePresence>
 
-      {/* Results */}
+      {/* Résultats */}
       <div className="space-y-4">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
             <Filter size={32} className="mx-auto text-muted mb-3" />
-            <p className="text-sm text-muted">No therapists match your filters. Try adjusting them.</p>
+            <p className="text-sm text-muted">Aucun thérapeute ne correspond à vos critères. Essayez d&apos;ajuster les filtres.</p>
           </div>
         ) : (
           filtered.map(t => (

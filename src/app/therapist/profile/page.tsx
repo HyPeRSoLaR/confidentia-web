@@ -23,7 +23,7 @@ export default function TherapistProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <PageHeader title="Mon Profil" subtitle="Visible aux clients sur le marketplace des thérapeutes" />
+      <PageHeader title="Mon Profil" subtitle="Visible aux clients sur l'annuaire des thérapeutes Confidentia" />
 
       <StaggerList className="space-y-5">
         {/* Avatar + stats */}
@@ -39,7 +39,7 @@ export default function TherapistProfilePage() {
                 <h3 className="font-semibold text-text">{profile.name}</h3>
                 <div className="flex items-center gap-1 mt-1">
                   {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= Math.round(profile.rating) ? 'text-amber-400 fill-amber-400' : 'text-border'} />)}
-                  <span className="text-xs text-muted ml-1">{profile.rating} · {profile.sessionCount} sessions</span>
+                  <span className="text-xs text-muted ml-1">{profile.rating} · {profile.sessionCount} séances</span>
                 </div>
                 <div className="flex gap-1.5 mt-2 flex-wrap">
                   {profile.languages.map(l => (

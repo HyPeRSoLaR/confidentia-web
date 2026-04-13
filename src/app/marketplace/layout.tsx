@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Find a Therapist | Confidentia',
-  description: 'Browse and book sessions with verified mental health professionals.',
+  title: 'Trouver un thérapeute | Confidentia',
+  description: 'Parcourez et réservez des séances avec des professionnels de santé mentale certifiés.',
 };
 
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {

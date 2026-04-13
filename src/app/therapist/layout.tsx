@@ -12,7 +12,7 @@ const NAV: NavItem[] = [
   { label: 'Profil',          href: '/therapist/profile',        icon: User },
   { label: 'Disponibilités',  href: '/therapist/availability',   icon: Calendar },
   { label: 'Demandes',        href: '/therapist/requests',       icon: Inbox, badge: 3 },
-  { label: 'Sessions',        href: '/therapist/sessions',       icon: Clock },
+  { label: 'Séances',          href: '/therapist/sessions',       icon: Clock },
   { label: 'Revenus',         href: '/therapist/earnings',       icon: DollarSign },
   { label: 'Notifications',   href: '/therapist/notifications',  icon: Bell, badge: UNREAD_NOTIFS },
 ];

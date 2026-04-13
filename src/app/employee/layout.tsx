@@ -2,7 +2,7 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { getSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, MessageCircle, BookOpen, Shield, Headphones, Store } from 'lucide-react';
+import { LayoutDashboard, MessageCircle, BookOpen, Shield, Headphones, Users } from 'lucide-react';
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
@@ -10,7 +10,7 @@ const NAV: NavItem[] = [
   { label: 'Chat IA',         href: '/employee/chat',      icon: Headphones },
   { label: 'Soutien',         href: '/employee/support',   icon: MessageCircle },
   { label: 'Ressources',      href: '/employee/resources', icon: BookOpen },
-  { label: 'Marketplace',     href: '/marketplace',        icon: Store },
+  { label: 'Thérapeutes',     href: '/marketplace',        icon: Users },
   { label: 'Confidentialité', href: '/employee/privacy',   icon: Shield },
 ];
 

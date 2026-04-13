@@ -13,8 +13,8 @@ import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
 import { MOCK_THERAPISTS } from '@/lib/mock-data';
 import type { TherapistProfile } from '@/types';
 
-const SPECIALTY_FILTERS = ['Tous', 'Anxiety', 'Workplace Stress', 'CBT', 'Grief', 'Mindfulness', 'Trauma'];
-const LANGUAGE_FILTERS  = ['Tous', 'English', 'Mandarin', 'Spanish', 'Portuguese'];
+const SPECIALTY_FILTERS = ['Tous', 'Anxiété', 'Stress professionnel', 'TCC', 'Deuil', 'Pleine conscience', 'Trauma'];
+const LANGUAGE_FILTERS  = ['Tous', 'Anglais', 'Mandarin', 'Espagnol', 'Portugais'];
 
 export default function TherapistMarketplacePage() {
   const [search,    setSearch]    = useState('');
@@ -103,7 +103,7 @@ export default function TherapistMarketplacePage() {
                         {[1,2,3,4,5].map(star => (
                           <Star key={star} size={10} className={star <= Math.round(therapist.rating) ? 'text-amber-400 fill-amber-400' : 'text-border'} />
                         ))}
-                        <span className="text-[10px] text-muted ml-1">{therapist.rating} · {therapist.sessionCount} sessions</span>
+                        <span className="text-[10px] text-muted ml-1">{therapist.rating} · {therapist.sessionCount} séances</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {therapist.specialties.slice(0, 2).map(s => <Badge key={s} size="sm">{s}</Badge>)}

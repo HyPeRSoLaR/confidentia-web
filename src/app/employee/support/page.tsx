@@ -87,7 +87,7 @@ export default function SupportPage() {
               <CheckCircle size={52} className="mx-auto text-emerald-400 mb-4" />
               <h2 className="font-bold text-xl text-text mb-2">Merci</h2>
               <p className="text-sm text-muted leading-relaxed mb-6">
-                Votre bilan a été soumis anonymement. Votre bien-être compte — si vous avez besoin d&apos;un soutien immédiat, votre employeur dispose de ressources PAE confidentielles.
+                Votre bilan a été soumis anonymement. Votre bien-être compte — si vous avez besoin d&apos;un soutien immédiat, votre employeur met à disposition des ressources d&apos;accompagnement psychologique confidentielles.
               </p>
               <Button onClick={() => { setStep(0); setEmotion(''); setDetail(''); }} variant="secondary" fullWidth>
                 Envoyer un autre bilan

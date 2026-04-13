@@ -21,7 +21,7 @@ const ROLES: { role: UserRole; label: string; subtitle: string; icon: React.Elem
     icon: BarChart2, gradient: 'from-pink/20 to-coral/20',
   },
   {
-    role: 'therapist', label: 'Thérapeute', subtitle: 'Gérez votre cabinet & vos sessions',
+    role: 'therapist', label: 'Thérapeute', subtitle: 'Gérez votre cabinet & vos séances',
     icon: Stethoscope, gradient: 'from-coral/20 to-violet/20',
   },
   {

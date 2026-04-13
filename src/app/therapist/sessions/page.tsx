@@ -21,12 +21,12 @@ export default function TherapistSessionsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader title="Mes sessions" subtitle="Sessions à venir et passées" />
+      <PageHeader title="Mes séances" subtitle="Séances à venir et passées" />
 
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Total sessions', value: totalSessions.toString(), icon: CheckCircle, color: 'text-violet' },
+          { label: 'Total séances', value: totalSessions.toString(), icon: CheckCircle, color: 'text-violet' },
           { label: 'Terminées',      value: completed.length.toString(), icon: CheckCircle, color: 'text-emerald-400' },
           { label: 'Net perçu',      value: `€${totalEarned.toLocaleString('fr-FR')}`, icon: DollarSign, color: 'text-cyan' },
         ].map(s => {

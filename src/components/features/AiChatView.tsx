@@ -347,7 +347,7 @@ export function AiChatView({
     const userMsg: Message = {
       id:          Date.now().toString(),
       role:        'user',
-      content:     input.trim() ? input.slice(0, MAX_INPUT) : pendingAttachments.map(a => `[Attachment: ${a.name}]`).join(', '),
+      content:     input.trim() ? input.slice(0, MAX_INPUT) : pendingAttachments.map(a => `[Pièce jointe : ${a.name}]`).join(', '),
       timestamp:   new Date().toISOString(),
       attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
     };
@@ -488,7 +488,7 @@ export function AiChatView({
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="font-bold text-text text-lg">Parler avec un vrai thérapeute</h2>
-                  <p className="text-xs text-muted mt-0.5">Correspondance à votre profil · Réponse sous 2h</p>
+                  <p className="text-xs text-muted mt-0.5">Correspondance à votre profil · Réponse sous 24h</p>
                 </div>
                 <button onClick={() => setShowExpertPanel(false)} className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-text transition-colors">
                   <X size={14} />
