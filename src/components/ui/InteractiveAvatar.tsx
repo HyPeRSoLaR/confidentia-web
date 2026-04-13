@@ -14,8 +14,6 @@ import { Loader2, Mic, MicOff, Camera, CameraOff, Zap } from 'lucide-react';
 // ─── Public API ────────────────────────────────────────────────────────────────
 
 export interface InteractiveAvatarRef {
-  /** Send a text message for the avatar to speak.
-   *  No-op in LITE mode (ElevenLabs drives all TTS). */
   speak: (text: string) => void;
 }
 
@@ -23,13 +21,10 @@ interface Props {
   onReady?:           () => void;
   onError?:           () => void;
   onDisconnected?:    () => void;
-  /** Called with USER transcript (voice input from mic). */
   onVoiceTranscript?: (text: string) => void;
-  /** Called with AVATAR transcript (what the avatar said). */
   onAvatarResponse?:  (text: string) => void;
 }
 
-// ─── Stable callback ref helper ───────────────────────────────────────────────
 function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) {
   const ref = useRef<T>(fn);
   useEffect(() => { ref.current = fn; }, [fn]);
@@ -51,25 +46,22 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     const onAvatarRef       = useCallbackRef(onAvatarResponse);
 
     const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
-    const [isMuted,  setIsMuted]  = useState(false);
-    const [hasError, setHasError] = useState(false);
-
-    // ── Mode tracking ─────────────────────────────────────────────────────────
-    // 'LITE' = ElevenLabs drives voice, HeyGen drives lip-sync only
-    // 'FULL' = HeyGen drives the entire AI pipeline
+    const [hasError,  setHasError]  = useState(false);
     const sessionModeRef = useRef<'LITE' | 'FULL'>('FULL');
     const [sessionMode,  setSessionMode] = useState<'LITE' | 'FULL'>('FULL');
 
-    // ── Echo prevention (FULL mode only) ─────────────────────────────────────
-    // In LITE mode ElevenLabs handles its own VAD — we must NOT call
-    // startListening/stopListening or we break the ElevenLabs audio pipe.
-    const isSpeakingRef   = useRef(false);
-    const speakEndedAtRef = useRef(0);
-    const COOLDOWN_MS     = 1500;
+    // ── PTT (Push-to-Talk) state ──────────────────────────────────────────────
+    // In FULL mode, VAD is NOT started automatically.
+    // The user taps the mic button to start/stop listening.
+    // This avoids echo and gives a deliberate, human-feeling UX.
+    const [isListening,  setIsListening]  = useState(false);
+    const [isSpeaking,   setIsSpeaking]   = useState(false); // avatar is speaking
+    const isListeningRef = useRef(false);
+    const isSpeakingRef  = useRef(false);
+    const COOLDOWN_MS    = 800;
 
     // ── Webcam PiP ────────────────────────────────────────────────────────────
     const [webcamOn,    setWebcamOn]    = useState(false);
-    const [webcamError, setWebcamError] = useState(false);
     const webcamRef    = useRef<HTMLVideoElement>(null);
     const webcamStream = useRef<MediaStream | null>(null);
 
@@ -81,10 +73,8 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
         webcamStream.current = stream;
         if (webcamRef.current) webcamRef.current.srcObject = stream;
         setWebcamOn(true);
-        setWebcamError(false);
-      } catch { setWebcamError(true); }
+      } catch {}
     }
-
     function stopWebcam() {
       webcamStream.current?.getTracks().forEach(t => t.stop());
       webcamStream.current = null;
@@ -100,124 +90,84 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
       async function init() {
         try {
-          // 1. Fetch token + mode from our server route
           const res = await fetch('/api/heygen-token', { method: 'POST' });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err?.error ?? `Token request failed: ${res.status}`);
+            throw new Error(err?.error ?? `Token failed: ${res.status}`);
           }
           const { token, mode } = await res.json();
-          if (!token) throw new Error('No session token returned');
+          if (!token) throw new Error('No session token');
           if (!mounted) return;
 
-          // Track the mode so FULL/LITE paths can diverge
           const isLite = mode === 'LITE';
           sessionModeRef.current = isLite ? 'LITE' : 'FULL';
           setSessionMode(isLite ? 'LITE' : 'FULL');
-          console.log(`[LiveAvatar] Session mode: ${isLite ? 'LITE (ElevenLabs)' : 'FULL'}`);
 
-          // 2. Create session — voiceChat:true opens the mic WebRTC track
           const session = new LiveAvatarSession(token, { voiceChat: true });
           sessionRef.current = session;
 
-          // ── Stream ready ──────────────────────────────────────────────────
           session.on(SessionEvent.SESSION_STREAM_READY, () => {
             if (!mounted) return;
             if (mediaRef.current) session.attach(mediaRef.current);
             onReadyRef.current?.();
           });
 
-          // ── State changes ─────────────────────────────────────────────────
           session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
             if (!mounted) return;
             setSessionState(state);
-
-            if (state === SessionState.CONNECTED) {
-              if (!isLite) {
-                // FULL mode: manually start VAD (HeyGen server-side STT)
-                try { session.startListening(); } catch (e) {
-                  console.warn('[LiveAvatar] startListening failed:', e);
-                }
-              }
-              // LITE mode: ElevenLabs manages its own VAD — do NOT call startListening()
-            }
+            // PTT: do NOT auto-start listening on connect.
+            // User must tap the mic button deliberately.
+            // (In LITE mode, ElevenLabs manages VAD anyway.)
           });
 
-          // ── Disconnected ──────────────────────────────────────────────────
           session.on(SessionEvent.SESSION_DISCONNECTED, () => {
             if (!mounted) return;
-            setIsMuted(false);
+            setIsListening(false);
+            setIsSpeaking(false);
             onDisconnectedRef.current?.();
           });
 
-          // ── User transcription ────────────────────────────────────────────
+          // ── User transcript (only forwarded in FULL mode when listening) ───
           session.on(AgentEventsEnum.USER_TRANSCRIPTION, (event) => {
             if (!mounted || !event.text?.trim()) return;
-            // FULL mode echo guard: drop transcripts while avatar is speaking
-            if (!isLite) {
-              if (isSpeakingRef.current) {
-                console.debug('[LiveAvatar] FULL: transcript suppressed — avatar speaking');
-                return;
-              }
-              const msSinceEnd = Date.now() - speakEndedAtRef.current;
-              if (msSinceEnd < COOLDOWN_MS) {
-                console.debug(`[LiveAvatar] FULL: transcript suppressed — cooldown ${msSinceEnd}ms`);
-                return;
-              }
-            }
+            if (!isListeningRef.current) return; // PTT gate
             onVoiceRef.current?.(event.text.trim());
           });
 
-          // ── Avatar transcription ──────────────────────────────────────────
           session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
-            if (mounted && event.text?.trim()) {
-              onAvatarRef.current?.(event.text.trim());
-            }
+            if (mounted && event.text?.trim()) onAvatarRef.current?.(event.text.trim());
           });
 
-          // ── Avatar starts speaking ────────────────────────────────────────
+          // ── Avatar starts speaking → stop listening (echo prevention) ──────
           session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
             if (!mounted) return;
-            if (!isLite) {
-              // FULL mode only: stop VAD to prevent echo
-              isSpeakingRef.current = true;
-              try { session.stopListening(); } catch (e) {
-                console.warn('[LiveAvatar] FULL: stopListening on SPEAK_STARTED failed:', e);
-              }
+            isSpeakingRef.current = true;
+            setIsSpeaking(true);
+            if (!isLite && isListeningRef.current) {
+              try { session.stopListening(); } catch {}
+              isListeningRef.current = false;
+              setIsListening(false);
             }
-            // LITE mode: ElevenLabs handles its own echo cancellation — do NOT stop listening
           });
 
-          // ── Avatar finishes speaking ──────────────────────────────────────
+          // ── Avatar finishes speaking → ready for next PTT tap ────────────
           session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
             if (!mounted) return;
-            if (!isLite) {
-              // FULL mode only: re-enable VAD after cooldown
+            setTimeout(() => {
               isSpeakingRef.current = false;
-              speakEndedAtRef.current = Date.now();
-              setTimeout(() => {
-                if (!mounted) return;
-                try { session.startListening(); } catch (e) {
-                  console.warn('[LiveAvatar] FULL: re-startListening failed:', e);
-                }
-              }, COOLDOWN_MS);
-            }
+              setIsSpeaking(false);
+            }, COOLDOWN_MS);
           });
 
-          // 3. Start WebRTC session
           await session.start();
 
         } catch (err: any) {
           console.error('[LiveAvatar] Init error:', err);
-          if (mounted) {
-            setHasError(true);
-            onErrorRef.current?.();
-          }
+          if (mounted) { setHasError(true); onErrorRef.current?.(); }
         }
       }
 
       init();
-
       return () => {
         mounted = false;
         sessionRef.current?.stop().catch(console.error);
@@ -226,46 +176,53 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ── Mute toggle ───────────────────────────────────────────────────────────
-    const toggleMute = useCallback(async () => {
+    // ── PTT toggle ────────────────────────────────────────────────────────────
+    const toggleListening = useCallback(async () => {
       const session = sessionRef.current;
-      if (!session || !isConnected) return;
-      try {
-        if (isMuted) {
-          await session.voiceChat.unmute();
-          setIsMuted(false);
-        } else {
-          await session.voiceChat.mute();
-          setIsMuted(true);
-        }
-      } catch (err) {
-        console.error('[LiveAvatar] Mute toggle error:', err);
-      }
-    }, [isConnected, isMuted]);
+      if (!session || !isConnected || isSpeakingRef.current) return;
 
-    // ── Expose speak() ────────────────────────────────────────────────────────
+      if (sessionModeRef.current === 'LITE') {
+        // LITE: ElevenLabs controls VAD — mute/unmute instead
+        try {
+          if (isListeningRef.current) {
+            await session.voiceChat.mute();
+            isListeningRef.current = false;
+            setIsListening(false);
+          } else {
+            await session.voiceChat.unmute();
+            isListeningRef.current = true;
+            setIsListening(true);
+          }
+        } catch (e) { console.warn('[LiveAvatar] LITE mute toggle error:', e); }
+        return;
+      }
+
+      // FULL mode: startListening / stopListening
+      if (isListeningRef.current) {
+        try { session.stopListening(); } catch {}
+        isListeningRef.current = false;
+        setIsListening(false);
+      } else {
+        try { session.startListening(); } catch {}
+        isListeningRef.current = true;
+        setIsListening(true);
+      }
+    }, [isConnected]);
+
+    // ── speak() for typed text in FULL mode ───────────────────────────────────
     useImperativeHandle(ref, () => ({
       speak: (text: string) => {
         const session = sessionRef.current;
         if (!session || !isConnected) return;
-
-        if (sessionModeRef.current === 'LITE') {
-          // LITE mode: ElevenLabs controls ALL TTS — sending text here would
-          // bypass the ElevenLabs agent and break the conversation flow.
-          // The user's typed text is handled by AiChatView in text/audio mode;
-          // in video LITE mode the voice conversation is fully autonomous.
-          console.debug('[LiveAvatar] LITE: speak() no-op — ElevenLabs manages TTS');
-          return;
-        }
-
-        // FULL mode: stop VAD → send message → avatar speaks → VAD resumes via SPEAK_ENDED
-        isSpeakingRef.current = true;
-        try { session.stopListening(); } catch (e) {
-          console.warn('[LiveAvatar] FULL: stopListening before speak failed:', e);
+        if (sessionModeRef.current === 'LITE') return; // ElevenLabs controls TTS
+        // Stop listening before speaking to prevent echo
+        if (isListeningRef.current) {
+          try { session.stopListening(); } catch {}
+          isListeningRef.current = false;
+          setIsListening(false);
         }
         try { session.message(text); } catch (e) {
-          isSpeakingRef.current = false;
-          console.warn('[LiveAvatar] FULL: speak error', e);
+          console.warn('[LiveAvatar] speak error', e);
         }
       },
     }), [isConnected]);
@@ -283,6 +240,13 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     const loading = !isConnected && !hasError;
 
+    // ── Mic button label ──────────────────────────────────────────────────────
+    function micLabel() {
+      if (isSpeaking)    return 'Aria parle…';
+      if (isListening)   return 'En écoute — touchez pour arrêter';
+      return 'Touchez pour parler';
+    }
+
     return (
       <div
         className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border border-border/40 group"
@@ -299,7 +263,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           </div>
         )}
 
-        {/* Avatar video stream */}
+        {/* Avatar video */}
         <video
           ref={mediaRef}
           autoPlay
@@ -318,57 +282,49 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           </div>
         )}
 
-        {/* Mic control */}
+        {/* ── PTT Mic button ── */}
         {isConnected && (
-          <div className="absolute bottom-4 left-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
+          <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center">
             <button
-              onClick={toggleMute}
-              aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
-              className={`p-2.5 rounded-full transition-colors ${
-                isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-brand hover:opacity-90'
-              }`}
+              onClick={toggleListening}
+              disabled={isSpeaking}
+              aria-label={micLabel()}
+              className={`
+                flex items-center gap-2.5 px-5 py-2.5 rounded-full border transition-all duration-200 backdrop-blur-md shadow-lg
+                ${isSpeaking
+                  ? 'bg-black/40 border-white/10 text-white/40 cursor-not-allowed'
+                  : isListening
+                    ? 'bg-red-500/90 border-red-400/60 text-white scale-105 shadow-red-500/30 animate-pulse-slow'
+                    : 'bg-brand/90 border-brand/60 text-white hover:scale-105 hover:shadow-brand/40'
+                }
+              `}
             >
-              {isMuted
-                ? <MicOff className="w-4 h-4 text-white" />
-                : <Mic    className="w-4 h-4 text-white" />}
+              {isSpeaking
+                ? <Loader2 size={16} className="animate-spin" />
+                : isListening
+                  ? <MicOff size={16} />
+                  : <Mic size={16} />
+              }
+              <span className="text-xs font-semibold">{micLabel()}</span>
             </button>
-            <div className="text-xs font-medium text-white/90 pr-2">
-              {isMuted
-                ? 'Micro coupé — cliquez pour parler'
-                : sessionMode === 'LITE'
-                  ? 'Parlez — Aria vous écoute'
-                  : 'En écoute — cliquez pour couper'}
-            </div>
           </div>
         )}
 
         {/* Webcam PiP */}
         {webcamOn && (
-          <div className="absolute bottom-4 right-4 z-20 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl">
-            <video
-              ref={webcamRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover scale-x-[-1]"
-              aria-label="Your webcam (visible only to you)"
-            />
-            <button
-              onClick={stopWebcam}
-              className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-red-500/80 transition-colors"
-              title="Turn off camera"
-            >
+          <div className="absolute bottom-16 right-4 z-20 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl">
+            <video ref={webcamRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+            <button onClick={stopWebcam} className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-red-500/80 transition-colors">
               <CameraOff size={8} />
             </button>
           </div>
         )}
 
-        {/* Webcam toggle */}
+        {/* Camera toggle */}
         {isConnected && (
           <div className="absolute bottom-4 right-4 z-20" style={webcamOn ? { display: 'none' } : {}}>
             <button
               onClick={webcamOn ? stopWebcam : startWebcam}
-              title={webcamOn ? 'Turn off camera' : 'Turn on your camera (optional)'}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 text-[10px] hover:bg-black/70 transition-colors"
             >
               {webcamOn ? <CameraOff size={10} /> : <Camera size={10} />}
