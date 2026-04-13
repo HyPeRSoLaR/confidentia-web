@@ -9,7 +9,7 @@ import {
   SessionState,
   AgentEventsEnum,
 } from '@heygen/liveavatar-web-sdk';
-import { Loader2, Mic, MicOff } from 'lucide-react';
+import { Loader2, Mic, MicOff, Camera, CameraOff } from 'lucide-react';
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 
@@ -59,10 +59,29 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     const onAvatarRef        = useCallbackRef(onAvatarResponse);
 
     const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
-    // isMuted tracks whether the user has manually silenced their mic.
-    // Voice-activity-detection (VAD) continues running server-side regardless.
     const [isMuted,   setIsMuted]   = useState(false);
     const [hasError,  setHasError]  = useState(false);
+    // ── Webcam PiP ─────────────────────────────────────────────────────────────
+    const [webcamOn,    setWebcamOn]   = useState(false);
+    const [webcamError, setWebcamError] = useState(false);
+    const webcamRef    = useRef<HTMLVideoElement>(null);
+    const webcamStream = useRef<MediaStream | null>(null);
+
+    async function startWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' } });
+        webcamStream.current = stream;
+        if (webcamRef.current) { webcamRef.current.srcObject = stream; }
+        setWebcamOn(true);
+        setWebcamError(false);
+      } catch { setWebcamError(true); }
+    }
+
+    function stopWebcam() {
+      webcamStream.current?.getTracks().forEach(t => t.stop());
+      webcamStream.current = null;
+      setWebcamOn(false);
+    }
 
     const isConnected  = sessionState === SessionState.CONNECTED;
     const isConnecting = sessionState === SessionState.CONNECTING;
@@ -262,6 +281,40 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
                 ? 'Muted — click to speak'
                 : 'Listening — click to mute'}
             </div>
+          </div>
+        )}
+        {/* Webcam PiP — local only, never sent to server */}
+        {webcamOn && (
+          <div className="absolute bottom-4 right-4 z-20 w-28 h-20 rounded-xl overflow-hidden border-2 border-white/20 shadow-xl">
+            <video
+              ref={webcamRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover scale-x-[-1]" // mirror effect
+              aria-label="Your webcam (visible only to you)"
+            />
+            <button
+              onClick={stopWebcam}
+              className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-red-500/80 transition-colors"
+              title="Turn off camera"
+            >
+              <CameraOff size={8} />
+            </button>
+          </div>
+        )}
+
+        {/* Webcam toggle — shown when connected */}
+        {isConnected && (
+          <div className="absolute bottom-4 right-4 z-20" style={webcamOn ? { display: 'none' } : {}}>
+            <button
+              onClick={webcamOn ? stopWebcam : startWebcam}
+              title={webcamOn ? 'Turn off camera' : 'Turn on your camera (optional)'}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/80 text-[10px] hover:bg-black/70 transition-colors"
+            >
+              {webcamOn ? <CameraOff size={10} /> : <Camera size={10} />}
+              {webcamOn ? 'Camera off' : 'My camera'}
+            </button>
           </div>
         )}
       </div>

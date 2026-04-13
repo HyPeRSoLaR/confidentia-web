@@ -54,14 +54,24 @@ export interface JournalEntry {
 export type ConversationMode = 'text' | 'audio' | 'video';
 export type MessageRole = 'user' | 'assistant';
 
+export interface MessageAttachment {
+  id: string;
+  name: string;
+  type: 'pdf' | 'doc' | 'image' | 'other';
+  sizeBytes: number;
+  url: string; // object URL or CDN URL
+}
+
 export interface Message {
   id: string;
   role: MessageRole;
   content: string;
-  audioUrl?: string;   // for audio mode (ElevenLabs)
+  audioUrl?: string;   // for audio mode (ElevenLabs) or voice note blob
   videoUrl?: string;   // for video mode (HeyGen)
   timestamp: string;
   isPinned?: boolean;   // Pillar 3: User-controlled memory
+  isVoiceNote?: boolean; // recorded voice note in text mode
+  attachments?: MessageAttachment[];
 }
 
 export interface Conversation {
@@ -101,6 +111,10 @@ export interface SessionRequest {
   preferredDate: string;
   topic: string;
   urgency: 'low' | 'medium' | 'high';
+  /** ISO timestamp — auto-expires 24h after requestedAt */
+  expiresAt: string;
+  /** Set when auto-reassigned to another therapist after expiry */
+  reassignedTo?: string;
 }
 
 // ─── Therapist ───────────────────────────────────────────────────────────────
@@ -206,4 +220,62 @@ export interface Resource {
   difficulty?: ResourceDifficulty;
   /** 2–3 bullet takeaways shown on hover / expanded card */
   keyTakeaways?: string[];
+}
+
+// ─── Employee Distress Requests ───────────────────────────────────────────────
+
+export type DistressCategory =
+  | 'wellbeing'      // Not feeling well, need mental health support
+  | 'time_off'       // Need a day / half-day off
+  | 'speak_hr'       // Want to speak with HR about something personal
+  | 'overload'       // Work overload, need help prioritising
+  | 'urgent'         // Urgent situation requiring immediate support
+  | 'other';         // Free text
+
+export interface DistressRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeEmail: string;
+  category: DistressCategory;
+  /** Employee's own words — shown verbatim to HR (explicit consent given) */
+  note?: string;
+  submittedAt: string;
+  status: 'pending' | 'in_progress' | 'resolved';
+  acknowledged: boolean;
+}
+
+// ─── HR Department Poles ──────────────────────────────────────────────────────
+
+export interface Pole {
+  id: string;
+  companyId: string;
+  name: string;
+  color: string;      // hex color for visual identity
+  emoji: string;      // single emoji icon
+  memberCount: number;
+  createdAt: string;
+  createdBy: string;  // HR manager userId
+}
+
+export interface PoleMember {
+  poleId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  addedAt: string;
+}
+
+// ─── Therapist Notifications ──────────────────────────────────────────────────
+
+export type NotificationType = 'new_request' | 'session_reminder' | 'request_expired' | 'system';
+
+export interface TherapistNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  createdAt: string;
+  read: boolean;
+  actionUrl?: string;
 }

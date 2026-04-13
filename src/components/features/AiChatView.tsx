@@ -4,11 +4,18 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Shared AI chat UI — /consumer/chat and /employee/chat.
  *
+ * Features:
+ *   • Text / Audio / Video modes
+ *   • Voice notes in text mode (record → transcript → waveform player)
+ *   • File attachments (PDF, DOCX, images)
+ *   • Avatar photo beside AI messages in text mode (selected companion)
+ *   • Waveform audio player in audio mode
+ *   • "I want to speak with someone" CTA → therapist panel
+ *
  * Privacy contract:
  *   • All conversation content stays in React state (in-memory only).
  *   • Nothing is persisted without explicit user action.
  *   • No employer, HR, or admin role can access message content.
- *   • Audio synthesis runs server-side via 'use server' action (ElevenLabs key never hits client).
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -16,18 +23,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Mic, Video, MessageCircle,
   Loader2, Check, Lock, X, Wifi, WifiOff, AlertTriangle,
+  Paperclip, StopCircle, FileText, Image as ImageIcon, File,
+  Users, MicOff, Star, Globe, ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { InteractiveAvatar, type InteractiveAvatarRef } from '@/components/ui/InteractiveAvatar';
+import { WaveformPlayer } from '@/components/ui/WaveformPlayer';
 import { INITIAL_MESSAGES } from '@/lib/mock-data';
-import type { Message, ConversationMode } from '@/types';
+import { MOCK_THERAPISTS } from '@/lib/mock-data';
+import { getSavedAvatar, getSavedAvatarName } from '@/lib/avatar-config';
+import type { Message, ConversationMode, MessageAttachment } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const MAX_INPUT    = 2000;
-const BANNER_KEY   = 'confidentia_privacy_banner_ts';
-const BANNER_TTL   = 7 * 24 * 60 * 60 * 1000; // 7 days
+const MAX_INPUT  = 2000;
+const BANNER_KEY = 'confidentia_privacy_banner_ts';
+const BANNER_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] = [
   { id: 'text',  label: 'Text',  icon: MessageCircle },
@@ -35,34 +47,27 @@ const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] 
   { id: 'video', label: 'Video', icon: Video          },
 ];
 
-/**
- * Persona injected into HeyGen's built-in AI via the knowledgeBase field.
- * This is what allows the avatar to generate autonomous replies when the user
- * speaks — without it, HeyGen listens but never responds.
- */
-const ARIA_KNOWLEDGE_BASE = `You are Aria, a warm and empathetic AI mental health counselor working for Confidentia — a confidential mental wellness platform.
+const FILE_ACCEPT = '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif';
 
-Your role:
-- Listen actively and provide emotional support
-- Help users explore their feelings without judgment
-- Offer practical coping strategies drawn from CBT, mindfulness, and positive psychology
-- Maintain strict confidentiality — never share or reference what the user says outside this session
-- Keep responses to 2-3 short sentences for natural, conversational flow
-- Never provide medical diagnoses; gently encourage professional help when appropriate
-- Speak warmly, personally, and without clinical jargon
+function fileType(name: string): MessageAttachment['type'] {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  if (['pdf'].includes(ext)) return 'pdf';
+  if (['doc','docx','txt'].includes(ext)) return 'doc';
+  if (['png','jpg','jpeg','webp','gif'].includes(ext)) return 'image';
+  return 'other';
+}
 
-Start by welcoming the user and inviting them to share what is on their mind today.`;
+function fileIcon(type: MessageAttachment['type']) {
+  const cls = 'w-3.5 h-3.5 flex-shrink-0';
+  if (type === 'pdf')   return <FileText className={cls} />;
+  if (type === 'image') return <ImageIcon className={cls} />;
+  return <File className={cls} />;
+}
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Split text into sentences so the avatar can start speaking the first sentence
- * immediately, cutting first-word latency vs. sending the entire paragraph.
- * Splits on ., !, ? followed by whitespace or end-of-string.
- */
-function splitIntoSentences(text: string): string[] {
-  const raw = text.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) ?? [text];
-  return raw.map(s => s.trim()).filter(Boolean);
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
 type AvatarStatus = 'connecting' | 'ready' | 'error';
@@ -70,14 +75,8 @@ type AvatarStatus = 'connecting' | 'ready' | 'error';
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface AiChatViewProps {
-  /** Shown in the page header */
   title?:       string;
-  /** Shown below the title */
   subtitle?:    string;
-  /**
-   * Privacy banner copy — customised per role.
-   * Employee copy explicitly states employer cannot read this.
-   */
   privacyNote?: string;
 }
 
@@ -89,9 +88,16 @@ export function AiChatView({
   privacyNote = 'Your conversations are end-to-end encrypted and never reviewed by humans.',
 }: AiChatViewProps) {
 
-  // ── State ──────────────────────────────────────────────────────────────────
+  // ── Saved avatar ───────────────────────────────────────────────────────────
+  const [avatarConfig, setAvatarConfig] = useState(() => getSavedAvatar());
+  const [avatarDisplayName, setAvatarDisplayName] = useState('');
+  useEffect(() => {
+    const a = getSavedAvatar();
+    setAvatarConfig(a);
+    setAvatarDisplayName(getSavedAvatarName(a));
+  }, []);
 
-  // Stable ref to latest messages — must be declared BEFORE useState that reads it
+  // ── Core state ─────────────────────────────────────────────────────────────
   const messagesRef = useRef<Message[]>([...INITIAL_MESSAGES]);
 
   const [mode,           setMode]          = useState<ConversationMode>('text');
@@ -99,58 +105,142 @@ export function AiChatView({
   const [input,          setInput]         = useState('');
   const [loading,        setLoading]       = useState(false);
   const [sessionEnded,   setSessionEnded]  = useState(false);
-  // Per-message audio loading indicator (async — text appears first)
   const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
-  // Banner: false initially to avoid SSR mismatch; set from localStorage in effect
   const [bannerVisible,  setBannerVisible]  = useState(false);
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
-  // Pending voice text triggers the Claude→avatar pipeline via useEffect
   const [pendingVoice,   setPendingVoice]  = useState<string | null>(null);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const avatarRef = useRef<InteractiveAvatarRef>(null);
+  // ── Voice note (record in text mode) ──────────────────────────────────────
+  const [recording,      setRecording]     = useState(false);
+  const [recSeconds,     setRecSeconds]    = useState(0);
+  const mediaRecRef = useRef<MediaRecorder | null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── File attachments ───────────────────────────────────────────────────────
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Expert panel ───────────────────────────────────────────────────────────
+  const [showExpertPanel, setShowExpertPanel] = useState(false);
+
+  const scrollRef  = useRef<HTMLDivElement>(null);
+  const avatarRef  = useRef<InteractiveAvatarRef>(null);
 
   // ── Effects ────────────────────────────────────────────────────────────────
 
-  // Read banner state from localStorage (client-only)
   useEffect(() => {
     try {
       const ts   = localStorage.getItem(BANNER_KEY);
       const show = !ts || Date.now() - parseInt(ts, 10) > BANNER_TTL;
       setBannerVisible(show);
-    } catch {
-      setBannerVisible(true);
-    }
+    } catch { setBannerVisible(true); }
   }, []);
 
-  // Auto-scroll on new messages AND when switching to/from video mode
-  // (mode switch changes layout height, so the last message may go out of view)
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, mode]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // ── Voice note handlers ────────────────────────────────────────────────────
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      recChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
+      mr.start(200);
+      mediaRecRef.current = mr;
+      setRecording(true);
+      setRecSeconds(0);
+      recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
+    } catch (err) {
+      console.warn('[VoiceNote] Mic access denied', err);
+    }
+  }
+
+  async function stopRecording() {
+    if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+    const mr = mediaRecRef.current;
+    if (!mr) return;
+    mr.stop();
+    mr.stream.getTracks().forEach(t => t.stop());
+    setRecording(false);
+
+    // Wait a tick for final ondataavailable
+    await new Promise(r => setTimeout(r, 100));
+    const blob = new Blob(recChunksRef.current, { type: 'audio/webm' });
+    const audioUrl = URL.createObjectURL(blob);
+
+    // Try browser speech recognition for transcript
+    let transcript = '[Voice note]';
+    try {
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) {
+        const sr = new SR();
+        sr.lang = 'fr-FR,en-US';
+        sr.maxAlternatives = 1;
+        transcript = await new Promise<string>((resolve) => {
+          sr.onresult = (e: any) => resolve(e.results[0][0].transcript);
+          sr.onerror  = () => resolve('[Voice note]');
+          sr.start();
+          setTimeout(() => { try { sr.stop(); } catch {} resolve('[Voice note]'); }, 5000);
+        });
+      }
+    } catch {}
+
+    const userMsg: Message = {
+      id:          `vnote-${Date.now()}`,
+      role:        'user',
+      content:     transcript,
+      audioUrl,
+      isVoiceNote: true,
+      timestamp:   new Date().toISOString(),
+    };
+    const updated = [...messagesRef.current, userMsg];
+    messagesRef.current = updated;
+    setMessages(updated);
+    setPendingVoice(transcript);
+  }
+
+  function cancelRecording() {
+    if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+    mediaRecRef.current?.stop();
+    mediaRecRef.current?.stream.getTracks().forEach(t => t.stop());
+    setRecording(false);
+    setRecSeconds(0);
+  }
+
+  // ── File attachment handler ────────────────────────────────────────────────
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    const newAttachments: MessageAttachment[] = Array.from(files).map(f => ({
+      id:        `att-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name:      f.name,
+      type:      fileType(f.name),
+      sizeBytes: f.size,
+      url:       URL.createObjectURL(f),
+    }));
+    setPendingAttachments(prev => [...prev, ...newAttachments]);
+  }
+
+  function removeAttachment(id: string) {
+    setPendingAttachments(prev => prev.filter(a => a.id !== id));
+  }
+
+  // ── Dismiss banner ─────────────────────────────────────────────────────────
 
   const dismissBanner = useCallback(() => {
     setBannerVisible(false);
     try { localStorage.setItem(BANNER_KEY, Date.now().toString()); } catch {}
   }, []);
 
-  // ── Voice transcript handlers ─────────────────────────────────────────────
+  // ── Voice transcript from avatar (video mode) ──────────────────────────────
 
-  /**
-   * Called by InteractiveAvatar when the user finishes a voice utterance.
-   * ── Hybrid voice pipeline ───────────────────────────────────────────────
-   * Pattern: simple sync callback sets pendingVoice state; a useEffect
-   * picks it up and does the async Claude call. This avoids stale-closure
-   * bugs that silently swallow async errors on mobile browsers.
-   */
   const handleVoiceTranscript = useCallback((text: string) => {
     const userMsg: Message = {
-      id:        `voice-user-${Date.now()}`,
-      role:      'user',
-      content:   text,
-      timestamp: new Date().toISOString(),
+      id: `voice-user-${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString(),
     };
     const updated = [...messagesRef.current, userMsg];
     messagesRef.current = updated;
@@ -158,14 +248,9 @@ export function AiChatView({
     setPendingVoice(text);
   }, []);
 
-  /**
-   * Hybrid voice effect: when pendingVoice is set (user just spoke),
-   * call Claude with full history then make the avatar speak the reply.
-   */
   useEffect(() => {
     if (!pendingVoice) return;
-    setPendingVoice(null); // Clear immediately to avoid double-fire
-
+    setPendingVoice(null);
     const currentMessages = messagesRef.current;
     setLoading(true);
 
@@ -176,40 +261,20 @@ export function AiChatView({
     const trimmed   = firstUser >= 0 ? history.slice(firstUser) : history;
 
     fetch('/api/chat', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ messages: trimmed }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: trimmed }),
     })
       .then(r => r.json())
       .then(data => {
         const reply = data.reply ?? "I'm here with you — please continue.";
-
-        // Make avatar speak the Claude reply
-        if (avatarRef.current) {
-          try { avatarRef.current.speak(reply); } catch (e) {
-            console.warn('[AiChat] avatar speak error', e);
-          }
-        }
-
-        const aiMsg: Message = {
-          id:        `voice-ai-${Date.now()}`,
-          role:      'assistant',
-          content:   reply,
-          timestamp: new Date().toISOString(),
-        };
+        if (avatarRef.current) { try { avatarRef.current.speak(reply); } catch {} }
+        const aiMsg: Message = { id: `voice-ai-${Date.now()}`, role: 'assistant', content: reply, timestamp: new Date().toISOString() };
         const withReply = [...messagesRef.current, aiMsg];
         messagesRef.current = withReply;
         setMessages(withReply);
       })
-      .catch(err => {
-        console.error('[AiChat] Voice Claude error:', err);
-        // Show visible error in chat so we can debug
-        const errMsg: Message = {
-          id:        `voice-err-${Date.now()}`,
-          role:      'assistant',
-          content:   `(Connection issue — please try again.)`,
-          timestamp: new Date().toISOString(),
-        };
+      .catch(() => {
+        const errMsg: Message = { id: `voice-err-${Date.now()}`, role: 'assistant', content: `(Connection issue — please try again.)`, timestamp: new Date().toISOString() };
         const withErr = [...messagesRef.current, errMsg];
         messagesRef.current = withErr;
         setMessages(withErr);
@@ -217,96 +282,73 @@ export function AiChatView({
       .finally(() => setLoading(false));
   }, [pendingVoice]);
 
-  /** No-op — response is now handled entirely in the useEffect above. */
   const handleAvatarResponse = useCallback((_text: string) => {}, []);
 
+  // ── Send message ───────────────────────────────────────────────────────────
 
   async function sendMessage() {
-    if (!input.trim() || loading) return;
+    if ((!input.trim() && pendingAttachments.length === 0) || loading) return;
 
     const userMsg: Message = {
-      id:        Date.now().toString(),
-      role:      'user',
-      content:   input.slice(0, MAX_INPUT),
-      timestamp: new Date().toISOString(),
+      id:          Date.now().toString(),
+      role:        'user',
+      content:     input.trim() ? input.slice(0, MAX_INPUT) : pendingAttachments.map(a => `[Attachment: ${a.name}]`).join(', '),
+      timestamp:   new Date().toISOString(),
+      attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
     };
 
-    // Capture updated messages list immediately for the API call
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput('');
+    setPendingAttachments([]);
     setLoading(true);
 
     let text = '';
     const msgId = (Date.now() + 1).toString();
 
     try {
-      // ── Real Claude call (text & audio modes) ─────────────────────────────
-      // Video mode uses HeyGen's autonomous LLM pipeline — no external call needed.
       if (mode !== 'video') {
-        // Build message history for Claude.
-        // Anthropic requires the first message to be 'user' — strip any leading
-        // assistant messages (e.g. the initial greeting) before sending.
         const allHistory = updatedMessages
-          .filter(m => m.id !== 'init-1') // exclude the static opening greeting
+          .filter(m => m.id !== 'init-1')
           .filter(m => m.role === 'user' || m.role === 'assistant')
           .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-        // Drop any leading assistant turns so the array starts with 'user'
         const firstUserIdx = allHistory.findIndex(m => m.role === 'user');
         const history = firstUserIdx >= 0 ? allHistory.slice(firstUserIdx) : allHistory;
 
         const res = await fetch('/api/chat', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ messages: history }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: history }),
         });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error ?? `Chat API error ${res.status}`);
-        }
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error ?? `Chat API error ${res.status}`); }
         const data = await res.json();
         text = data.reply ?? '';
       } else {
-        // Video mode: HeyGen handles the full VAD→STT→LLM→TTS pipeline.
-        // We don't call Claude here — just forward the user text to the avatar.
-        text = input; // fallback transcript (avatar speaks autonomously)
+        text = input;
       }
     } catch (err) {
       console.error('[AiChat] Claude error:', err);
       text = "I'm here with you. Could you tell me a little more about what's on your mind?";
     }
 
-    // Video mode: send the reply text to the avatar for lip-sync speech.
     if (mode === 'video' && avatarRef.current) {
-      try { avatarRef.current.speak(text); } catch (e) { console.warn('[AiChat] avatar speak error', e); }
+      try { avatarRef.current.speak(text); } catch {}
     }
 
-    // ✅ Show text message immediately
-    const aiMsg: Message = {
-      id:        msgId,
-      role:      'assistant',
-      content:   text,
-      timestamp: new Date().toISOString(),
-    };
+    const aiMsg: Message = { id: msgId, role: 'assistant', content: text, timestamp: new Date().toISOString() };
     setMessages(m => [...m, aiMsg]);
     setLoading(false);
 
-    // ✅ Audio: synthesise via ElevenLabs AFTER text is visible (non-blocking)
     if (mode === 'audio' && text) {
       setLoadingAudioId(msgId);
       try {
         const res = await fetch('/api/synthesize', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ text }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
         });
         if (!res.ok) throw new Error(`Synthesis failed: ${res.status}`);
-        const blob     = await res.blob();
+        const blob = await res.blob();
         const audioUrl = URL.createObjectURL(blob);
-        setMessages(m =>
-          m.map(msg => msg.id === msgId ? { ...msg, audioUrl } : msg),
-        );
+        setMessages(m => m.map(msg => msg.id === msgId ? { ...msg, audioUrl } : msg));
       } catch (err) {
         console.error('[ElevenLabs] Synthesis failed:', err);
       } finally {
@@ -317,17 +359,17 @@ export function AiChatView({
 
   function resetSession() {
     setSessionEnded(false);
-    // ✅ Spread to create a fresh array — not the module-level reference
     setMessages([...INITIAL_MESSAGES]);
     setInput('');
+    setPendingAttachments([]);
   }
 
   // ── Sub-renderers ──────────────────────────────────────────────────────────
 
   const charCount = input.length;
   const charWarn  = charCount > MAX_INPUT * 0.8;
+  const recFmt    = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  /** Mode tabs — rendered in two places (header on desktop, below banner on mobile) */
   function ModeSwitcher({ className = '' }: { className?: string }) {
     return (
       <div className={`flex bg-surface rounded-xl p-1 border border-border gap-0.5 ${className}`}>
@@ -340,13 +382,10 @@ export function AiChatView({
               aria-pressed={mode === m.id}
               aria-label={`Switch to ${m.label} mode`}
               className={`flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                mode === m.id
-                  ? 'bg-brand text-white shadow-brand'
-                  : 'text-muted hover:text-text'
+                mode === m.id ? 'bg-brand text-white shadow-brand' : 'text-muted hover:text-text'
               }`}
             >
-              <Icon size={13} aria-hidden />
-              <span>{m.label}</span>
+              <Icon size={13} aria-hidden /><span>{m.label}</span>
             </button>
           );
         })}
@@ -354,7 +393,6 @@ export function AiChatView({
     );
   }
 
-  /** Avatar connection status badge — shown in header when in video mode */
   function AvatarStatusBadge() {
     const map: Record<AvatarStatus, { label: string; color: string; icon: React.ReactNode }> = {
       connecting: { label: 'Connecting…',      color: 'text-amber-400   border-amber-400/30   bg-amber-400/10   animate-pulse', icon: <WifiOff size={10} /> },
@@ -369,10 +407,149 @@ export function AiChatView({
     );
   }
 
+  // ── Expert Panel ───────────────────────────────────────────────────────────
+  function ExpertPanel() {
+    return (
+      <AnimatePresence>
+        {showExpertPanel && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowExpertPanel(false)} />
+            <div className="relative w-full max-w-lg bg-surface border border-border rounded-3xl p-6 shadow-brand z-10 max-h-[80vh] overflow-y-auto scrollbar-thin">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-bold text-text text-lg">Speak with a real therapist</h2>
+                  <p className="text-xs text-muted mt-0.5">Matched to your profile · Response within 2h</p>
+                </div>
+                <button onClick={() => setShowExpertPanel(false)} className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-text transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="space-y-3 mb-5">
+                {MOCK_THERAPISTS.map(t => (
+                  <div key={t.userId} className="glass p-4 rounded-2xl flex gap-3 hover:border-violet/40 transition-colors cursor-pointer group">
+                    <img src={t.avatarUrl} alt={t.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="font-semibold text-sm text-text truncate">{t.name}</span>
+                        {t.isVerified && <Check size={11} className="text-emerald-400 flex-shrink-0" />}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-muted mb-1.5">
+                        <span className="flex items-center gap-0.5"><Star size={9} className="text-amber-400" /> {t.rating}</span>
+                        <span>·</span>
+                        <span className="flex items-center gap-0.5"><Globe size={9} /> {t.languages.join(', ')}</span>
+                        <span>·</span>
+                        <span>€{t.ratePerSession}/session</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {t.specialties.slice(0, 3).map(s => (
+                          <span key={s} className="text-[9px] px-1.5 py-0.5 bg-violet/10 text-violet rounded-full">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-muted group-hover:text-violet transition-colors flex-shrink-0 self-center" />
+                  </div>
+                ))}
+              </div>
+
+              <Button className="w-full rounded-2xl py-3 shadow-brand" onClick={() => setShowExpertPanel(false)}>
+                Explore all therapists
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // ── Message bubble renderer ────────────────────────────────────────────────
+
+  function MessageBubble({ msg }: { msg: Message }) {
+    const isUser = msg.role === 'user';
+    const displayName = avatarDisplayName || avatarConfig.name;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end gap-2`}
+      >
+        {/* Avatar photo for AI messages in text mode */}
+        {!isUser && mode === 'text' && (
+          <img
+            src={avatarConfig.stillUrl}
+            alt={displayName}
+            title={displayName}
+            className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-0.5 ring-1 ring-border"
+          />
+        )}
+
+        <div className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+          isUser ? 'bg-brand text-white rounded-br-sm' : 'glass text-text rounded-bl-sm'
+        }`}>
+
+          {/* Voice note waveform */}
+          {msg.isVoiceNote && msg.audioUrl && (
+            <div className="mb-1.5">
+              <WaveformPlayer src={msg.audioUrl} autoPlay={false} variant="user" />
+              {msg.content !== '[Voice note]' && (
+                <p className="text-[10px] text-white/60 mt-1 italic">"{msg.content}"</p>
+              )}
+            </div>
+          )}
+
+          {/* Audio mode waveform (AI synthesis) */}
+          {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
+            <div className="mb-2">
+              <WaveformPlayer src={msg.audioUrl} autoPlay variant="ai" />
+            </div>
+          )}
+
+          {/* Audio loading skeleton */}
+          {msg.role === 'assistant' && mode === 'audio' && !msg.audioUrl && loadingAudioId === msg.id && (
+            <div className="flex items-center gap-1.5 mb-2 opacity-60">
+              <Loader2 size={11} className="animate-spin" />
+              <span className="text-[10px]">Synthesising audio…</span>
+            </div>
+          )}
+
+          {/* Regular text (not voice note) */}
+          {!msg.isVoiceNote && <span>{msg.content}</span>}
+
+          {/* Attachments */}
+          {msg.attachments && msg.attachments.length > 0 && (
+            <div className={`flex flex-col gap-1 ${msg.content ? 'mt-2 pt-2 border-t border-white/20' : ''}`}>
+              {msg.attachments.map(att => (
+                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer"
+                  className={`flex items-center gap-2 text-[11px] px-2 py-1.5 rounded-lg transition-colors ${
+                    isUser ? 'bg-white/15 hover:bg-white/25 text-white' : 'bg-surface hover:bg-border/50 text-text'
+                  }`}>
+                  {fileIcon(att.type)}
+                  <span className="flex-1 truncate font-medium">{att.name}</span>
+                  <span className="opacity-60 flex-shrink-0">{formatBytes(att.sizeBytes)}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col h-full max-w-3xl mx-auto">
+
+      {/* Expert panel overlay */}
+      <ExpertPanel />
 
       {/* ── Header ── */}
       <PageHeader
@@ -380,34 +557,21 @@ export function AiChatView({
         subtitle={subtitle}
         actions={
           <div className="flex items-center gap-2">
-            {/* Avatar status badge — only visible in video mode */}
             {mode === 'video' && <AvatarStatusBadge />}
-
-            {/* End Session */}
             {!sessionEnded && (
-              <Button
-                onClick={() => setSessionEnded(true)}
-                variant="danger"
-                size="sm"
-                aria-label="End this session"
-              >
+              <Button onClick={() => setSessionEnded(true)} variant="danger" size="sm" aria-label="End this session">
                 End Session
               </Button>
             )}
-
-            {/* Desktop-only mode switcher in header */}
-            <div className="hidden sm:block">
-              <ModeSwitcher />
-            </div>
+            <div className="hidden sm:block"><ModeSwitcher /></div>
           </div>
         }
       />
 
-      {/* ── Session ended screen ── */}
+      {/* ── Session ended ── */}
       {sessionEnded ? (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
           className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4"
         >
           <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center shadow-brand">
@@ -419,37 +583,28 @@ export function AiChatView({
             Take a moment to breathe and reflect on your progress today.
           </p>
           <div className="pt-4">
-            <Button onClick={resetSession} className="rounded-full px-8 py-5 text-sm">
-              Begin New Session
-            </Button>
+            <Button onClick={resetSession} className="rounded-full px-8 py-5 text-sm">Begin New Session</Button>
           </div>
         </motion.div>
 
       ) : (
         <>
-          {/* ── Mobile-only mode switcher — always visible below header ── */}
-          <div className="sm:hidden mb-3">
-            <ModeSwitcher className="w-full" />
-          </div>
+          {/* Mobile mode switcher */}
+          <div className="sm:hidden mb-3"><ModeSwitcher className="w-full" /></div>
 
-          {/* ── Dismissable privacy banner ── */}
+          {/* Privacy banner */}
           <AnimatePresence>
             {bannerVisible && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                 animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
                 exit={{   opacity: 0, height: 0, marginBottom: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
+                transition={{ duration: 0.2 }} className="overflow-hidden"
               >
                 <div className="flex items-start gap-2 bg-violet/10 border border-violet/20 rounded-xl px-4 py-2.5 text-xs text-violet">
                   <Lock size={11} className="flex-shrink-0 mt-0.5" />
                   <span className="flex-1 leading-relaxed">{privacyNote}</span>
-                  <button
-                    onClick={dismissBanner}
-                    aria-label="Dismiss privacy notice"
-                    className="flex-shrink-0 p-1 rounded-md hover:bg-violet/20 transition-colors"
-                  >
+                  <button onClick={dismissBanner} aria-label="Dismiss privacy notice" className="flex-shrink-0 p-1 rounded-md hover:bg-violet/20 transition-colors">
                     <X size={11} />
                   </button>
                 </div>
@@ -457,8 +612,7 @@ export function AiChatView({
             )}
           </AnimatePresence>
 
-          {/* ── Video avatar — ALWAYS mounted (CSS hides when inactive) ── */}
-          {/* Mounted once: avoids re-negotiating WebRTC on every mode toggle */}
+          {/* Video avatar — always mounted */}
           <div className={mode === 'video' ? 'mb-4' : 'hidden'} aria-hidden={mode !== 'video'}>
             <InteractiveAvatar
               ref={avatarRef}
@@ -468,58 +622,42 @@ export function AiChatView({
             />
           </div>
 
-          {/* ── Messages list ── */}
+          {/* Audio mode companion display */}
+          {mode === 'audio' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3 mb-4 py-4"
+            >
+              <div className="relative">
+                <img
+                  src={avatarConfig.stillUrl}
+                  alt={avatarDisplayName || avatarConfig.name}
+                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-border shadow-brand"
+                />
+                <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand flex items-center justify-center">
+                  <Mic size={10} className="text-white" />
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-text">{avatarDisplayName || avatarConfig.name}</p>
+              <p className="text-xs text-muted">Audio session active</p>
+            </motion.div>
+          )}
+
+          {/* Messages list */}
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto scrollbar-thin space-y-4 pr-1 mb-4"
-            aria-live="polite"
-            aria-label="Conversation messages"
+            aria-live="polite" aria-label="Conversation messages"
           >
             <AnimatePresence initial={false}>
-              {messages.map(msg => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-brand text-white rounded-br-sm'
-                      : 'glass text-text rounded-bl-sm'
-                  }`}>
-                    {/* Audio player — shows when audio is ready */}
-                    {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
-                      <div className="mb-2">
-                        <audio
-                          src={msg.audioUrl}
-                          controls
-                          autoPlay
-                          className="h-8 w-full max-w-[220px]"
-                        />
-                      </div>
-                    )}
-                    {/* Audio loading indicator — visible while synthesis runs */}
-                    {msg.role === 'assistant' && mode === 'audio' && !msg.audioUrl && loadingAudioId === msg.id && (
-                      <div className="flex items-center gap-1.5 mb-2 opacity-60">
-                        <Loader2 size={11} className="animate-spin" />
-                        <span className="text-[10px]">Generating audio…</span>
-                      </div>
-                    )}
-                    {msg.content}
-                  </div>
-                </motion.div>
-              ))}
+              {messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)}
 
-              {/* "Thinking…" indicator while AI response is being generated */}
               {loading && (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex justify-start"
-                >
+                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start items-end gap-2">
+                  {mode === 'text' && (
+                    <img src={avatarConfig.stillUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-0.5 ring-1 ring-border" />
+                  )}
                   <div className="glass rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin text-violet" />
                     <span className="text-xs text-muted">Thinking…</span>
@@ -529,32 +667,126 @@ export function AiChatView({
             </AnimatePresence>
           </div>
 
+          {/* "Talk to someone" CTA */}
+          <motion.button
+            onClick={() => setShowExpertPanel(true)}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 w-full mb-3 p-3 rounded-2xl border border-dashed border-violet/40 bg-violet/5 text-violet text-xs font-medium hover:bg-violet/10 hover:border-violet/60 transition-all duration-200"
+          >
+            <Users size={14} />
+            <span className="flex-1 text-left">I want to speak with someone</span>
+            <ChevronRight size={13} />
+          </motion.button>
+
+          {/* Pending attachment chips */}
+          <AnimatePresence>
+            {pendingAttachments.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-wrap gap-1.5 mb-2"
+              >
+                {pendingAttachments.map(att => (
+                  <div key={att.id} className="flex items-center gap-1.5 bg-surface border border-border rounded-lg px-2.5 py-1 text-[11px] text-text">
+                    {fileIcon(att.type)}
+                    <span className="max-w-[120px] truncate">{att.name}</span>
+                    <button onClick={() => removeAttachment(att.id)} className="text-muted hover:text-red-400 transition-colors ml-0.5">
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* ── Input bar ── */}
           <div className="glass flex flex-col gap-1 p-3 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={e => setInput(e.target.value.slice(0, MAX_INPUT))}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                placeholder="Share what's on your mind…"
-                maxLength={MAX_INPUT}
-                className="flex-1 bg-transparent text-text text-sm placeholder:text-muted/60 outline-none min-w-0"
-                aria-label="Type your message"
-                disabled={loading}
-              />
-              <Button
-                onClick={sendMessage}
-                loading={loading}
-                size="sm"
-                disabled={!input.trim() || loading}
-                aria-label="Send message"
-              >
-                <Send size={14} />
-              </Button>
-            </div>
 
-            {/* Character counter — appears at 80% capacity */}
+            {/* Recording state */}
+            {recording ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-rec" />
+                  <span className="text-xs text-red-400 font-medium">Recording… {recFmt(recSeconds)}</span>
+                  {/* Live waveform bars during recording */}
+                  <div className="flex items-end gap-0.5 h-5">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 rounded-full bg-red-400/70 animate-waveform"
+                        style={{ height: `${40 + Math.random() * 60}%`, animationDelay: `${i * 50}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <button onClick={cancelRecording} title="Cancel recording" className="text-muted hover:text-red-400 transition-colors p-1">
+                  <MicOff size={16} />
+                </button>
+                <button
+                  onClick={stopRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-xl text-xs font-medium hover:bg-red-600 transition-colors"
+                >
+                  <StopCircle size={13} /> Send
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={FILE_ACCEPT}
+                  className="hidden"
+                  onChange={e => handleFiles(e.target.files)}
+                />
+
+                {/* Attachment button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file"
+                  className="text-muted hover:text-violet transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-violet/10"
+                >
+                  <Paperclip size={16} />
+                </button>
+
+                {/* Voice note button (text mode only) */}
+                {mode === 'text' && (
+                  <button
+                    onClick={startRecording}
+                    title="Record voice note"
+                    className="text-muted hover:text-violet transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-violet/10"
+                  >
+                    <Mic size={16} />
+                  </button>
+                )}
+
+                <input
+                  type="text"
+                  value={input}
+                  onChange={e => setInput(e.target.value.slice(0, MAX_INPUT))}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                  placeholder={mode === 'audio' ? 'Type or speak…' : 'Share what\'s on your mind…'}
+                  maxLength={MAX_INPUT}
+                  className="flex-1 bg-transparent text-text text-sm placeholder:text-muted/60 outline-none min-w-0"
+                  aria-label="Type your message"
+                  disabled={loading}
+                />
+                <Button
+                  onClick={sendMessage}
+                  loading={loading}
+                  size="sm"
+                  disabled={(!input.trim() && pendingAttachments.length === 0) || loading}
+                  aria-label="Send message"
+                >
+                  <Send size={14} />
+                </Button>
+              </div>
+            )}
+
+            {/* Character counter */}
             {charWarn && (
               <p className={`text-right text-[10px] transition-colors select-none ${
                 charCount >= MAX_INPUT ? 'text-red-400' : 'text-amber-400'

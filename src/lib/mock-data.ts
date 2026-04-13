@@ -9,6 +9,7 @@ import type {
   JournalEntry, EmotionEntry, Conversation, TherapySession,
   SessionRequest, TherapistProfile, WellbeingTrend, HeatmapCell,
   OrgAlert, HRSettings, Plan, Company, Resource, User, Message,
+  DistressRequest, Pole, PoleMember, TherapistNotification,
 } from '@/types';
 
 // ─── Journal ─────────────────────────────────────────────────────────────────
@@ -492,9 +493,21 @@ export const MOCK_THERAPIST_PROFILE: TherapistProfile = {
 };
 
 export const MOCK_SESSION_REQUESTS: SessionRequest[] = [
-  { id: 'req1', clientId: 'c1', clientName: 'Alex R.', requestedAt: '2026-03-30T10:00:00Z', preferredDate: '2026-04-02T14:00:00Z', topic: 'Work anxiety and burnout', urgency: 'high' },
-  { id: 'req2', clientId: 'c2', clientName: 'Jamie L.', requestedAt: '2026-03-29T15:00:00Z', preferredDate: '2026-04-03T10:00:00Z', topic: 'Relationship stress', urgency: 'medium' },
-  { id: 'req3', clientId: 'c3', clientName: 'Casey M.', requestedAt: '2026-03-28T11:00:00Z', preferredDate: '2026-04-04T16:00:00Z', topic: 'General anxiety management', urgency: 'low' },
+  {
+    id: 'req1', clientId: 'c1', clientName: 'Alex R.', requestedAt: '2026-04-13T08:00:00Z',
+    preferredDate: '2026-04-14T14:00:00Z', topic: 'Work anxiety and burnout', urgency: 'high',
+    expiresAt: '2026-04-14T08:00:00Z',
+  },
+  {
+    id: 'req2', clientId: 'c2', clientName: 'Jamie L.', requestedAt: '2026-04-12T15:00:00Z',
+    preferredDate: '2026-04-15T10:00:00Z', topic: 'Relationship stress', urgency: 'medium',
+    expiresAt: '2026-04-13T15:00:00Z',
+  },
+  {
+    id: 'req3', clientId: 'c3', clientName: 'Casey M.', requestedAt: '2026-04-13T11:00:00Z',
+    preferredDate: '2026-04-16T16:00:00Z', topic: 'General anxiety management', urgency: 'low',
+    expiresAt: '2026-04-14T11:00:00Z',
+  },
 ];
 
 export const MOCK_THERAPY_SESSIONS: TherapySession[] = [
@@ -586,3 +599,74 @@ export const MOCK_THERAPISTS: TherapistProfile[] = [
     ]
   }
 ];
+
+// ─── Distress Requests ─────────────────────────────────────────────────────────────
+
+export const MOCK_DISTRESS_REQUESTS: DistressRequest[] = [
+  {
+    id: 'dr1', employeeId: 'u2', employeeName: 'Jordan Kim', employeeEmail: 'jordan@techcorp.com',
+    category: 'time_off',
+    note: "I've been feeling really overwhelmed this week and I think a mental health day would help me reset. Could we discuss?",
+    submittedAt: '2026-04-13T09:30:00Z', status: 'pending', acknowledged: false,
+  },
+  {
+    id: 'dr2', employeeId: 'u6', employeeName: 'Robin T.', employeeEmail: 'robin@startup.io',
+    category: 'overload',
+    note: 'I have 4 projects due this week and I\'m struggling to prioritise. I need some help figuring out what to push back.',
+    submittedAt: '2026-04-11T14:00:00Z', status: 'in_progress', acknowledged: true,
+  },
+];
+
+// ─── HR Department Poles ──────────────────────────────────────────────────────────
+
+export const MOCK_POLES: Pole[] = [
+  { id: 'pole-1', companyId: 'company-1', name: 'Commercial', color: '#7C3AED', emoji: '💼', memberCount: 18, createdAt: '2026-02-01T00:00:00Z', createdBy: 'u3' },
+  { id: 'pole-2', companyId: 'company-1', name: 'Tech & Engineering', color: '#0EA5E9', emoji: '⚙️', memberCount: 32, createdAt: '2026-02-01T00:00:00Z', createdBy: 'u3' },
+  { id: 'pole-3', companyId: 'company-1', name: 'Operations', color: '#F59E0B', emoji: '📦', memberCount: 15, createdAt: '2026-02-15T00:00:00Z', createdBy: 'u3' },
+  { id: 'pole-4', companyId: 'company-1', name: 'R&D', color: '#10B981', emoji: '🔬', memberCount: 11, createdAt: '2026-03-01T00:00:00Z', createdBy: 'u3' },
+];
+
+export const MOCK_POLE_MEMBERS: PoleMember[] = [
+  { poleId: 'pole-1', userId: 'u2', userName: 'Jordan Kim',    userEmail: 'jordan@techcorp.com', addedAt: '2026-02-01T00:00:00Z' },
+  { poleId: 'pole-2', userId: 'u6', userName: 'Robin T.',      userEmail: 'robin@startup.io',   addedAt: '2026-02-01T00:00:00Z' },
+  { poleId: 'pole-3', userId: 'u5', userName: 'Casey M.',      userEmail: 'casey@demo.com',     addedAt: '2026-02-15T00:00:00Z' },
+];
+
+// ─── Therapist Notifications ───────────────────────────────────────────────────────────
+
+export const MOCK_THERAPIST_NOTIFICATIONS: TherapistNotification[] = [
+  { id: 'tn1', type: 'new_request', title: 'New session request', body: 'Alex R. has requested a session on April 14 at 14:00.', createdAt: '2026-04-13T08:00:00Z', read: false, actionUrl: '/therapist/requests' },
+  { id: 'tn2', type: 'session_reminder', title: 'Session in 1 hour', body: 'Your session with Robin T. starts at 11:00.', createdAt: '2026-04-01T10:00:00Z', read: false, actionUrl: '/therapist/sessions' },
+  { id: 'tn3', type: 'request_expired', title: 'Request expired — auto-reassigned', body: 'The request from Jamie L. expired after 24h and was forwarded to Dr. Elena Rodriguez.', createdAt: '2026-04-13T15:00:00Z', read: false, actionUrl: '/therapist/requests' },
+  { id: 'tn4', type: 'system', title: 'Weekly summary ready', body: 'Your earnings report for the week of April 7 is now available.', createdAt: '2026-04-07T09:00:00Z', read: true, actionUrl: '/therapist/earnings' },
+];
+
+// ─── Weekly Heatmap (day × week) ────────────────────────────────────────────────────────
+
+/** Day-level aggregates (no hour dimension) for the simplified heatmap */
+export type DayHeatCell = {
+  day: number;           // 0=Mon … 6=Sun
+  averageScore: number;  // 0–10
+  dominantEmotion: string;
+  participantCount: number;
+  week?: number;          // 0=this week, 1=last week, 2=2 weeks ago, 3=3 weeks ago
+};
+
+export const MOCK_DAY_HEATMAP: DayHeatCell[] = (() => {
+  const emotions = ['calm','happy','anxious','stressed','neutral','energized','sad'] as const;
+  const cells: DayHeatCell[] = [];
+  let seed = 99;
+  function rand() { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; }
+  for (let week = 0; week < 4; week++) {
+    for (let day = 0; day < 7; day++) {
+      cells.push({
+        day, week,
+        averageScore: 4 + Math.round(rand() * 5 * 10) / 10,
+        dominantEmotion: emotions[Math.floor(rand() * emotions.length)],
+        participantCount: 5 + Math.floor(rand() * 40),
+      });
+    }
+  }
+  return cells;
+})();
+

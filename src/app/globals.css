@@ -111,4 +111,28 @@ body {
     background: var(--gradient-brand);
     z-index: -1;
   }
+
+  /* bg-surface-glow helper */
+  .bg-surface-glow { background: var(--surface-glow); }
+
+  /* Waveform bar animation — used in WaveformPlayer */
+  @keyframes waveform-pulse {
+    0%, 100% { transform: scaleY(1);   opacity: 1;   }
+    50%       { transform: scaleY(1.6); opacity: 0.85; }
+  }
+  .animate-waveform {
+    animation: waveform-pulse 500ms ease-in-out infinite;
+    transform-origin: bottom;
+  }
+
+  /* Recording dot pulse */
+  @keyframes rec-pulse {
+    0%, 100% { opacity: 1;   transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.85); }
+  }
+  .animate-rec { animation: rec-pulse 900ms ease-in-out infinite; }
 }
+
+/* CSS variable alias for JS consumption (WaveformPlayer) */
+:root { --color-brand: #9B6FE8; }
+
