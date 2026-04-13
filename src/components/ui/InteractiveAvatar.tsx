@@ -3,146 +3,158 @@
 import React, {
   useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback,
 } from 'react';
-import StreamingAvatar, { AvatarQuality, StreamingEvents, TaskType } from '@heygen/streaming-avatar';
+import {
+  LiveAvatarSession,
+  SessionEvent,
+  SessionState,
+  AgentEventsEnum,
+} from '@heygen/liveavatar-web-sdk';
 import { Loader2, Mic, MicOff } from 'lucide-react';
 
+// ─── Public API ────────────────────────────────────────────────────────────────
+
 export interface InteractiveAvatarRef {
-  speak: (text: string) => Promise<void>;
+  /** Send a text message for the avatar to speak (used in text/type-input mode). */
+  speak: (text: string) => void;
 }
 
 interface Props {
-  avatarId?:       string;
-  onDisconnected?: () => void;
-  /** Called once when the avatar stream is ready and playing. */
-  onReady?:        () => void;
-  /** Called if the WebRTC connection fails to establish. */
-  onError?:        () => void;
+  onReady?:            () => void;
+  onError?:            () => void;
+  onDisconnected?:     () => void;
+  /**
+   * Called with the final transcript of what the USER just said.
+   * Lets the parent add a user message bubble in the conversation log.
+   */
+  onVoiceTranscript?:  (text: string) => void;
+  /**
+   * Called with the final transcript of what the AVATAR just said.
+   * Lets the parent add an assistant message bubble in the conversation log.
+   */
+  onAvatarResponse?:   (text: string) => void;
 }
 
-// ─── Chroma key ───────────────────────────────────────────────────────────────
-// HeyGen's green-screen colour is pure chroma-key green (~HSL 120°, 100%, 50%).
-// Thresholds are intentionally conservative to preserve skin-tone mid-greens.
-const GREEN_G_MIN   = 80;   // green channel must be high
-const GREEN_RB_MAX  = 120;  // red and blue must be comparatively low
-const GREEN_G_RATIO = 1.4;  // green must dominate by at least 40 %
-
-/** Zero the alpha of any pixel that falls within the green-screen range. */
-function applyChromaKey(data: Uint8ClampedArray) {
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    if (
-      g > GREEN_G_MIN &&
-      r < GREEN_RB_MAX &&
-      b < GREEN_RB_MAX &&
-      g > r * GREEN_G_RATIO &&
-      g > b * GREEN_G_RATIO
-    ) {
-      data[i + 3] = 0; // fully transparent
-    }
-  }
+// ─── Stable callback ref helper ───────────────────────────────────────────────
+function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) {
+  const ref = useRef<T>(fn);
+  useEffect(() => { ref.current = fn; }, [fn]);
+  return ref;
 }
+
+// Opening greeting prompt — instructs the LLM (already loaded with the Aria system prompt
+// via the context_id) to deliver the first turn. Keeping it directive keeps latency low.
+const GREETING_PROMPT =
+  'Greet the user warmly as Aria and invite them to share what is on their mind today.';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
-  ({ avatarId = 'Anna_public_3_20240108', onDisconnected, onReady, onError }, ref) => {
-    const videoRef      = useRef<HTMLVideoElement>(null);
-    const canvasRef     = useRef<HTMLCanvasElement>(null);
-    const avatarRef     = useRef<StreamingAvatar | null>(null);
-    const rafRef        = useRef<number>(0);
+  ({ onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
 
-    const [stream,        setStream]        = useState<MediaStream | null>(null);
-    const [loading,       setLoading]       = useState(true);
-    const [isVoiceActive, setIsVoiceActive] = useState(false);
-    const [hasError,      setHasError]      = useState(false);
-    const lastFrameRef    = useRef<number>(0);
+    // The SDK attaches audio/video directly to an HTMLMediaElement via session.attach()
+    const mediaRef     = useRef<HTMLVideoElement>(null);
+    const sessionRef   = useRef<LiveAvatarSession | null>(null);
 
-    // ── Chroma key loop ────────────────────────────────────────────────────────
-    const startChromaLoop = useCallback(() => {
-      const video  = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas) return;
+    // Stable refs for parent callbacks (avoids stale closures in the effect)
+    const onReadyRef         = useCallbackRef(onReady);
+    const onErrorRef         = useCallbackRef(onError);
+    const onDisconnectedRef  = useCallbackRef(onDisconnected);
+    const onVoiceRef         = useCallbackRef(onVoiceTranscript);
+    const onAvatarRef        = useCallbackRef(onAvatarResponse);
 
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      if (!ctx) return;
+    const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
+    // isMuted tracks whether the user has manually silenced their mic.
+    // Voice-activity-detection (VAD) continues running server-side regardless.
+    const [isMuted,   setIsMuted]   = useState(false);
+    const [hasError,  setHasError]  = useState(false);
 
-      // Throttle to ~30 fps to reduce main-thread pressure during WebRTC audio
-      const TARGET_FPS = 30;
-      const FRAME_MS   = 1000 / TARGET_FPS;
+    const isConnected  = sessionState === SessionState.CONNECTED;
+    const isConnecting = sessionState === SessionState.CONNECTING;
 
-      function tick(now: number) {
-        if (!video || !canvas || !ctx) return;
-        if (now - lastFrameRef.current >= FRAME_MS) {
-          lastFrameRef.current = now;
-          if (video.readyState >= 2 && video.videoWidth > 0) {
-            if (canvas.width !== video.videoWidth) {
-              canvas.width  = video.videoWidth;
-              canvas.height = video.videoHeight;
-            }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            applyChromaKey(frame.data);
-            ctx.putImageData(frame, 0, 0);
-          }
-        }
-        rafRef.current = requestAnimationFrame(tick);
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    }, []);
-
-    const stopChromaLoop = useCallback(() => {
-      cancelAnimationFrame(rafRef.current);
-    }, []);
-
-    // ── WebRTC avatar init ─────────────────────────────────────────────────────
+    // ── Session init ───────────────────────────────────────────────────────────
     useEffect(() => {
       let mounted = true;
 
       async function init() {
         try {
+          // 1. Get a session token from our server-side route
           const res = await fetch('/api/heygen-token', { method: 'POST' });
-          if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error ?? `Token request failed: ${res.status}`);
+          }
           const { token } = await res.json();
+          if (!token) throw new Error('No session token returned');
           if (!mounted) return;
 
-          const avatar = new StreamingAvatar({ token });
-          avatarRef.current = avatar;
+          // 2. Create the LiveAvatar session in FULL mode.
+          //    voiceChat: true → SDK opens the mic and publishes the local audio track
+          //    (echo-cancelled, noise-suppressed). VAD is managed server-side.
+          const session = new LiveAvatarSession(token, { voiceChat: true });
+          sessionRef.current = session;
 
-          avatar.on(StreamingEvents.STREAM_READY, (e: any) => {
-            if (mounted) {
-              setStream(e.detail);
-              setLoading(false);
-              onReady?.();
+          // ── Stream ready ──────────────────────────────────────────────────
+          session.on(SessionEvent.SESSION_STREAM_READY, () => {
+            if (!mounted) return;
+            // Attach A/V output to the video element
+            if (mediaRef.current) session.attach(mediaRef.current);
+            onReadyRef.current?.();
+          });
+
+          // ── State changes ─────────────────────────────────────────────────
+          session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
+            if (!mounted) return;
+            setSessionState(state);
+
+            if (state === SessionState.CONNECTED) {
+              // ✅ FIX 1: Start listening immediately — sends avatar.start_listening
+              // to the LiveAvatar backend so VAD/STT/LLM pipeline activates.
+              // Without this the server ignores all incoming audio.
+              try { session.startListening(); } catch (e) {
+                console.warn('[LiveAvatar] startListening failed:', e);
+              }
+
+              // ✅ NEW: Avatar speaks first — sends a greeting prompt through the
+              // AVATAR_SPEAK_RESPONSE pipeline (LLM → TTS → video via Aria persona).
+              // Small delay lets the audio/video stream fully settle before speaking.
+              setTimeout(() => {
+                if (!mounted || !sessionRef.current) return;
+                try { session.message(GREETING_PROMPT); } catch (e) {
+                  console.warn('[LiveAvatar] greeting failed:', e);
+                }
+              }, 800);
             }
           });
 
-          avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-            if (mounted) {
-              setStream(null);
-              stopChromaLoop();
-              onDisconnected?.();
+          // ── Disconnected ──────────────────────────────────────────────────
+          session.on(SessionEvent.SESSION_DISCONNECTED, () => {
+            if (!mounted) return;
+            setIsMuted(false);
+            onDisconnectedRef.current?.();
+          });
+
+          // ── User transcription (final — fires once per utterance) ─────────
+          session.on(AgentEventsEnum.USER_TRANSCRIPTION, (event) => {
+            if (mounted && event.text?.trim()) {
+              onVoiceRef.current?.(event.text.trim());
             }
           });
 
-          await avatar.createStartAvatar({
-            quality:          AvatarQuality.Low,
-            avatarName:       avatarId,
-            useSilencePrompt: false,
+          // ── Avatar transcription (final — fires once per avatar reply) ────
+          session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
+            if (mounted && event.text?.trim()) {
+              onAvatarRef.current?.(event.text.trim());
+            }
           });
 
-          // Fallback: if STREAM_READY never fires, unlock UI after 12 s
-          setTimeout(() => {
-            if (mounted && loading) setLoading(false);
-          }, 12_000);
-        } catch (err) {
-          console.error('[HeyGen WebRTC] Init Error:', err);
+          // 3. Start the session (LiveKit WebRTC handshake)
+          await session.start();
+
+        } catch (err: any) {
+          console.error('[LiveAvatar] Init error:', err);
           if (mounted) {
-            setLoading(false);
             setHasError(true);
-            onError?.();
+            onErrorRef.current?.();
           }
         }
       }
@@ -151,65 +163,44 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
       return () => {
         mounted = false;
-        stopChromaLoop();
-        avatarRef.current?.stopAvatar().catch(console.error);
-        avatarRef.current = null;
+        sessionRef.current?.stop().catch(console.error);
+        sessionRef.current = null;
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [avatarId]);
+    }, []);
 
-    // ── Sync avatar stream → hidden video → chroma canvas ─────────────────────
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video || !stream) return;
-      video.srcObject = stream;
-
-      // Start chroma loop once the video has enough data to play
-      const onCanPlay = () => {
-        video.play().catch(console.error);
-        startChromaLoop();
-      };
-      video.addEventListener('canplay', onCanPlay, { once: true });
-      return () => video.removeEventListener('canplay', onCanPlay);
-    }, [stream, startChromaLoop]);
-
-    // ── Cleanup on unmount ────────────────────────────────────────────────────
-    useEffect(() => {
-      return () => { stopChromaLoop(); };
-    }, [stopChromaLoop]);
-
-    // ── Voice toggle ──────────────────────────────────────────────────────────
-    // NOTE: We do NOT call getUserMedia ourselves — HeyGen's startVoiceChat()
-    // handles mic access internally. Claiming the mic before calling startVoiceChat
-    // creates two competing audio capture contexts on the same device, which
-    // freezes the WebRTC pipeline and silences the avatar.
-    const toggleVoiceChat = async () => {
-      if (!avatarRef.current) return;
+    // ── Mute toggle ────────────────────────────────────────────────────────────
+    // Toggles the LOCAL microphone track mute state.
+    // VAD/STT continues running server-side — the user just silences their input.
+    const toggleMute = useCallback(async () => {
+      const session = sessionRef.current;
+      if (!session || !isConnected) return;
       try {
-        if (isVoiceActive) {
-          await avatarRef.current.closeVoiceChat();
-          setIsVoiceActive(false);
+        if (isMuted) {
+          await session.voiceChat.unmute();
+          setIsMuted(false);
         } else {
-          await avatarRef.current.startVoiceChat({ useSilencePrompt: false });
-          setIsVoiceActive(true);
+          await session.voiceChat.mute();
+          setIsMuted(true);
         }
       } catch (err) {
-        console.error('[InteractiveAvatar] Voice chat toggle failed:', err);
+        console.error('[LiveAvatar] Mute toggle error:', err);
       }
-    };
+    }, [isConnected, isMuted]);
 
-    // ── Expose speak() to parent ──────────────────────────────────────────────
+    // ── Expose speak() for typed text input ────────────────────────────────────
     useImperativeHandle(ref, () => ({
-      speak: async (text: string) => {
-        if (avatarRef.current) {
-          await avatarRef.current.speak({ text, taskType: TaskType.TALK });
-        } else {
-          console.warn('[InteractiveAvatar] Avatar not yet connected.');
+      speak: (text: string) => {
+        const session = sessionRef.current;
+        if (session && isConnected) {
+          // session.message() sends text into the LLM pipeline;
+          // the avatar autonomously generates and speaks a response.
+          try { session.message(text); } catch (e) { console.warn('[LiveAvatar] speak error', e); }
         }
       },
-    }));
+    }), [isConnected]);
 
-    // ── Error state ───────────────────────────────────────────────────────────
+    // ── Error state ────────────────────────────────────────────────────────────
     if (hasError) {
       return (
         <div className="w-full aspect-video bg-surface rounded-2xl border border-border/40 flex flex-col items-center justify-center gap-3 text-muted">
@@ -220,56 +211,60 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       );
     }
 
-    return (
-      <div className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center shadow-lg border border-border/40 group">
+    const loading = !isConnected && !hasError;
 
+    return (
+      <div
+        className="relative w-full aspect-video rounded-2xl overflow-hidden flex items-center justify-center shadow-xl border border-border/40 group"
+        style={{ background: 'radial-gradient(ellipse at 60% 40%, #1e1040 0%, #0d0820 60%, #07050f 100%)' }}
+      >
         {/* Loading overlay */}
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-10 gap-3 backdrop-blur-sm">
             <Loader2 className="animate-spin text-violet" size={28} />
-            <p className="text-white/80 text-xs font-semibold tracking-wide">Securing WebRTC Connection…</p>
+            <p className="text-white/80 text-xs font-semibold tracking-wide">
+              {isConnecting ? 'Connecting to LiveAvatar…' : 'Securing WebRTC Connection…'}
+            </p>
             <p className="text-white/40 text-[10px]">This may take a few seconds</p>
           </div>
         )}
 
-        {/* Hidden raw video — feeds the chroma-key canvas */}
+        {/*
+          The LiveAvatar SDK streams both audio AND video to this single element.
+          session.attach(mediaRef.current) is called after SESSION_STREAM_READY.
+        */}
         <video
-          ref={videoRef}
+          ref={mediaRef}
           autoPlay
           playsInline
-          muted
-          aria-hidden
-          className="absolute opacity-0 pointer-events-none w-px h-px"
-        />
-
-        {/* Chroma-keyed canvas — the visible avatar output */}
-        <canvas
-          ref={canvasRef}
-          aria-label="AI avatar video stream"
           className={`w-full h-full object-contain transition-opacity duration-700 ${
-            stream && !loading ? 'opacity-100' : 'opacity-0'
+            isConnected ? 'opacity-100' : 'opacity-0'
           }`}
+          aria-label="AI avatar video stream"
         />
 
-
-        {/* Voice chat controls — visible on hover */}
-        <div className="absolute bottom-4 left-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
-          <button
-            onClick={toggleVoiceChat}
-            disabled={loading}
-            aria-label={isVoiceActive ? 'Mute microphone' : 'Enable microphone and voice conversation'}
-            className={`p-2.5 rounded-full transition-colors disabled:opacity-40 ${
-              isVoiceActive ? 'bg-red-500 hover:bg-red-600' : 'bg-brand hover:opacity-90'
-            }`}
-          >
-            {isVoiceActive ? <Mic className="w-4 h-4 text-white" /> : <MicOff className="w-4 h-4 text-white" />}
-          </button>
-          <div className="text-xs font-medium text-white/90 pr-2">
-            {loading          ? 'Connecting…'
-              : isVoiceActive ? 'Voice active — AI is listening…'
-              : 'Hover & click mic to speak'}
+        {/* ✅ FIX 2: Mic control — always visible (not hidden behind hover).
+            Shows mute/unmute state. VAD is always active; this only silences the mic track. */}
+        {isConnected && (
+          <div className="absolute bottom-4 left-4 z-20 px-4 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3">
+            <button
+              onClick={toggleMute}
+              aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+              className={`p-2.5 rounded-full transition-colors ${
+                isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-brand hover:opacity-90'
+              }`}
+            >
+              {isMuted
+                ? <MicOff className="w-4 h-4 text-white" />
+                : <Mic    className="w-4 h-4 text-white" />}
+            </button>
+            <div className="text-xs font-medium text-white/90 pr-2">
+              {isMuted
+                ? 'Muted — click to speak'
+                : 'Listening — click to mute'}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   },

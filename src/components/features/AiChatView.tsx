@@ -20,8 +20,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { InteractiveAvatar, type InteractiveAvatarRef } from '@/components/ui/InteractiveAvatar';
-import { synthesize } from '@/lib/elevenlabs';
-import { INITIAL_MESSAGES, MOCK_AI_RESPONSES } from '@/lib/mock-data';
+import { INITIAL_MESSAGES } from '@/lib/mock-data';
 import type { Message, ConversationMode } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -35,6 +34,24 @@ const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] 
   { id: 'audio', label: 'Audio', icon: Mic           },
   { id: 'video', label: 'Video', icon: Video          },
 ];
+
+/**
+ * Persona injected into HeyGen's built-in AI via the knowledgeBase field.
+ * This is what allows the avatar to generate autonomous replies when the user
+ * speaks — without it, HeyGen listens but never responds.
+ */
+const ARIA_KNOWLEDGE_BASE = `You are Aria, a warm and empathetic AI mental health counselor working for Confidentia — a confidential mental wellness platform.
+
+Your role:
+- Listen actively and provide emotional support
+- Help users explore their feelings without judgment
+- Offer practical coping strategies drawn from CBT, mindfulness, and positive psychology
+- Maintain strict confidentiality — never share or reference what the user says outside this session
+- Keep responses to 2-3 short sentences for natural, conversational flow
+- Never provide medical diagnoses; gently encourage professional help when appropriate
+- Speak warmly, personally, and without clinical jargon
+
+Start by welcoming the user and inviting them to share what is on their mind today.`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -114,43 +131,100 @@ export function AiChatView({
     try { localStorage.setItem(BANNER_KEY, Date.now().toString()); } catch {}
   }, []);
 
+  // ── Voice transcript handlers ─────────────────────────────────────────────
+
+  /**
+   * Called by InteractiveAvatar when the user finishes a voice utterance.
+   * We add their spoken words as a user message bubble so the conversation
+   * log shows what they said.
+   */
+  const handleVoiceTranscript = useCallback((text: string) => {
+    const userMsg: Message = {
+      id:        `voice-user-${Date.now()}`,
+      role:      'user',
+      content:   text,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages(m => [...m, userMsg]);
+  }, []);
+
+  /**
+   * Called by InteractiveAvatar when HeyGen's built-in AI (knowledgeBase)
+   * finishes speaking an autonomous voice reply.
+   * We add the spoken text as an assistant bubble for the transcript.
+   */
+  const handleAvatarResponse = useCallback((text: string) => {
+    const aiMsg: Message = {
+      id:        `voice-ai-${Date.now()}`,
+      role:      'assistant',
+      content:   text,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages(m => [...m, aiMsg]);
+  }, []);
+
   async function sendMessage() {
     if (!input.trim() || loading) return;
 
     const userMsg: Message = {
       id:        Date.now().toString(),
       role:      'user',
-      content:   input.slice(0, MAX_INPUT), // guard against paste > limit
+      content:   input.slice(0, MAX_INPUT),
       timestamp: new Date().toISOString(),
     };
-    setMessages(m => [...m, userMsg]);
+
+    // Capture updated messages list immediately for the API call
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput('');
     setLoading(true);
 
-    // In video mode skip the artificial delay — the WebRTC avatar renders in real-time
-    // so adding fake latency here directly worsens the user-perceived response time.
-    // Text/audio modes keep a realistic delay so the transition feels natural.
-    if (mode !== 'video') {
-      await new Promise(r => setTimeout(r, 900 + Math.random() * 700));
-    }
-    const text  = MOCK_AI_RESPONSES[Math.floor(Math.random() * MOCK_AI_RESPONSES.length)];
+    let text = '';
     const msgId = (Date.now() + 1).toString();
 
-    // Video mode: chunk into sentences and dispatch sequentially so the avatar
-    // starts speaking sentence 1 while still processing the rest — minimises
-    // first-word latency from full-paragraph synthesis to single-sentence synthesis.
-    if (mode === 'video' && avatarRef.current) {
-      const avatar = avatarRef.current;
-      const sentences = splitIntoSentences(text);
-      // Fire-and-forget: don't block the UI on avatar speech
-      (async () => {
-        for (const sentence of sentences) {
-          await avatar.speak(sentence).catch(console.error);
+    try {
+      // ── Real Claude call (text & audio modes) ─────────────────────────────
+      // Video mode uses HeyGen's autonomous LLM pipeline — no external call needed.
+      if (mode !== 'video') {
+        // Build message history for Claude.
+        // Anthropic requires the first message to be 'user' — strip any leading
+        // assistant messages (e.g. the initial greeting) before sending.
+        const allHistory = updatedMessages
+          .filter(m => m.id !== 'init-1') // exclude the static opening greeting
+          .filter(m => m.role === 'user' || m.role === 'assistant')
+          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+        // Drop any leading assistant turns so the array starts with 'user'
+        const firstUserIdx = allHistory.findIndex(m => m.role === 'user');
+        const history = firstUserIdx >= 0 ? allHistory.slice(firstUserIdx) : allHistory;
+
+        const res = await fetch('/api/chat', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ messages: history }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error ?? `Chat API error ${res.status}`);
         }
-      })();
+        const data = await res.json();
+        text = data.reply ?? '';
+      } else {
+        // Video mode: HeyGen handles the full VAD→STT→LLM→TTS pipeline.
+        // We don't call Claude here — just forward the user text to the avatar.
+        text = input; // fallback transcript (avatar speaks autonomously)
+      }
+    } catch (err) {
+      console.error('[AiChat] Claude error:', err);
+      text = "I'm here with you. Could you tell me a little more about what's on your mind?";
     }
 
-    // ✅ Show text message IMMEDIATELY — don't block on audio synthesis
+    // Video mode: send the reply text to the avatar for lip-sync speech.
+    if (mode === 'video' && avatarRef.current) {
+      try { avatarRef.current.speak(text); } catch (e) { console.warn('[AiChat] avatar speak error', e); }
+    }
+
+    // ✅ Show text message immediately
     const aiMsg: Message = {
       id:        msgId,
       role:      'assistant',
@@ -158,15 +232,22 @@ export function AiChatView({
       timestamp: new Date().toISOString(),
     };
     setMessages(m => [...m, aiMsg]);
-    setLoading(false); // hide "Thinking…" as soon as text is ready
+    setLoading(false);
 
-    // ✅ Audio: synthesise AFTER text is visible (non-blocking)
-    if (mode === 'audio') {
+    // ✅ Audio: synthesise via ElevenLabs AFTER text is visible (non-blocking)
+    if (mode === 'audio' && text) {
       setLoadingAudioId(msgId);
       try {
-        const res = await synthesize(text);
+        const res = await fetch('/api/synthesize', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error(`Synthesis failed: ${res.status}`);
+        const blob     = await res.blob();
+        const audioUrl = URL.createObjectURL(blob);
         setMessages(m =>
-          m.map(msg => msg.id === msgId ? { ...msg, audioUrl: res.audioUrl } : msg),
+          m.map(msg => msg.id === msgId ? { ...msg, audioUrl } : msg),
         );
       } catch (err) {
         console.error('[ElevenLabs] Synthesis failed:', err);
@@ -325,6 +406,7 @@ export function AiChatView({
               ref={avatarRef}
               onReady={() => setAvatarStatus('ready')}
               onError={() => setAvatarStatus('error')}
+              onVoiceTranscript={handleVoiceTranscript}
             />
           </div>
 
