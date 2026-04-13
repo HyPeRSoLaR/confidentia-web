@@ -23,6 +23,9 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   badge?: string | number;
+  /** If true, only an exact pathname match marks this item active.
+   *  Use for root/index routes that are a prefix of sibling routes. */
+  exact?: boolean;
 }
 
 interface SidebarProps {
@@ -93,7 +96,9 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
       {/* Nav items */}
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto scrollbar-thin">
         {navItems.map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          const active = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
           return (
             <Link key={item.href} href={item.href}>

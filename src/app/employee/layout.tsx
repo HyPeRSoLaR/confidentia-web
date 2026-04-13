@@ -6,7 +6,7 @@ import { LayoutDashboard, MessageCircle, BookOpen, Shield, Headphones } from 'lu
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
-  { label: 'Dashboard',  href: '/employee',           icon: LayoutDashboard },
+  { label: 'Dashboard',  href: '/employee',           icon: LayoutDashboard, exact: true },
   { label: 'AI Chat',    href: '/employee/chat',      icon: Headphones },
   { label: 'Support',   href: '/employee/support',   icon: MessageCircle },
   { label: 'Resources', href: '/employee/resources',  icon: BookOpen },
