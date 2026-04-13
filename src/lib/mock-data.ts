@@ -670,3 +670,41 @@ export const MOCK_DAY_HEATMAP: DayHeatCell[] = (() => {
   return cells;
 })();
 
+/** Per-pole heatmap data — each pole has its own DayHeatCell[] so HR can filter by department */
+export const MOCK_POLE_DAY_HEATMAP: Record<string, DayHeatCell[]> = (() => {
+  const emotions = ['calm','happy','anxious','stressed','neutral','energized','sad'] as const;
+  const poleSeeds: Record<string, number> = {
+    'pole-1': 42,
+    'pole-2': 777,
+    'pole-3': 314,
+    'pole-4': 191,
+  };
+
+  // Helper — returns a closure over its own seed so each pole is independent
+  function makePrng(initSeed: number) {
+    let seed = initSeed;
+    return () => { seed = (seed * 1664525 + 1013904223) & 0x7fffffff; return seed / 0x7fffffff; };
+  }
+
+  const result: Record<string, DayHeatCell[]> = {};
+  for (const [poleId, initSeed] of Object.entries(poleSeeds)) {
+    const rand = makePrng(initSeed);
+    const cells: DayHeatCell[] = [];
+    const baseCount = poleId === 'pole-2' ? 32 : poleId === 'pole-1' ? 18 : poleId === 'pole-3' ? 15 : 11;
+    for (let week = 0; week < 4; week++) {
+      for (let day = 0; day < 7; day++) {
+        const count = Math.max(0, Math.floor(baseCount * (0.4 + rand() * 0.7)));
+        cells.push({
+          day, week,
+          averageScore: 3.5 + Math.round(rand() * 5.5 * 10) / 10,
+          dominantEmotion: emotions[Math.floor(rand() * emotions.length)],
+          participantCount: count,
+        });
+      }
+    }
+    result[poleId] = cells;
+  }
+  return result;
+})();
+
+
