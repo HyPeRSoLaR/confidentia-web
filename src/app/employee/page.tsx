@@ -150,9 +150,9 @@ export default function EmployeeDashboardPage() {
       {/* ── Featured Resource ── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-text">Resource of the day</h2>
+          <h2 className="font-semibold text-text">Ressource du jour</h2>
           <Link href="/employee/resources" className="text-xs text-violet hover:underline flex items-center gap-0.5">
-            See all <ChevronRight size={12} />
+            Voir tout <ChevronRight size={12} />
           </Link>
         </div>
         <Card className="hover:border-violet/30 transition-colors cursor-pointer group">
@@ -186,7 +186,7 @@ export default function EmployeeDashboardPage() {
 
           <div className="mt-4">
             <Button size="sm" variant="secondary" className="rounded-xl text-xs">
-              Read now <ChevronRight size={12} />
+              Lire maintenant <ChevronRight size={12} />
             </Button>
           </div>
         </Card>

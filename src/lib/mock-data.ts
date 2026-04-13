@@ -52,14 +52,14 @@ export const INITIAL_MESSAGES: Message[] = [
   {
     id: 'init-1',
     role: 'assistant',
-    content: "Hello! I'm here to listen. How are you feeling today?",
+    content: "Bonjour ! Je suis là pour vous écouter. Comment vous sentez-vous aujourd'hui ?",
     timestamp: new Date(0).toISOString(),
   },
 ];
 
 // MOCK_MESSAGES kept for Storybook / demo purposes only
 export const MOCK_MESSAGES: Message[] = [
-  { id: 'm1', role: 'assistant', content: "Hello! I'm here to listen. How are you feeling today?",                                                                                               timestamp: '2026-03-30T09:00:00Z' },
+  { id: 'm1', role: 'assistant', content: "Bonjour ! Je suis l’écoute. Comment vous sentez-vous aujourd’hui ?",                                                                                               timestamp: '2026-03-30T09:00:00Z' },
   { id: 'm2', role: 'user',      content: "I've been a bit anxious about an upcoming work deadline.",                                                                                             timestamp: '2026-03-30T09:01:00Z' },
   { id: 'm3', role: 'assistant', content: "That's completely understandable. Deadlines can feel overwhelming. Would you like to explore what's driving that anxiety, or would you prefer some grounding techniques?", timestamp: '2026-03-30T09:01:30Z' },
 ];

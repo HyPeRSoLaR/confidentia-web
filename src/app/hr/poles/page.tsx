@@ -82,11 +82,11 @@ export default function PolesPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <PageHeader
-        title="Department Poles"
-        subtitle={`${poles.length} poles · Manage org groups with dedicated analytics`}
+        title="Pôles Organisationnels"
+        subtitle={`${poles.length} pôle${poles.length > 1 ? 's' : ''} · Gérez les groupes par service avec des analytiques dédiées`}
         actions={
           <Button onClick={() => setShowCreate(true)} size="sm" className="rounded-xl">
-            <Plus size={14} /> New Pole
+            <Plus size={14} /> Nouveau pôle
           </Button>
         }
       />
@@ -124,14 +124,14 @@ export default function PolesPage() {
                         <p className="font-semibold text-text text-sm truncate">{pole.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Users size={10} className="text-muted" />
-                          <span className="text-[11px] text-muted">{pole.memberCount} members</span>
+                          <span className="text-[11px] text-muted">{pole.memberCount} membres</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           onClick={e => { e.stopPropagation(); deletePole(pole.id); }}
                           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
-                          title="Delete pole"
+                          title="Supprimer le pôle"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -148,7 +148,7 @@ export default function PolesPage() {
 
             {poles.length === 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
-                <p className="text-muted text-sm">No poles yet. Create your first one.</p>
+                <p className="text-muted text-sm">Aucun pôle pour l&apos;instant. Créez votre premier pôle.</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -174,16 +174,16 @@ export default function PolesPage() {
                   </div>
                   <div className="flex-1">
                     <h2 className="font-bold text-text text-lg">{selectedPole.name}</h2>
-                    <p className="text-xs text-muted">{selectedPole.memberCount} members · Created {new Date(selectedPole.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</p>
+                    <p className="text-xs text-muted">{selectedPole.memberCount} membres · Créé en {new Date(selectedPole.createdAt).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}</p>
                   </div>
                 </div>
 
                 {/* Quick stats */}
                 <div className="grid grid-cols-3 gap-3 mt-4">
                   {[
-                    { label: 'Avg. Wellbeing', value: '6.4 / 10', color: 'text-emerald-400' },
-                    { label: 'Check-in Rate', value: '78%',        color: 'text-cyan' },
-                    { label: 'Active Alerts',  value: '1',          color: 'text-amber-400' },
+                    { label: 'Score moyen', value: '6.4 / 10', color: 'text-emerald-400' },
+                    { label: 'Taux de bilan', value: '78%',       color: 'text-cyan' },
+                    { label: 'Alertes actives',  value: '1',       color: 'text-amber-400' },
                   ].map(stat => (
                     <div key={stat.label} className="bg-panel rounded-xl p-3 text-center">
                       <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
@@ -196,12 +196,12 @@ export default function PolesPage() {
               {/* Members */}
               <Card>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-text text-sm">Members</h3>
+                  <h3 className="font-semibold text-text text-sm">Membres</h3>
                   <Badge variant="default">{poleMembers.length > 0 ? poleMembers.length : selectedPole.memberCount}</Badge>
                 </div>
 
                 {poleMembers.length === 0 ? (
-                  <p className="text-xs text-muted text-center py-4">No member data for this pole yet.</p>
+                  <p className="text-xs text-muted text-center py-4">Aucune donnée membre pour ce pôle.</p>
                 ) : (
                   <div className="space-y-2 mb-4">
                     {poleMembers.map(member => (
@@ -223,14 +223,14 @@ export default function PolesPage() {
 
                 {/* Add member button */}
                 <button className="flex items-center gap-2 w-full p-2.5 rounded-xl border border-dashed border-border text-muted hover:border-violet/40 hover:text-violet transition-all text-xs">
-                  <UserPlus size={13} /> Add member
+                  <UserPlus size={13} /> Ajouter un membre
                 </button>
               </Card>
 
               {/* Analytics CTA */}
               <div className="flex gap-3">
                 <button className="flex-1 glass p-3 rounded-xl text-xs text-center text-muted hover:border-violet/30 hover:text-violet transition-all flex items-center justify-center gap-2">
-                  <BarChart2 size={13} /> View Pole Analytics
+                  <BarChart2 size={13} /> Voir les analytiques du pôle
                 </button>
               </div>
             </motion.div>
@@ -240,7 +240,7 @@ export default function PolesPage() {
                 <div className="w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-3">
                   <Users size={20} className="text-muted" />
                 </div>
-                <p className="text-sm text-muted">Select a pole to view its members and analytics</p>
+                <p className="text-sm text-muted">Sélectionnez un pôle pour afficher ses membres et analytiques</p>
               </div>
             </div>
           )}
@@ -259,7 +259,7 @@ export default function PolesPage() {
               className="relative w-full max-w-md bg-surface border border-border rounded-3xl p-6 shadow-brand z-10"
             >
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-bold text-text">Create a new pole</h2>
+                <h2 className="font-bold text-text">Créer un nouveau pôle</h2>
                 <button onClick={() => setShowCreate(false)} className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-text">
                   <X size={14} />
                 </button>
@@ -268,19 +268,19 @@ export default function PolesPage() {
               <div className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Pole name</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Nom du pôle</label>
                   <input
                     type="text"
                     value={newName}
                     onChange={e => setNewName(e.target.value.slice(0, 32))}
-                    placeholder="e.g. Commercial, Tech & Engineering…"
+                    placeholder="ex. Commercial, Tech & Ingénierie…"
                     className="w-full bg-panel border border-border rounded-xl px-3 py-2.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-violet/50 transition-colors"
                   />
                 </div>
 
                 {/* Emoji */}
                 <div>
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Icon</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Icône</label>
                   <div className="flex flex-wrap gap-2">
                     {PRESET_EMOJIS.map(em => (
                       <button
@@ -296,7 +296,7 @@ export default function PolesPage() {
 
                 {/* Color */}
                 <div>
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Colour</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Couleur</label>
                   <div className="flex flex-wrap gap-2">
                     {PRESET_COLORS.map(c => (
                       <button
@@ -311,14 +311,14 @@ export default function PolesPage() {
 
                 {/* Add members */}
                 <div>
-                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Add members</label>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-1.5">Ajouter des membres</label>
                   <div className="relative mb-2">
                     <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                     <input
                       type="text"
                       value={memberSearch}
                       onChange={e => setMemberSearch(e.target.value)}
-                      placeholder="Search employees…"
+                      placeholder="Rechercher des employés…"
                       className="w-full bg-panel border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-text placeholder:text-muted/50 outline-none focus:border-violet/50"
                     />
                   </div>
@@ -343,7 +343,7 @@ export default function PolesPage() {
                     })}
                   </div>
                   {selectedEmp.length > 0 && (
-                    <p className="text-[10px] text-violet mt-1">{selectedEmp.length} members selected</p>
+                    <p className="text-[10px] text-violet mt-1">{selectedEmp.length} membre{selectedEmp.length > 1 ? 's' : ''} sélectionné{selectedEmp.length > 1 ? 's' : ''}</p>
                   )}
                 </div>
 
@@ -352,12 +352,12 @@ export default function PolesPage() {
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style={{ background: newColor + '25' }}>{newEmoji}</div>
                   <div>
                     <p className="font-semibold text-text text-sm">{newName || 'Pole name'}</p>
-                    <p className="text-[10px] text-muted">{selectedEmp.length} members</p>
+                    <p className="text-[10px] text-muted">{selectedEmp.length} membre{selectedEmp.length > 1 ? 's' : ''}</p>
                   </div>
                 </div>
 
                 <Button onClick={createPole} disabled={!newName.trim()} className="w-full rounded-2xl py-3 shadow-brand">
-                  Create Pole
+                  Créer le pôle
                 </Button>
               </div>
             </motion.div>

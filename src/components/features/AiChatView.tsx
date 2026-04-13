@@ -799,10 +799,10 @@ export function AiChatView({
                   value={input}
                   onChange={e => setInput(e.target.value.slice(0, MAX_INPUT))}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder={mode === 'audio' ? 'Type or speak…' : 'Share what\'s on your mind…'}
+                  placeholder={mode === 'audio' ? 'Tapez ou parlez…' : 'Partagez ce qui vous préoccupe…'}
                   maxLength={MAX_INPUT}
                   className="flex-1 bg-transparent text-text text-sm placeholder:text-muted/60 outline-none min-w-0"
-                  aria-label="Type your message"
+                  aria-label="Tapez votre message"
                   disabled={loading}
                 />
                 <Button
