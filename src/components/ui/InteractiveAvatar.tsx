@@ -41,10 +41,6 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
   return ref;
 }
 
-// Opening greeting prompt — instructs the LLM (already loaded with the Aria system prompt
-// via the context_id) to deliver the first turn. Keeping it directive keeps latency low.
-const GREETING_PROMPT =
-  'Greet the user warmly as Aria and invite them to share what is on their mind today.';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -107,22 +103,13 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             setSessionState(state);
 
             if (state === SessionState.CONNECTED) {
-              // ✅ FIX 1: Start listening immediately — sends avatar.start_listening
-              // to the LiveAvatar backend so VAD/STT/LLM pipeline activates.
-              // Without this the server ignores all incoming audio.
+              // Activate VAD so the server listens for user voice input.
+              // We do NOT send an automated greeting message — the text greeting
+              // in INITIAL_MESSAGES is sufficient and avoids the echo loop where
+              // the avatar's own speech is picked up by the mic as a user utterance.
               try { session.startListening(); } catch (e) {
                 console.warn('[LiveAvatar] startListening failed:', e);
               }
-
-              // Avatar speaks first — sends greeting through LLM → TTS → video.
-              // After the avatar finishes the greeting, AVATAR_TRANSCRIPTION fires
-              // and re-calls startListening() automatically (see handler below).
-              setTimeout(() => {
-                if (!mounted || !sessionRef.current) return;
-                try { session.message(GREETING_PROMPT); } catch (e) {
-                  console.warn('[LiveAvatar] greeting failed:', e);
-                }
-              }, 1000);
             }
           });
 
