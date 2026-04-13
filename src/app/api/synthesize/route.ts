@@ -13,7 +13,9 @@ import { NextRequest, NextResponse } from 'next/server';
  * Response:     audio/mpeg stream (same bytes as ElevenLabs /stream endpoint)
  */
 
-const DEFAULT_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Bella — calm, warm
+// Victoria — French Parisian, warm & calm (accent France, NOT Canadian)
+// Voice ID copied from ElevenLabs voice library (Parisian / French filter)
+const DEFAULT_VOICE_ID = 'WeAAwKYcS06VmXw086yZ'; // Victoria - Warm and calm (French Parisian)
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -50,10 +52,14 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           text,
           // eleven_turbo_v2_5: lowest-latency model (~75 ms first-byte)
+          // language_code: 'fr' ensures French (France) pronunciation — avoids Canadian drift
           model_id: 'eleven_turbo_v2_5',
+          language_code: 'fr',
           voice_settings: {
-            stability:        0.4,
-            similarity_boost: 0.7,
+            stability:        0.45,
+            similarity_boost: 0.75,
+            style:            0.0,
+            use_speaker_boost: true,
           },
         }),
       },
