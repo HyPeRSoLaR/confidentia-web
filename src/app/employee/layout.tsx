@@ -6,11 +6,11 @@ import { LayoutDashboard, MessageCircle, BookOpen, Shield, Headphones } from 'lu
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
-  { label: 'Dashboard',  href: '/employee',           icon: LayoutDashboard, exact: true },
-  { label: 'AI Chat',    href: '/employee/chat',      icon: Headphones },
-  { label: 'Support',   href: '/employee/support',   icon: MessageCircle },
-  { label: 'Resources', href: '/employee/resources',  icon: BookOpen },
-  { label: 'Privacy',   href: '/employee/privacy',    icon: Shield },
+  { label: 'Tableau de bord', href: '/employee',           icon: LayoutDashboard, exact: true },
+  { label: 'Chat IA',         href: '/employee/chat',      icon: Headphones },
+  { label: 'Soutien',         href: '/employee/support',   icon: MessageCircle },
+  { label: 'Ressources',      href: '/employee/resources', icon: BookOpen },
+  { label: 'Confidentialité', href: '/employee/privacy',   icon: Shield },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {

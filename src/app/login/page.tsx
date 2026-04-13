@@ -19,7 +19,6 @@ export default function LoginPage() {
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
     // TODO: verify credentials via Supabase auth, set session server-side.
-    // For demo: both login and demo flow go to /select-role so role is always chosen explicitly.
     router.push('/select-role');
   }
 
@@ -56,20 +55,20 @@ export default function LoginPage() {
             </svg>
           </motion.div>
           <h1 className="text-2xl font-bold text-text">Confidentia</h1>
-          <p className="text-sm text-muted mt-1">Your private well-being companion</p>
+          <p className="text-sm text-muted mt-1">Votre compagnon bien-être privé</p>
         </div>
 
         {/* Card */}
         <div className="glass p-8">
-          <h2 className="text-lg font-semibold text-text mb-6">Sign in</h2>
+          <h2 className="text-lg font-semibold text-text mb-6">Se connecter</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
-              label="Email" type="email" placeholder="you@example.com"
+              label="E-mail" type="email" placeholder="vous@exemple.com"
               value={email} onChange={e => setEmail(e.target.value)}
               icon={<Mail size={16}/>}
             />
             <Input
-              label="Password" type={showPw ? 'text' : 'password'} placeholder="••••••••"
+              label="Mot de passe" type={showPw ? 'text' : 'password'} placeholder="••••••••"
               value={password} onChange={e => setPassword(e.target.value)}
               icon={<Lock size={16}/>}
               rightIcon={
@@ -79,7 +78,7 @@ export default function LoginPage() {
               }
             />
             <Button type="submit" fullWidth loading={loading} className="mt-2">
-              Sign in
+              Se connecter
             </Button>
           </form>
 
@@ -87,14 +86,14 @@ export default function LoginPage() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
-            <div className="relative flex justify-center text-xs text-muted"><span className="bg-surface px-3">or</span></div>
+            <div className="relative flex justify-center text-xs text-muted"><span className="bg-surface px-3">ou</span></div>
           </div>
 
           <Button variant="secondary" fullWidth onClick={handleDemo}>
-            ✨ Continue as Demo
+            ✨ Continuer en démo
           </Button>
           <p className="text-xs text-muted text-center mt-4">
-            No account needed — explore all 5 role dashboards instantly.
+            Aucun compte requis — explorez les 5 tableaux de bord instantanément.
           </p>
         </div>
       </motion.div>

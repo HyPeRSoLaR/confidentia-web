@@ -39,7 +39,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'warm',
     stillUrl: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Abigal_expressive_2024112501',
-    tagline: 'Warm, present, and non-judgmental.',
+    tagline: 'Chaleureuse, présente et sans jugement.',
   },
   {
     id: 'av-mei',
@@ -49,7 +49,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'calm',
     stillUrl: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Erika_public_3',
-    tagline: 'Clear, thoughtful, and grounding.',
+    tagline: 'Claire, réfléchie et apaisante.',
   },
   {
     id: 'av-sofia',
@@ -59,7 +59,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'energetic',
     stillUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Daisy-inskirt-20220818',
-    tagline: 'Vibrant energy to lift you forward.',
+    tagline: 'Une énergie vibrante pour vous porter vers l’avant.',
   },
   {
     id: 'av-emma',
@@ -69,7 +69,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'gentle',
     stillUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Angela-inblackskirt-20220820',
-    tagline: 'Soft-spoken, steady, and safe.',
+    tagline: 'Douce, stable et rassurante.',
   },
 
   // ── Men ───────────────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'calm',
     stillUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Eric_public_pro1',
-    tagline: 'Measured, attentive, and precise.',
+    tagline: 'Mesuré, attentif et précis.',
   },
   {
     id: 'av-marcus',
@@ -91,7 +91,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'warm',
     stillUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Mike_public_pro1',
-    tagline: 'Real talk, genuine care.',
+    tagline: 'Franc et sincèrement bienveillant.',
   },
   {
     id: 'av-diego',
@@ -101,7 +101,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'energetic',
     stillUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Tyler-incasualsuit-20220721',
-    tagline: 'A positive push when you need it.',
+    tagline: 'Une impulsion positive quand vous en avez besoin.',
   },
   {
     id: 'av-james',
@@ -111,7 +111,7 @@ export const AVATARS: AvatarConfig[] = [
     persona: 'gentle',
     stillUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80',
     heygenId: 'Josh_public_pro1',
-    tagline: 'Patient, unhurried, deeply kind.',
+    tagline: 'Patient, sans précipitation, profondément attentionné.',
   },
 ];
 
@@ -122,28 +122,28 @@ export const PERSONA_META: Record<AvatarPersona, {
   systemPromptSuffix: string;
 }> = {
   warm: {
-    label: 'Warm & Empathetic',
+    label: 'Chaleureux & Empathique',
     emoji: '🌿',
-    description: 'Leads with heart. Creates a safe, validating space to be heard.',
-    systemPromptSuffix: 'You respond with warmth and deep empathy. You validate feelings before offering perspective.',
+    description: 'Conduit avec le cœur. Crée un espace sûr et valorisant pour être entendu.',
+    systemPromptSuffix: 'Tu réponds TOUJOURS en français, avec chaleur et une profonde empathie. Tu valides les ressentis avant d’offrir une perspective.',
   },
   calm: {
-    label: 'Calm & Analytical',
+    label: 'Calme & Analytique',
     emoji: '🧠',
-    description: 'Helps you understand patterns and think clearly under pressure.',
-    systemPromptSuffix: 'You are calm and precise. You help users identify thought patterns and reason clearly.',
+    description: 'Vous aide à comprendre les schémas et à réfléchir clairement sous pression.',
+    systemPromptSuffix: 'Tu réponds TOUJOURS en français, avec calme et précision. Tu aides à identifier les schémas de pensée et à raisonner clairement.',
   },
   energetic: {
-    label: 'Energetic & Motivating',
+    label: 'Énergique & Motivant',
     emoji: '⚡',
-    description: 'Brings positive momentum and helps you take action.',
-    systemPromptSuffix: 'You are upbeat and action-oriented. You inspire users and celebrate small wins.',
+    description: 'Apporte un élan positif et vous aide à passer à l’action.',
+    systemPromptSuffix: 'Tu réponds TOUJOURS en français, avec enthousiasme et une orientation vers l’action. Tu inspires et célèbres les petites victoires.',
   },
   gentle: {
-    label: 'Gentle & Reassuring',
+    label: 'Doux & Rassurant',
     emoji: '🌙',
-    description: 'Soft-spoken guidance for moments of deep vulnerability.',
-    systemPromptSuffix: 'You are soft, gentle, and reassuring. You move slowly and never rush the user.',
+    description: 'Accompagnement doux pour les moments de grande vulnérabilité.',
+    systemPromptSuffix: 'Tu réponds TOUJOURS en français, avec douceur et bienveillance. Tu prends le temps, ne précipites jamais l’utilisateur.',
   },
 };
 

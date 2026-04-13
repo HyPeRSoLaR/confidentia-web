@@ -4,9 +4,9 @@ import { AiChatView } from '@/components/features/AiChatView';
 export default function EmployeeChatPage() {
   return (
     <AiChatView
-      title="AI Well-being Chat"
-      subtitle="Confidential support — your employer cannot see your conversations"
-      privacyNote="Your conversations are end-to-end encrypted. Your employer only receives anonymized, aggregated well-being trends — never individual messages."
+      title="Chat IA Bien-être"
+      subtitle="Soutien confidentiel — votre employeur ne peut pas voir vos conversations"
+      privacyNote="Vos conversations sont chiffrées de bout en bout. Votre employeur reçoit uniquement des tendances agrégées et anonymisées — jamais de messages individuels."
     />
   );
 }

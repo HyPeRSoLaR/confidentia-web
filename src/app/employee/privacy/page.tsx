@@ -8,32 +8,32 @@ const PRINCIPLES = [
   {
     icon: Lock,
     color: 'text-violet bg-violet/10',
-    title: 'End-to-End Encrypted',
-    body: 'Every conversation with Confidentia is encrypted using AES-256 before leaving your device. Not even Confidentia employees can read your sessions.',
+    title: 'Chiffrement de bout en bout',
+    body: 'Chaque conversation avec Confidentia est chiffrée en AES-256 avant de quitter votre appareil. Même les employés de Confidentia ne peuvent pas lire vos sessions.',
   },
   {
     icon: Eye,
     color: 'text-cyan bg-cyan/10',
-    title: 'Your Employer Sees Nothing',
-    body: 'Your company only receives anonymized, aggregated well-being trends. Individual data points are never shared. We enforce a minimum of 5 respondents (k-anonymity) before any metric is surfaced.',
+    title: 'Votre employeur ne voit rien',
+    body: 'Votre entreprise ne reçoit que des tendances de bien-être anonymisées et agrégées. Les données individuelles ne sont jamais partagées. Nous appliquons un minimum de 5 répondants (k-anonymat) avant de divulguer toute métrique.',
   },
   {
     icon: ShieldCheck,
     color: 'text-emerald-400 bg-emerald-500/10',
-    title: 'GDPR &amp; CCPA Compliant',
-    body: 'We comply fully with GDPR (EU/EEA) and the California Consumer Privacy Act (CCPA). You can request your data or deletion at any time.',
+    title: 'Conforme RGPD &amp; CCPA',
+    body: 'Nous respectons entièrement le RGPD (UE/EEE) et le California Consumer Privacy Act (CCPA). Vous pouvez demander vos données ou leur suppression à tout moment.',
   },
   {
     icon: Trash2,
     color: 'text-coral bg-coral/10',
-    title: 'Right to Erasure',
-    body: 'Request permanent deletion of all your stored data at any time. Processed within 30 days as required by GDPR Article 17.',
+    title: 'Droit à l’effacement',
+    body: 'Demandez la suppression définitive de toutes vos données à tout moment. Traité dans les 30 jours conformément à l’article 17 du RGPD.',
   },
   {
     icon: FileText,
     color: 'text-amber-400 bg-amber-400/10',
-    title: 'No Data Sales',
-    body: 'We never sell your personal data to third parties. Period. Our business model is your subscription — not your information.',
+    title: 'Pas de revente de données',
+    body: 'Nous ne vendons jamais vos données personnelles à des tiers. Un point c’est tout. Notre modèle commercial, c’est votre abonnement — pas vos informations.',
   },
 ];
 
@@ -41,12 +41,12 @@ export default function PrivacyPage() {
   return (
     <div className="max-w-xl mx-auto">
       <PageHeader
-        title="Your Privacy"
-        subtitle="How Confidentia protects your data at every step"
+        title="Votre Confidentialité"
+        subtitle="Comment Confidentia protège vos données à chaque étape"
         actions={
           <div className="flex items-center gap-1.5 text-xs text-muted border border-border bg-surface rounded-full px-3 py-1.5">
             <ShieldCheck size={12} className="text-cyan" />
-            SOC 2 Type II certified
+            Certifié SOC 2 Type II
           </div>
         }
       />
@@ -74,9 +74,9 @@ export default function PrivacyPage() {
 
       <div className="mt-6 p-4 bg-surface border border-border rounded-2xl text-center">
         <p className="text-xs text-muted">
-          Questions about your data? Email{' '}
+          Des questions sur vos données ? Écrivez à{' '}
           <span className="text-violet font-medium">privacy@confidentia.app</span>
-          {' '}— we respond within 48h.
+          {' '}— nous répondons dans les 48h.
         </p>
       </div>
     </div>

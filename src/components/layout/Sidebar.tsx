@@ -86,7 +86,7 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
           <button
             onClick={() => setCollapsed(c => !c)}
             className="w-8 h-8 rounded-full text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center flex-shrink-0"
-            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            title={collapsed ? "Déplier le menu" : "Replier le menu"}
           >
             {collapsed ? <ChevronRight size={16}/> : <ChevronLeft size={16}/>}
           </button>
@@ -151,7 +151,7 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
                 className="flex-1 overflow-hidden"
               >
                 <p className="text-xs font-semibold text-text truncate">{userName}</p>
-                <p className="text-xs text-muted capitalize">{userRole}</p>
+                <p className="text-xs text-muted capitalize">{userRole === 'hr' ? 'RH' : userRole === 'consumer' ? 'Personnel' : userRole === 'employee' ? 'Employé' : userRole === 'therapist' ? 'Thérapeute' : 'Admin'}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -161,7 +161,7 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
               'text-muted hover:text-coral transition-colors flex-shrink-0',
               collapsed && 'mx-auto'
             )}
-            title="Sign out"
+            title="Déconnexion"
           >
             <LogOut size={16} />
           </button>

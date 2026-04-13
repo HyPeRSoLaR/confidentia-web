@@ -25,18 +25,18 @@ import type { DistressRequest } from '@/types';
 // ─── Category meta ─────────────────────────────────────────────────────────
 
 const CATEGORY_META: Record<string, { emoji: string; label: string; color: string; bg: string }> = {
-  wellbeing: { emoji: '😔', label: 'Mental health support', color: 'text-blue-400',   bg: 'bg-blue-400/10'   },
-  time_off:  { emoji: '🏖',  label: 'Time off request',      color: 'text-violet',     bg: 'bg-violet/10'     },
-  speak_hr:  { emoji: '💬', label: 'Speak with HR',          color: 'text-cyan',       bg: 'bg-cyan/10'       },
-  overload:  { emoji: '⚡',  label: 'Work overload',          color: 'text-amber-400',  bg: 'bg-amber-400/10'  },
-  urgent:    { emoji: '🚨', label: 'Urgent support',          color: 'text-red-400',    bg: 'bg-red-400/10'    },
-  other:     { emoji: '✍️', label: 'Other',                   color: 'text-muted',      bg: 'bg-surface'       },
+  wellbeing: { emoji: '😔', label: 'Soutien santé mentale',  color: 'text-blue-400',   bg: 'bg-blue-400/10'   },
+  time_off:  { emoji: '🏖',  label: 'Demande de congé',     color: 'text-violet',     bg: 'bg-violet/10'     },
+  speak_hr:  { emoji: '💬', label: 'Parler avec les RH',   color: 'text-cyan',       bg: 'bg-cyan/10'       },
+  overload:  { emoji: '⚡',  label: 'Surcharge de travail', color: 'text-amber-400',  bg: 'bg-amber-400/10'  },
+  urgent:    { emoji: '🚨', label: 'Aide urgente',          color: 'text-red-400',    bg: 'bg-red-400/10'    },
+  other:     { emoji: '✍️', label: 'Autre',                  color: 'text-muted',      bg: 'bg-surface'       },
 };
 
 const STATUS_META = {
-  pending:     { label: 'Pending',     color: 'text-amber-400', bg: 'bg-amber-400/10', icon: Clock },
-  in_progress: { label: 'In Progress', color: 'text-cyan',      bg: 'bg-cyan/10',      icon: RefreshCw },
-  resolved:    { label: 'Resolved',    color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle2 },
+  pending:     { label: 'En attente',   color: 'text-amber-400', bg: 'bg-amber-400/10', icon: Clock },
+  in_progress: { label: 'En cours',     color: 'text-cyan',      bg: 'bg-cyan/10',      icon: RefreshCw },
+  resolved:    { label: 'Résolu',       color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: CheckCircle2 },
 };
 
 // ─── Request card ─────────────────────────────────────────────────────────────
@@ -120,11 +120,11 @@ function RequestCard({ request, onUpdate }: { request: DistressRequest; onUpdate
                 {/* Employee note */}
                 {request.note ? (
                   <div className="bg-panel rounded-xl p-3">
-                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1.5">Employee's note</p>
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-1.5">Note de l&apos;employé</p>
                     <p className="text-sm text-text leading-relaxed italic">"{request.note}"</p>
                   </div>
                 ) : (
-                  <p className="text-xs text-muted italic">No note provided — the employee preferred not to add details.</p>
+                  <p className="text-xs text-muted italic">Aucune note fournie — l&apos;employé a préféré ne pas ajouter de détails.</p>
                 )}
 
                 {/* Actions */}
@@ -141,13 +141,13 @@ function RequestCard({ request, onUpdate }: { request: DistressRequest; onUpdate
                     {!request.acknowledged && (
                       <Button size="sm" variant="secondary" onClick={handleAcknowledge} className="rounded-xl text-xs">
                         <RefreshCw size={11} className="mr-1" />
-                        Mark in progress
+                        Marquer en cours
                       </Button>
                     )}
 
                     <Button size="sm" onClick={handleResolve} className="rounded-xl text-xs bg-emerald-500/90 hover:bg-emerald-500 text-white border-0">
                       <CheckCircle2 size={11} className="mr-1" />
-                      Resolve
+                      Résoudre
                     </Button>
                   </div>
                 )}
@@ -187,16 +187,16 @@ export default function HRDistressPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <PageHeader
-        title="Support Requests"
-        subtitle="Employee distress requests — respond within 24h"
+        title="Demandes de soutien"
+        subtitle="Demandes des employés — répondez dans les 24h"
         actions={
           pendingCnt > 0 ? (
             <span className="flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-400/10 px-3 py-1 rounded-full border border-red-400/20">
               <Heart size={11} className="fill-red-400" />
-              {pendingCnt} new request{pendingCnt > 1 ? 's' : ''}
+              {pendingCnt} nouvelle{pendingCnt > 1 ? 's' : ''} demande{pendingCnt > 1 ? 's' : ''}
             </span>
           ) : (
-            <span className="text-xs text-muted">All up to date ✓</span>
+            <span className="text-xs text-muted">Tout est à jour ✓</span>
           )
         }
       />
@@ -213,7 +213,7 @@ export default function HRDistressPage() {
                 : 'text-muted hover:text-text border border-transparent'
             }`}
           >
-            {f === 'in_progress' ? 'In progress' : f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === 'in_progress' ? 'En cours' : f === 'all' ? 'Toutes' : f === 'pending' ? 'En attente' : 'Résolues'}
             {f === 'all' && requests.length > 0 && (
               <span className="ml-1.5 text-[10px] opacity-60">{requests.length}</span>
             )}
@@ -252,7 +252,7 @@ export default function HRDistressPage() {
       {/* Privacy notice */}
       {requests.length > 0 && (
         <p className="text-[10px] text-muted text-center mt-8 leading-relaxed">
-          🔒 Requests are submitted voluntarily with explicit employee consent. Data is stored locally for this demo session.
+          🔒 Les demandes sont soumises volontairement avec le consentement explicite de l’employé. Les données sont stockées localement pour cette session de démo.
         </p>
       )}
     </div>

@@ -4,9 +4,9 @@ import { AiChatView } from '@/components/features/AiChatView';
 export default function ChatPage() {
   return (
     <AiChatView
-      title="AI Conversation"
-      subtitle="Private, confidential — your conversations are never shared"
-      privacyNote="Your conversations are end-to-end encrypted and never reviewed by humans."
+      title="Conversation IA"
+      subtitle="Privé et confidentiel — vos conversations ne sont jamais partagées"
+      privacyNote="Vos conversations sont chiffrées de bout en bout et ne sont jamais consultées par des humains."
     />
   );
 }

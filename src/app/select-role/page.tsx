@@ -9,23 +9,23 @@ import type { UserRole } from '@/types';
 
 const ROLES: { role: UserRole; label: string; subtitle: string; icon: React.ElementType; gradient: string }[] = [
   {
-    role: 'consumer', label: 'Personal', subtitle: 'AI conversations, journaling & insights',
+    role: 'consumer', label: 'Personnel', subtitle: 'Conversations IA, journal & aperçus',
     icon: MessageCircle, gradient: 'from-cyan/20 to-violet/20',
   },
   {
-    role: 'employee', label: 'Employee', subtitle: 'Confidential well-being support',
+    role: 'employee', label: 'Employé', subtitle: 'Soutien bien-être confidentiel',
     icon: Briefcase, gradient: 'from-violet/20 to-pink/20',
   },
   {
-    role: 'hr', label: 'HR Dashboard', subtitle: 'Anonymized org-wide analytics',
+    role: 'hr', label: 'Tableau RH', subtitle: 'Analytiques anonymisées à l\'échelle de l\'org',
     icon: BarChart2, gradient: 'from-pink/20 to-coral/20',
   },
   {
-    role: 'therapist', label: 'Therapist', subtitle: 'Manage your practice & sessions',
+    role: 'therapist', label: 'Thérapeute', subtitle: 'Gérez votre cabinet & vos sessions',
     icon: Stethoscope, gradient: 'from-coral/20 to-violet/20',
   },
   {
-    role: 'admin', label: 'Admin', subtitle: 'Platform-wide management',
+    role: 'admin', label: 'Admin', subtitle: 'Gestion globale de la plateforme',
     icon: ShieldCheck, gradient: 'from-cyan/20 to-coral/20',
   },
 ];
@@ -60,8 +60,8 @@ export default function SelectRolePage() {
             </div>
             <span className="text-xl font-bold text-text">Confidentia</span>
           </div>
-          <h1 className="text-3xl font-bold text-text">Who are you today?</h1>
-          <p className="text-muted mt-2">Choose your role to enter your personalized dashboard</p>
+          <h1 className="text-3xl font-bold text-text">Qui êtes-vous aujourd&apos;hui ?</h1>
+          <p className="text-muted mt-2">Choisissez votre rôle pour accéder à votre tableau de bord personnalisé</p>
         </motion.div>
 
         <motion.div
@@ -88,7 +88,7 @@ export default function SelectRolePage() {
               <h3 className="font-semibold text-text mb-1">{label}</h3>
               <p className="text-xs text-muted leading-relaxed">{subtitle}</p>
               <div className="mt-4 text-xs text-violet font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                Enter →
+                Accéder →
               </div>
             </motion.button>
           ))}

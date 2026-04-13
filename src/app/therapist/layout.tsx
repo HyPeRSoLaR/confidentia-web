@@ -9,12 +9,12 @@ import type { NavItem } from '@/components/layout/Sidebar';
 const UNREAD_NOTIFS = MOCK_THERAPIST_NOTIFICATIONS.filter(n => !n.read).length;
 
 const NAV: NavItem[] = [
-  { label: 'Profile',       href: '/therapist/profile',        icon: User },
-  { label: 'Availability',  href: '/therapist/availability',   icon: Calendar },
-  { label: 'Requests',      href: '/therapist/requests',       icon: Inbox, badge: 3 },
-  { label: 'Sessions',      href: '/therapist/sessions',       icon: Clock },
-  { label: 'Earnings',      href: '/therapist/earnings',       icon: DollarSign },
-  { label: 'Notifications', href: '/therapist/notifications',  icon: Bell, badge: UNREAD_NOTIFS },
+  { label: 'Profil',          href: '/therapist/profile',        icon: User },
+  { label: 'Disponibilités',  href: '/therapist/availability',   icon: Calendar },
+  { label: 'Demandes',        href: '/therapist/requests',       icon: Inbox, badge: 3 },
+  { label: 'Sessions',        href: '/therapist/sessions',       icon: Clock },
+  { label: 'Revenus',         href: '/therapist/earnings',       icon: DollarSign },
+  { label: 'Notifications',   href: '/therapist/notifications',  icon: Bell, badge: UNREAD_NOTIFS },
 ];
 
 export default function TherapistLayout({ children }: { children: React.ReactNode }) {

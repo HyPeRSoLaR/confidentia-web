@@ -1,0 +1,7 @@
+feat: Sprints 1-5 feature delivery
+
+- Sprint 1: Voice notes, file attachments, waveform player, avatar photo in chat
+- Sprint 2: 5-step onboarding, 8-avatar diverse library, persona selection, avatar-config.ts
+- Sprint 3: Employee dashboard, distress modal (GDPR consent), HR heatmap day/week toggle, HR poles management
+- Sprint 4: Therapist 24h countdown, notifications page, therapist marketplace with booking
+- Sprint 5: Optional webcam PiP in video mode

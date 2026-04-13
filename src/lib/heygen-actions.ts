@@ -18,7 +18,7 @@ export async function createHeyGenVideo(prompt: string, avatarId: string) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      video_inputs: [{
+      video_inputs: [{ 
         character: {
           type: "avatar",
           avatar_id: avatarId,
@@ -26,7 +26,10 @@ export async function createHeyGenVideo(prompt: string, avatarId: string) {
         },
         voice: {
           type: "text",
-          input_text: prompt
+          input_text: prompt,
+          voice_id: "fr-FR-DeniseNeural",  // French Microsoft neural voice
+          speed: 1.0,
+          language: "fr"
         }
       }]
     })

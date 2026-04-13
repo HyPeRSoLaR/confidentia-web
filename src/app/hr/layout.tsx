@@ -31,13 +31,13 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const NAV: NavItem[] = [
-    { label: 'Analytics',        href: '/hr/analytics', icon: BarChart2 },
-    { label: 'Heatmap',          href: '/hr/heatmap',   icon: Grid3X3 },
-    { label: 'Poles',            href: '/hr/poles',      icon: Users2 },
-    { label: 'Support Requests', href: '/hr/distress',   icon: HeartHandshake, badge: distressBadge || undefined },
-    { label: 'Alerts',           href: '/hr/alerts',     icon: Bell, badge: UNREAD_ALERTS },
-    { label: 'Pricing',          href: '/hr/pricing',    icon: CreditCard },
-    { label: 'Settings',         href: '/hr/settings',   icon: Settings },
+    { label: 'Analytiques',        href: '/hr/analytics', icon: BarChart2 },
+    { label: 'Carte thermique',    href: '/hr/heatmap',   icon: Grid3X3 },
+    { label: 'Pôles',              href: '/hr/poles',      icon: Users2 },
+    { label: 'Demandes de soutien',href: '/hr/distress',   icon: HeartHandshake, badge: distressBadge || undefined },
+    { label: 'Alertes',            href: '/hr/alerts',     icon: Bell, badge: UNREAD_ALERTS },
+    { label: 'Tarifs',             href: '/hr/pricing',    icon: CreditCard },
+    { label: 'Paramètres',         href: '/hr/settings',   icon: Settings },
   ];
 
   return (

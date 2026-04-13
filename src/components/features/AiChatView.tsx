@@ -42,9 +42,9 @@ const BANNER_KEY = 'confidentia_privacy_banner_ts';
 const BANNER_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] = [
-  { id: 'text',  label: 'Text',  icon: MessageCircle },
+  { id: 'text',  label: 'Texte', icon: MessageCircle },
   { id: 'audio', label: 'Audio', icon: Mic           },
-  { id: 'video', label: 'Video', icon: Video          },
+  { id: 'video', label: 'Vidéo', icon: Video          },
 ];
 
 const FILE_ACCEPT = '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp,.gif';
@@ -83,9 +83,9 @@ interface AiChatViewProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function AiChatView({
-  title       = 'AI Conversation',
-  subtitle    = 'Private, confidential — your conversations are never shared',
-  privacyNote = 'Your conversations are end-to-end encrypted and never reviewed by humans.',
+  title       = 'Conversation IA',
+  subtitle    = 'Privé et confidentiel — vos conversations ne sont jamais partagées',
+  privacyNote = 'Vos conversations sont chiffrées de bout en bout et ne sont jamais consultées par des humains.',
 }: AiChatViewProps) {
 
   // ── Saved avatar ───────────────────────────────────────────────────────────
@@ -294,7 +294,7 @@ export function AiChatView({
     })
       .then(r => r.json())
       .then(data => {
-        const reply = data.reply ?? "I'm here with you — please continue.";
+        const reply = data.reply ?? "Je suis là pour vous — continuez, je vous écoute.";
         if (avatarRef.current) { try { avatarRef.current.speak(reply); } catch {} }
         const aiMsg: Message = { id: `voice-ai-${Date.now()}`, role: 'assistant', content: reply, timestamp: new Date().toISOString() };
         const withReply = [...messagesRef.current, aiMsg];
@@ -302,7 +302,7 @@ export function AiChatView({
         setMessages(withReply);
       })
       .catch(() => {
-        const errMsg: Message = { id: `voice-err-${Date.now()}`, role: 'assistant', content: '(Connection issue — please try again.)', timestamp: new Date().toISOString() };
+        const errMsg: Message = { id: `voice-err-${Date.now()}`, role: 'assistant', content: '(Problème de connexion — veuillez réessayer.)', timestamp: new Date().toISOString() };
         const withErr = [...messagesRef.current, errMsg];
         messagesRef.current = withErr;
         setMessages(withErr);
@@ -358,7 +358,7 @@ export function AiChatView({
       }
     } catch (err) {
       console.error('[AiChat] Claude error:', err);
-      text = "I'm here with you. Could you tell me a little more about what's on your mind?";
+      text = "Je suis là pour vous. Pourriez-vous m'en dire un peu plus sur ce qui vous préoccupe ?";
     }
 
     if (mode === 'video' && avatarRef.current) {
@@ -411,7 +411,7 @@ export function AiChatView({
               key={m.id}
               onClick={() => setMode(m.id)}
               aria-pressed={mode === m.id}
-              aria-label={`Switch to ${m.label} mode`}
+              aria-label={`Passer en mode ${m.label}`}
               className={`flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                 mode === m.id ? 'bg-brand text-white shadow-brand' : 'text-muted hover:text-text'
               }`}
@@ -425,10 +425,10 @@ export function AiChatView({
   }
 
   function AvatarStatusBadge() {
-    const map: Record<AvatarStatus, { label: string; color: string; icon: React.ReactNode }> = {
-      connecting: { label: 'Connecting…',      color: 'text-amber-400   border-amber-400/30   bg-amber-400/10   animate-pulse', icon: <WifiOff size={10} /> },
-      ready:      { label: 'Avatar Ready',     color: 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10',               icon: <Wifi     size={10} /> },
-      error:      { label: 'Connection Failed',color: 'text-red-400     border-red-400/30     bg-red-400/10',                  icon: <AlertTriangle size={10} /> },
+      const map: Record<AvatarStatus, { label: string; color: string; icon: React.ReactNode }> = {
+      connecting: { label: 'Connexion en cours…',  color: 'text-amber-400   border-amber-400/30   bg-amber-400/10   animate-pulse', icon: <WifiOff size={10} /> },
+      ready:      { label: 'Avatar prêt',          color: 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10',               icon: <Wifi     size={10} /> },
+      error:      { label: 'Connexion échouée',    color: 'text-red-400     border-red-400/30     bg-red-400/10',                  icon: <AlertTriangle size={10} /> },
     };
     const { label, color, icon } = map[avatarStatus];
     return (
@@ -454,8 +454,8 @@ export function AiChatView({
             <div className="relative w-full max-w-lg bg-surface border border-border rounded-3xl p-6 shadow-brand z-10 max-h-[80vh] overflow-y-auto scrollbar-thin">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="font-bold text-text text-lg">Speak with a real therapist</h2>
-                  <p className="text-xs text-muted mt-0.5">Matched to your profile · Response within 2h</p>
+                  <h2 className="font-bold text-text text-lg">Parler avec un vrai thérapeute</h2>
+                  <p className="text-xs text-muted mt-0.5">Correspondance à votre profil · Réponse sous 2h</p>
                 </div>
                 <button onClick={() => setShowExpertPanel(false)} className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center text-muted hover:text-text transition-colors">
                   <X size={14} />
@@ -490,7 +490,7 @@ export function AiChatView({
               </div>
 
               <Button className="w-full rounded-2xl py-3 shadow-brand" onClick={() => setShowExpertPanel(false)}>
-                Explore all therapists
+                Voir tous les thérapeutes
               </Button>
             </div>
           </motion.div>
@@ -547,7 +547,7 @@ export function AiChatView({
           {msg.role === 'assistant' && mode === 'audio' && !msg.audioUrl && loadingAudioId === msg.id && (
             <div className="flex items-center gap-1.5 mb-2 opacity-60">
               <Loader2 size={11} className="animate-spin" />
-              <span className="text-[10px]">Synthesising audio…</span>
+              <span className="text-[10px]">Synthèse audio en cours…</span>
             </div>
           )}
 
@@ -590,8 +590,8 @@ export function AiChatView({
           <div className="flex items-center gap-2">
             {mode === 'video' && <AvatarStatusBadge />}
             {!sessionEnded && (
-              <Button onClick={() => setSessionEnded(true)} variant="danger" size="sm" aria-label="End this session">
-                End Session
+              <Button onClick={() => setSessionEnded(true)} variant="danger" size="sm" aria-label="Terminer cette session">
+                Terminer
               </Button>
             )}
             <div className="hidden sm:block"><ModeSwitcher /></div>
@@ -608,13 +608,13 @@ export function AiChatView({
           <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center shadow-brand">
             <Check className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-serif text-text font-bold tracking-tight">Session Complete</h2>
+          <h2 className="text-2xl font-serif text-text font-bold tracking-tight">Session terminée</h2>
           <p className="text-muted text-sm max-w-sm leading-relaxed">
-            Your conversation was kept fully confidential and encrypted.
-            Take a moment to breathe and reflect on your progress today.
+            Votre conversation a été entièrement confidentielle et chiffrée.
+            Prenez un moment pour respirer et réfléchir à vos avancées d’aujourd’hui.
           </p>
           <div className="pt-4">
-            <Button onClick={resetSession} className="rounded-full px-8 py-5 text-sm">Begin New Session</Button>
+            <Button onClick={resetSession} className="rounded-full px-8 py-5 text-sm">Nouvelle session</Button>
           </div>
         </motion.div>
 
@@ -671,7 +671,7 @@ export function AiChatView({
                 </div>
               </div>
               <p className="text-sm font-semibold text-text">{avatarDisplayName || avatarConfig.name}</p>
-              <p className="text-xs text-muted">Audio session active</p>
+              <p className="text-xs text-muted">Session audio active</p>
             </motion.div>
           )}
 
@@ -691,7 +691,7 @@ export function AiChatView({
                   )}
                   <div className="glass rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin text-violet" />
-                    <span className="text-xs text-muted">Thinking…</span>
+                    <span className="text-xs text-muted">En train de réfléchir…</span>
                   </div>
                 </motion.div>
               )}
@@ -706,7 +706,7 @@ export function AiChatView({
             className="flex items-center gap-2 w-full mb-3 p-3 rounded-2xl border border-dashed border-violet/40 bg-violet/5 text-violet text-xs font-medium hover:bg-violet/10 hover:border-violet/60 transition-all duration-200"
           >
             <Users size={14} />
-            <span className="flex-1 text-left">I want to speak with someone</span>
+            <span className="flex-1 text-left">Je veux parler avec quelqu’un</span>
             <ChevronRight size={13} />
           </motion.button>
 
@@ -740,7 +740,7 @@ export function AiChatView({
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 flex-1">
                   <div className="w-2 h-2 rounded-full bg-red-500 animate-rec" />
-                  <span className="text-xs text-red-400 font-medium">Recording… {recFmt(recSeconds)}</span>
+                <span className="text-xs text-red-400 font-medium">Enregistrement… {recFmt(recSeconds)}</span>
                   {/* Live waveform bars during recording */}
                   <div className="flex items-end gap-0.5 h-5">
                     {Array.from({ length: 12 }).map((_, i) => (
@@ -787,7 +787,7 @@ export function AiChatView({
                 {mode === 'text' && (
                   <button
                     onClick={startRecording}
-                    title="Record voice note"
+                   title="Enregistrer une note vocale"
                     className="text-muted hover:text-violet transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-violet/10"
                   >
                     <Mic size={16} />

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { DistressRequestModal } from '@/components/features/DistressRequestModal';
 import { MOCK_EMOTION_ENTRIES, MOCK_RESOURCES } from '@/lib/mock-data';
 
-const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEK_DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 const MOOD_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   happy:    { icon: Smile,  color: 'text-emerald-400' },
@@ -46,9 +46,9 @@ const weekMood = buildWeekMood();
 const maxScore = 10;
 
 const QUICK_ACTIONS = [
-  { label: 'Start AI Session', href: '/employee/chat',      icon: MessageCircle, color: 'text-violet bg-violet/10',  desc: 'Talk to your AI companion' },
-  { label: 'Resources',        href: '/employee/resources', icon: BookOpen,       color: 'text-cyan   bg-cyan/10',    desc: 'Guides, articles & exercises' },
-  { label: 'My Progress',      href: '/employee/chat',      icon: TrendingUp,     color: 'text-emerald-400 bg-emerald-400/10', desc: 'Your wellbeing over time' },
+  { label: 'Démarrer une session IA', href: '/employee/chat',      icon: MessageCircle, color: 'text-violet bg-violet/10',  desc: 'Parlez à votre compagnon IA' },
+  { label: 'Ressources',             href: '/employee/resources', icon: BookOpen,       color: 'text-cyan   bg-cyan/10',    desc: 'Guides, articles & exercices' },
+  { label: 'Ma progression',         href: '/employee/chat',      icon: TrendingUp,     color: 'text-emerald-400 bg-emerald-400/10', desc: 'Votre bien-être dans le temps' },
 ];
 
 const featuredResource = MOCK_RESOURCES.find(r => r.isFeatured) ?? MOCK_RESOURCES[0];
@@ -66,8 +66,8 @@ export default function EmployeeDashboardPage() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-serif font-bold text-text">Good day 👋</h1>
-            <p className="text-sm text-muted mt-0.5">How are you feeling today? Your space is ready.</p>
+            <h1 className="text-2xl font-serif font-bold text-text">Bonjour 👋</h1>
+            <p className="text-sm text-muted mt-0.5">Comment vous sentez-vous aujourd’hui ? Votre espace est prêt.</p>
           </div>
           {/* Distress CTA — prominent but not alarming */}
           <button
@@ -75,7 +75,7 @@ export default function EmployeeDashboardPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-red-400/40 bg-red-400/5 text-red-400 text-xs font-medium hover:bg-red-400/10 hover:border-red-400/60 transition-all duration-200"
           >
             <AlertCircle size={13} />
-            I need support
+             J’ai besoin de soutien
           </button>
         </div>
       </motion.div>
@@ -105,11 +105,11 @@ export default function EmployeeDashboardPage() {
         <Card>
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="font-semibold text-text">Weekly Mood</h2>
-              <p className="text-xs text-muted mt-0.5">Your emotion intensity this week (1–10)</p>
+              <h2 className="font-semibold text-text">Humeur de la semaine</h2>
+              <p className="text-xs text-muted mt-0.5">Intensité de vos émotions cette semaine (1–10)</p>
             </div>
             <Link href="/employee/chat" className="text-xs text-violet hover:underline flex items-center gap-0.5">
-              Check in <ChevronRight size={12} />
+             Check in <ChevronRight size={12} />
             </Link>
           </div>
 
@@ -142,7 +142,7 @@ export default function EmployeeDashboardPage() {
           </div>
 
           <p className="text-xs text-muted mt-4 text-center">
-            Check in daily for a more accurate picture of your wellbeing trends.
+            Faites votre bilan quotidien pour une image plus précise de vos tendances de bien-être.
           </p>
         </Card>
       </motion.div>
@@ -172,7 +172,7 @@ export default function EmployeeDashboardPage() {
 
           {featuredResource.keyTakeaways && (
             <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-2">Key takeaways</p>
+              <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mb-2">Points clés</p>
               <ul className="space-y-1.5">
                 {featuredResource.keyTakeaways.slice(0, 2).map((k, i) => (
                   <li key={i} className="flex gap-2 text-xs text-muted">

@@ -6,10 +6,10 @@ import { Users, Building2, MessageSquare, CreditCard } from 'lucide-react';
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
-  { label: 'Users',          href: '/admin/users',          icon: Users },
-  { label: 'Companies',      href: '/admin/companies',      icon: Building2 },
-  { label: 'Conversations',  href: '/admin/conversations',  icon: MessageSquare },
-  { label: 'Plans',          href: '/admin/plans',          icon: CreditCard },
+  { label: 'Utilisateurs',  href: '/admin/users',          icon: Users },
+  { label: 'Entreprises',   href: '/admin/companies',      icon: Building2 },
+  { label: 'Conversations', href: '/admin/conversations',  icon: MessageSquare },
+  { label: 'Abonnements',   href: '/admin/plans',          icon: CreditCard },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

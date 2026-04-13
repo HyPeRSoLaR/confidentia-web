@@ -10,13 +10,13 @@ import { MessageCircle, BookOpen, Lightbulb, Smile, CreditCard, User, Users } fr
 import type { NavItem } from '@/components/layout/Sidebar';
 
 const NAV: NavItem[] = [
-  { label: 'AI Chat',      href: '/consumer/chat',       icon: MessageCircle },
-  { label: 'Marketplace',  href: '/consumer/therapists', icon: Users },
-  { label: 'Journal',      href: '/consumer/journal',    icon: BookOpen },
-  { label: 'Insights',     href: '/consumer/insights',   icon: Lightbulb },
-  { label: 'Check-in',     href: '/consumer/checkin',    icon: Smile },
-  { label: 'Plans',        href: '/consumer/pricing',    icon: CreditCard },
-  { label: 'Profile',      href: '/consumer/profile',    icon: User },
+  { label: 'Chat IA',       href: '/consumer/chat',       icon: MessageCircle },
+  { label: 'Thérapeutes',   href: '/consumer/therapists', icon: Users },
+  { label: 'Journal',       href: '/consumer/journal',    icon: BookOpen },
+  { label: 'Aperçus',       href: '/consumer/insights',   icon: Lightbulb },
+  { label: 'Bilan',         href: '/consumer/checkin',    icon: Smile },
+  { label: 'Abonnements',   href: '/consumer/pricing',    icon: CreditCard },
+  { label: 'Profil',        href: '/consumer/profile',    icon: User },
 ];
 
 export default function ConsumerLayout({ children }: { children: React.ReactNode }) {

@@ -18,19 +18,19 @@ const up      = Number(delta) >= 0;
 
 const STAT_CARDS = [
   {
-    label: 'Avg Well-being Score', value: latest.averageScore.toFixed(1) + '/10',
-    sub: `${up ? '▲' : '▼'} ${Math.abs(Number(delta))} vs last week`,
+    label: 'Score moyen de bien-être', value: latest.averageScore.toFixed(1) + '/10',
+    sub: `${up ? '▲' : '▼'} ${Math.abs(Number(delta))} vs semaine dernière`,
     icon: up ? TrendingUp : TrendingDown,
     color: up ? 'text-emerald-400' : 'text-coral',
     bg: up ? 'bg-emerald-500/10' : 'bg-coral/10',
   },
   {
-    label: 'Active Participants', value: latest.participantCount.toString(),
-    sub: 'This week', icon: Users, color: 'text-violet', bg: 'bg-violet/10',
+    label: 'Participants actifs', value: latest.participantCount.toString(),
+    sub: 'Cette semaine', icon: Users, color: 'text-violet', bg: 'bg-violet/10',
   },
   {
-    label: 'Dominant Emotion', value: latest.dominantEmotion,
-    sub: 'Organisation-wide', icon: Smile, color: 'text-cyan', bg: 'bg-cyan/10',
+    label: 'Émotion dominante', value: latest.dominantEmotion,
+    sub: 'Au niveau de l’organisation', icon: Smile, color: 'text-cyan', bg: 'bg-cyan/10',
   },
 ];
 
@@ -52,8 +52,8 @@ export default function HRAnalyticsPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="Well-being Analytics"
-        subtitle="Anonymized org-wide trends — individual data is never shown"
+        title="Analytiques Bien-être"
+        subtitle="Tendances anonymisées à l’échelle de l’org — les données individuelles ne sont jamais affichées"
         actions={<Badge variant="success">🔒 k-anon ≥ 5</Badge>}
       />
 
@@ -84,7 +84,7 @@ export default function HRAnalyticsPage() {
       <StaggerList className="space-y-5">
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-text mb-4">Well-being Score Trend</h3>
+            <h3 className="font-semibold text-text mb-4">Évolution du score de bien-être</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={MOCK_WELLBEING_TRENDS}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
@@ -105,7 +105,7 @@ export default function HRAnalyticsPage() {
 
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-text mb-4">Weekly Participants</h3>
+            <h3 className="font-semibold text-text mb-4">Participants hebdomadaires</h3>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={MOCK_WELLBEING_TRENDS}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />

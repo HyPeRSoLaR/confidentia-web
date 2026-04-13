@@ -2,12 +2,9 @@
 /**
  * components/features/DistressRequestModal.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Employee emotional distress request — non-anonymous, voluntary.
- * Employee explicitly consents and writes exactly what HR will see.
- * GDPR-compliant: employee owns the disclosure, gives explicit consent.
- *
- * On submit, the request is persisted to localStorage so HR managers
- * can see it live in the /hr/distress page (no backend required for demo).
+ * Demande de soutien émotionnel employé — non-anonyme, volontaire.
+ * L'employé consent explicitement et rédige exactement ce que verra les RH.
+ * Conforme RGPD : l'employé possède la divulgation, donne son consentement explicite.
  */
 
 import { useState } from 'react';
@@ -29,44 +26,44 @@ const CATEGORIES: { id: DistressCategory; emoji: string; label: string; example:
   {
     id:      'wellbeing',
     emoji:   '😔',
-    label:   "I'm not feeling well",
-    example: 'I need mental health support',
+    label:   'Je ne me sens pas bien',
+    example: "J'ai besoin d'un soutien en santé mentale",
   },
   {
     id:      'time_off',
     emoji:   '🏖',
-    label:   'I need time off',
-    example: 'A day or half-day for personal wellbeing',
+    label:   "J'ai besoin de congé",
+    example: 'Une journée ou demi-journée pour le bien-être personnel',
   },
   {
     id:      'speak_hr',
     emoji:   '💬',
-    label:   "I'd like to speak with HR",
-    example: "About something personal I'd prefer not to write",
+    label:   "Je souhaite échanger avec les RH",
+    example: "À propos de quelque chose de personnel que je préfère ne pas écrire",
   },
   {
     id:      'overload',
     emoji:   '⚡',
-    label:   "I'm experiencing overload",
-    example: 'I need help prioritising my workload',
+    label:   "Je suis en surcharge",
+    example: "J'ai besoin d'aide pour prioriser ma charge de travail",
   },
   {
     id:      'urgent',
     emoji:   '🚨',
-    label:   'I need urgent support',
-    example: 'This situation requires immediate attention',
+    label:   "J'ai besoin d'aide urgente",
+    example: 'Cette situation nécessite une attention immédiate',
   },
   {
     id:      'other',
     emoji:   '✍️',
-    label:   'Something else',
-    example: "I'll describe it below",
+    label:   'Autre chose',
+    example: "Je vais le décrire ci-dessous",
   },
 ];
 
 const MAX_NOTE = 300;
 
-export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR manager' }: DistressRequestModalProps) {
+export function DistressRequestModal({ open, onClose, hrManagerName = 'votre responsable RH' }: DistressRequestModalProps) {
   const [step,     setStep]     = useState<'form' | 'confirm' | 'sent'>('form');
   const [category, setCategory] = useState<DistressCategory | null>(null);
   const [note,     setNote]     = useState('');
@@ -85,16 +82,14 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
     if (!category) return;
     setLoading(true);
 
-    // Get current session user for the request payload
     const session = getSession();
     const user    = session.user;
 
     await new Promise(r => setTimeout(r, 1200));
 
-    // Persist to localStorage so HR can see it immediately
     submitDistressRequest({
       employeeId:    user?.id    ?? 'demo-employee',
-      employeeName:  user?.name  ?? 'Demo Employee',
+      employeeName:  user?.name  ?? 'Employé Démo',
       employeeEmail: user?.email ?? 'demo@employee.com',
       category,
       note: note.trim() || undefined,
@@ -126,15 +121,15 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
             className="relative w-full max-w-md bg-surface border border-border rounded-3xl shadow-brand z-10"
           >
 
-            {/* Header */}
+            {/* En-tête */}
             <div className="flex items-start justify-between p-6 pb-0">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Heart size={16} className="text-red-400" />
-                  <h2 className="font-bold text-text">Request support</h2>
+                  <h2 className="font-bold text-text">Demander de l&apos;aide</h2>
                 </div>
                 <p className="text-xs text-muted">
-                  This will be sent with your name to {hrManagerName}.
+                  Ceci sera envoyé avec votre nom à {hrManagerName}.
                 </p>
               </div>
               <button
@@ -147,12 +142,12 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
 
             <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
 
-              {/* ── FORM step ── */}
+              {/* ── Formulaire ── */}
               {step === 'form' && (
                 <>
-                  {/* Category selection */}
+                  {/* Sélection catégorie */}
                   <div>
-                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">What do you need?</p>
+                    <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">De quoi avez-vous besoin ?</p>
                     <div className="grid grid-cols-2 gap-2">
                       {CATEGORIES.map(cat => (
                         <button
@@ -174,10 +169,10 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                     </div>
                   </div>
 
-                  {/* Optional note */}
+                  {/* Note optionnelle */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-xs font-semibold text-muted uppercase tracking-wider">Add a note <span className="normal-case font-normal">(optional)</span></p>
+                      <p className="text-xs font-semibold text-muted uppercase tracking-wider">Ajouter une note <span className="normal-case font-normal">(optionnel)</span></p>
                       <span className={`text-[10px] ${note.length > MAX_NOTE * 0.8 ? 'text-amber-400' : 'text-muted'}`}>
                         {note.length}/{MAX_NOTE}
                       </span>
@@ -185,13 +180,13 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                     <textarea
                       value={note}
                       onChange={e => setNote(e.target.value.slice(0, MAX_NOTE))}
-                      placeholder="Describe what's happening in your own words. This is exactly what HR will see."
+                      placeholder="Décrivez ce qui se passe avec vos propres mots. C'est exactement ce que les RH verront."
                       rows={3}
                       className="w-full bg-panel border border-border rounded-xl px-3 py-2.5 text-sm text-text placeholder:text-muted/50 outline-none focus:border-red-400/50 resize-none transition-colors"
                     />
                   </div>
 
-                  {/* Consent checkbox */}
+                  {/* Consentement */}
                   <label className="flex items-start gap-3 p-3 bg-red-400/5 border border-red-400/20 rounded-xl cursor-pointer">
                     <div
                       onClick={() => setConsent(c => !c)}
@@ -202,8 +197,8 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                       {consent && <Check size={9} className="text-white" strokeWidth={3} />}
                     </div>
                     <p className="text-xs text-muted leading-relaxed">
-                      I understand this request will be sent with <strong className="text-text">my name</strong> to {hrManagerName}.
-                      My note will be shown verbatim. I am sharing this voluntarily.
+                      Je comprends que cette demande sera envoyée avec <strong className="text-text">mon nom</strong> à {hrManagerName}.
+                      Ma note sera affichée telle quelle. Je partage ceci volontairement.
                     </p>
                   </label>
 
@@ -212,16 +207,16 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                     disabled={!category || !consent}
                     className="w-full rounded-2xl py-3 bg-red-500 hover:bg-red-600 text-white border-0 shadow-none"
                   >
-                    Review &amp; Send
+                    Vérifier &amp; Envoyer
                   </Button>
                 </>
               )}
 
-              {/* ── CONFIRM step ── */}
+              {/* ── Confirmation ── */}
               {step === 'confirm' && (
                 <>
                   <div className="bg-panel border border-border rounded-2xl p-4 space-y-3">
-                    <p className="text-xs font-semibold text-muted uppercase tracking-wider">What HR will see</p>
+                    <p className="text-xs font-semibold text-muted uppercase tracking-wider">Ce que les RH verront</p>
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{chosen?.emoji}</span>
                       <div>
@@ -234,26 +229,26 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                   <div className="flex items-start gap-2 p-3 bg-amber-400/5 border border-amber-400/20 rounded-xl">
                     <AlertCircle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-muted">
-                      This cannot be undone. {hrManagerName} will be notified and may reach out to you directly.
+                      Cela ne peut pas être annulé. {hrManagerName} sera notifié(e) et pourra vous contacter directement.
                     </p>
                   </div>
 
                   <div className="flex gap-3">
                     <Button variant="secondary" onClick={() => setStep('form')} className="flex-1 rounded-2xl">
-                      Edit
+                      Modifier
                     </Button>
                     <Button
                       loading={loading}
                       onClick={submit}
                       className="flex-1 rounded-2xl bg-red-500 hover:bg-red-600 text-white border-0 shadow-none"
                     >
-                      Send to HR
+                      Envoyer aux RH
                     </Button>
                   </div>
                 </>
               )}
 
-              {/* ── SENT ── */}
+              {/* ── Envoyé ── */}
               {step === 'sent' && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -264,14 +259,14 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                     <Check size={24} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-text mb-1">Request sent</h3>
+                    <h3 className="font-bold text-text mb-1">Demande envoyée</h3>
                     <p className="text-sm text-muted leading-relaxed">
-                      {hrManagerName} has been notified. They will typically respond within 24 hours.
-                      You've done the right thing by reaching out.
+                      {hrManagerName} a été notifié(e). Il ou elle vous répondra généralement dans les 24 heures.
+                      Vous avez bien fait de vous manifester.
                     </p>
                   </div>
                   <Button onClick={handleClose} className="rounded-2xl px-8">
-                    Close
+                    Fermer
                   </Button>
                 </motion.div>
               )}

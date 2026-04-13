@@ -12,11 +12,11 @@ import { AVATARS, PERSONA_META, saveAvatarPrefs } from '@/lib/avatar-config';
 import type { AvatarPersona } from '@/lib/avatar-config';
 
 const USAGE_CONTEXTS = [
-  { id: 'stress',     label: 'Work Overload',   icon: Coffee,      desc: 'Feeling overwhelmed by daily tasks and professional pressure.' },
-  { id: 'anxiety',   label: 'Anxiety',          icon: HeartPulse,  desc: 'Racing thoughts, chest tightness, or generalized worry.' },
-  { id: 'loneliness',label: 'Loneliness',        icon: CloudRain,   desc: 'Feeling isolated, disconnected, or lacking a support system.' },
-  { id: 'sleep',     label: 'Nighttime Anxiety', icon: Moon,        desc: 'Difficulty falling asleep due to racing thoughts.' },
-  { id: 'burnout',   label: 'Early Burnout',     icon: BrainCircuit,desc: 'Emotional exhaustion and cynicism towards work or life.' },
+  { id: 'stress',      label: 'Surcharge de travail',  icon: Coffee,       desc: 'Se sentir submergé par les tâches quotidiennes et la pression professionnelle.' },
+  { id: 'anxiety',    label: 'Anxiété',                icon: HeartPulse,   desc: 'Pensées accélérées, oppression thoracique ou inquiétude généralisée.' },
+  { id: 'loneliness', label: 'Solitude',               icon: CloudRain,    desc: 'Se sentir isolé, déconnecté ou sans système de soutien.' },
+  { id: 'sleep',      label: 'Anxiété nocturne',       icon: Moon,         desc: 'Difficultés à s\'endormir à cause de pensées envahissantes.' },
+  { id: 'burnout',    label: 'Burn-out précoce',       icon: BrainCircuit, desc: 'Épuisement émotionnel et cynisme vis-à-vis du travail ou de la vie.' },
 ];
 
 const TOTAL_STEPS = 5;
@@ -36,7 +36,6 @@ export default function OnboardingPage() {
 
   const completeOnboarding = async () => {
     setLoading(true);
-    // Persist avatar preferences
     saveAvatarPrefs(selectedAvatar, avatarName, selectedPersona);
     await new Promise(r => setTimeout(r, 1200));
     router.push('/consumer/chat');
@@ -67,33 +66,33 @@ export default function OnboardingPage() {
 
         <AnimatePresence mode="wait">
 
-          {/* ── STEP 1: Welcome ── */}
+          {/* ── ÉTAPE 1 : Bienvenue ── */}
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
               <div className="w-20 h-20 bg-brand rounded-3xl mx-auto flex items-center justify-center mb-8 rotate-12 shadow-brand">
                 <ShieldCheck className="w-10 h-10 text-white -rotate-12" />
               </div>
               <h1 className="text-4xl font-serif font-bold text-text mb-4 tracking-tight">
-                A Safe Space,<br />Just for You.
+                Un espace sûr,<br />rien que pour vous.
               </h1>
               <p className="text-muted text-lg mb-10 leading-relaxed">
-                Confidentia provides an instant, photorealistic human connection.
-                100% confidential, available 24/7, and entirely free of judgment.
+                Confidentia vous offre une connexion humaine instantanée et photoréaliste.
+                100% confidentiel, disponible 24h/24 et totalement sans jugement.
               </p>
               <Button onClick={handleNext} className="w-full rounded-2xl py-6 text-base shadow-brand group">
-                Begin Your Journey
+                Commencer votre parcours
                 <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </motion.div>
           )}
 
-          {/* ── STEP 2: Usage context ── */}
+          {/* ── ÉTAPE 2 : Contexte ── */}
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-serif font-bold text-text mb-2">What brings you here?</h2>
+                <h2 className="text-3xl font-serif font-bold text-text mb-2">Qu&apos;est-ce qui vous amène ?</h2>
                 <p className="text-muted text-sm leading-relaxed">
-                  Select the area you'd like to focus on. We'll tailor your AI companion's approach to your needs.
+                  Sélectionnez le domaine sur lequel vous souhaitez vous concentrer. Nous adapterons l&apos;approche de votre compagnon IA à vos besoins.
                 </p>
               </div>
               <div className="grid gap-3 mb-8">
@@ -120,23 +119,23 @@ export default function OnboardingPage() {
                 })}
               </div>
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Back</Button>
-                <Button onClick={handleNext} disabled={!selectedContext} className="flex-1 rounded-2xl py-3 text-base shadow-brand">Continue</Button>
+                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
+                <Button onClick={handleNext} disabled={!selectedContext} className="flex-1 rounded-2xl py-3 text-base shadow-brand">Continuer</Button>
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP 3: Avatar choice ── */}
+          {/* ── ÉTAPE 3 : Choix de l'avatar ── */}
           {step === 3 && (
             <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
-                <h2 className="text-3xl font-serif font-bold text-text mb-2">Choose your companion</h2>
+                <h2 className="text-3xl font-serif font-bold text-text mb-2">Choisissez votre compagnon</h2>
                 <p className="text-muted text-sm leading-relaxed">
-                  This is who you'll speak with. You can change them anytime.
+                  C&apos;est avec lui que vous allez parler. Vous pouvez le changer à tout moment.
                 </p>
               </div>
 
-              {/* 2×4 avatar grid */}
+              {/* Grille 2×4 avatars */}
               <div className="grid grid-cols-4 gap-3 mb-5">
                 {AVATARS.map(av => {
                   const active = selectedAvatar === av.id;
@@ -162,7 +161,7 @@ export default function OnboardingPage() {
                 })}
               </div>
 
-              {/* Selected companion preview + optional name */}
+              {/* Prévisualisation compagnon + nom optionnel */}
               <div className="glass p-4 rounded-2xl flex items-center gap-4 mb-6">
                 <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -174,7 +173,7 @@ export default function OnboardingPage() {
                       onChange={e => setAvatarName(e.target.value.slice(0, 24))}
                       onBlur={() => setEditingName(false)}
                       onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
-                      placeholder={`Custom name (default: ${chosenAvatar.name})`}
+                      placeholder={`Nom personnalisé (défaut : ${chosenAvatar.name})`}
                       className="w-full bg-transparent text-text text-sm outline-none border-b border-violet pb-0.5 placeholder:text-muted/50"
                     />
                   ) : (
@@ -191,21 +190,21 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Back</Button>
-                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continue</Button>
+                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
+                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continuer</Button>
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP 4: Personality / Behaviour ── */}
+          {/* ── ÉTAPE 4 : Personnalité ── */}
           {step === 4 && (
             <motion.div key="step4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
                 <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">
-                  How should {avatarName || chosenAvatar.name} approach you?
+                  Comment {avatarName || chosenAvatar.name} doit-il vous aborder ?
                 </h2>
-                <p className="text-muted text-sm">Choose the personality style that resonates most.</p>
+                <p className="text-muted text-sm">Choisissez le style de personnalité qui vous correspond le mieux.</p>
               </div>
 
               <div className="grid gap-3 mb-8">
@@ -231,58 +230,58 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Back</Button>
-                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continue</Button>
+                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
+                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continuer</Button>
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP 5: Privacy consent ── */}
+          {/* ── ÉTAPE 5 : Consentement confidentialité ── */}
           {step === 5 && (
             <motion.div key="step5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
               <div className="w-16 h-16 bg-surface border border-border rounded-2xl mx-auto flex items-center justify-center mb-6">
                 <Lock className="w-8 h-8 text-violet" />
               </div>
-              <h2 className="text-3xl font-serif font-bold text-text mb-4">Your Data is Sacred</h2>
+              <h2 className="text-3xl font-serif font-bold text-text mb-4">Vos Données sont Sacrées</h2>
 
               <div className="bg-surface border border-border rounded-2xl p-6 text-left space-y-4 mb-8">
                 <div className="flex gap-3">
                   <ShieldCheck className="w-5 h-5 text-cyan shrink-0 mt-0.5" />
                   <p className="text-sm text-muted">
-                    <strong className="text-text font-medium">End-to-End Encryption:</strong>{' '}
-                    Your conversations are secured using AES-256 military-grade encryption.
+                    <strong className="text-text font-medium">Chiffrement de bout en bout :</strong>{' '}
+                    Vos conversations sont sécurisées avec un chiffrement militaire AES-256.
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <ShieldCheck className="w-5 h-5 text-pink shrink-0 mt-0.5" />
                   <p className="text-sm text-muted">
-                    <strong className="text-text font-medium">Memory Control:</strong>{' '}
-                    You own your data. Erase the AI's memory at any time with one click.
+                    <strong className="text-text font-medium">Contrôle de la mémoire :</strong>{' '}
+                    Vous possédez vos données. Effacez la mémoire de l&apos;IA à tout moment en un clic.
                   </p>
                 </div>
                 <div className="flex gap-3">
                   <ShieldCheck className="w-5 h-5 text-coral shrink-0 mt-0.5" />
                   <p className="text-sm text-muted">
-                    <strong className="text-text font-medium">Therapeutic Handoff:</strong>{' '}
-                    We detect crisis signals securely and can connect you to a human professional if needed.
+                    <strong className="text-text font-medium">Transfert thérapeute :</strong>{' '}
+                    Nous détectons les signaux de crise et pouvons vous connecter à un professionnel humain si nécessaire.
                   </p>
                 </div>
               </div>
 
-              {/* Summary of choices */}
+              {/* Récapitulatif des choix */}
               <div className="glass p-4 rounded-2xl flex items-center gap-3 mb-6 text-left">
                 <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-text">{avatarName || chosenAvatar.name} · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
-                  <p className="text-xs text-muted">Your AI companion is ready</p>
+                  <p className="text-xs text-muted">Votre compagnon IA est prêt</p>
                 </div>
               </div>
 
               <Button onClick={completeOnboarding} loading={loading} className="w-full rounded-2xl py-4 text-base shadow-brand group">
-                I Accept &amp; Start Free Session
+                J&apos;accepte &amp; Commencer ma session gratuite
               </Button>
               <button onClick={handleBack} className="mt-4 text-sm text-muted hover:text-text transition-colors">
-                Go back
+                Retour
               </button>
             </motion.div>
           )}
