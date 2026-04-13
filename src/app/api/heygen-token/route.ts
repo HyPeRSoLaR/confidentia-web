@@ -1,47 +1,32 @@
 import { NextResponse } from 'next/server';
 
 /**
- * LiveAvatar session token endpoint (replaces the deprecated HeyGen Streaming API).
+ * LiveAvatar session token endpoint — ElevenLabs LITE mode
+ * ─────────────────────────────────────────────────────────────────────────────
+ * LITE mode: ElevenLabs Conversational AI handles the full voice pipeline
+ *   (VAD → STT → LLM → TTS) and sends audio to HeyGen for lip-sync only.
  *
- * HeyGen's /v1/streaming.* API was sunset on March 31 2026.
- * The successor is the LiveAvatar platform (api.liveavatar.com).
+ * This gives us a NATIVE FRENCH voice — the ElevenLabs agent "Aria - Confidentia FR"
+ * is configured with a French voice and a French system prompt.
  *
- * Avatar chosen:  Judy Doctor Standing  (0f563214-1cb5-4dc0-a2f9-43f44e5e6b57)
- *   → warm, professional female avatar with a medical/counselor look
- *
- * Voice: Judy - Professional (4f3b1e99-b580-4f05-9b67-a5f585be0232)
- *   → LiveAvatar preset voice (only /v1/voices IDs are accepted by sessions/start).
- *   → General HeyGen voice library IDs (/v3/voices) are REJECTED at sessions/start
- *     with "Errors validating session token" — confirmed via browser debug.
- *
- * ⚠ IMPORTANT CONSTRAINT: LiveAvatar FULL mode only accepts voice IDs from its own
- *   preset library (/v1/voices). All presets are tagged "en" but the LLM context
- *   forces French output — the TTS synthesises whatever text the LLM generates.
- *   French voices from /v3/voices are NOT compatible with LiveAvatar sessions.
- *
- * LiveAvatar preset female voices (all tagged "en" but support multilingual TTS):
- *   • Judy - Professional      4f3b1e99-b580-4f05-9b67-a5f585be0232  ← ACTIVE
- *   • Marianne - IA            8a504f9b-95dd-42d4-8b0c-edc2567b6382  (French name)
- *   • June - Lifelike          62bbb4b2-bb26-4727-bc87-cfb2bd4e0cc8
- *   • Elenora - Professional   254ffe1e-c89f-430f-8c36-9e7611d310c0
- *   • Amina - IA               e948b062-7dce-4f2b-bcf6-98bd3511106b
- *
- * ── ElevenLabs LITE mode integration (future build) ─────────────────────────
- * For REAL native French TTS, use LITE mode where ElevenLabs handles audio.
  * Architecture:
- *   1. Register ElevenLabs API key at POST /v1/secrets → get secret_id
- *   2. Create an ElevenLabs Conversational AI agent (PCM 24000 Hz audio format)
- *   3. Pass { eleven_labs_config: { secret_id, agent_id } } in the session body
- *   4. Session mode becomes 'LITE' — ElevenLabs drives voice, HeyGen drives video
- * See: https://elevenlabs.io/docs/conversational-ai/guides/conversational-ai-with-heygen
+ *   Browser mic → LiveKit (HeyGen) → ElevenLabs Agent → TTS audio → HeyGen lip-sync → Browser
+ *
+ * Setup completed:
+ *   1. ✅ ElevenLabs API key "Confidentia LITE 2" (user_read + convai_read + voices_read + TTS)
+ *   2. ✅ ElevenLabs agent "Aria - Confidentia FR" (agent_6001kp3x42wse7e96gxgb06w8w9x)
+ *   3. ✅ Key registered with LiveAvatar secrets → secret_id in ELEVEN_LABS_SECRET_ID env var
+ *
+ * Avatar: Judy Doctor Standing (0f563214-1cb5-4dc0-a2f9-43f44e5e6b57)
+ *
+ * FULL mode fallback (used if LITE env vars are missing):
+ *   Voice: Judy - Professional (4f3b1e99-b580-4f05-9b67-a5f585be0232)
+ *   Language: fr (LLM context forces French output)
  */
 
-const LIVEAVATAR_API = 'https://api.liveavatar.com/v1';
-
-// The avatar and voice used for the Aria counselor persona
-const AVATAR_ID = '0f563214-1cb5-4dc0-a2f9-43f44e5e6b57'; // Judy Doctor Standing
-// Judy - Professional: confirmed-working LiveAvatar preset voice
-const VOICE_ID  = '4f3b1e99-b580-4f05-9b67-a5f585be0232';
+const LIVEAVATAR_API    = 'https://api.liveavatar.com/v1';
+const AVATAR_ID         = '0f563214-1cb5-4dc0-a2f9-43f44e5e6b57'; // Judy Doctor Standing
+const FALLBACK_VOICE_ID = '4f3b1e99-b580-4f05-9b67-a5f585be0232'; // Judy - Professional
 
 const ARIA_CONTEXT = `Tu es Aria, une conseillère en santé mentale IA chaleureuse et empathique travaillant pour Confidentia — une plateforme confidentielle de bien-être mental.
 
@@ -60,7 +45,10 @@ Ton rôle :
 Commence par accueillir l'utilisateur chaleureusement en français et l'inviter à partager ce qui l'amène aujourd'hui.`;
 
 export async function POST() {
-  const apiKey = process.env.LIVEAVATAR_API_KEY;
+  const apiKey         = process.env.LIVEAVATAR_API_KEY;
+  const elevenSecretId = process.env.ELEVEN_LABS_SECRET_ID; // b5a5e2e9-b29f-4c36-9eec-97df2977a0fe
+  const elevenAgentId  = process.env.ELEVEN_LABS_AGENT_ID;  // agent_6001kp3x42wse7e96gxgb06w8w9x
+
   if (!apiKey) {
     return NextResponse.json(
       { error: 'Missing LIVEAVATAR_API_KEY in environment variables' },
@@ -68,41 +56,55 @@ export async function POST() {
     );
   }
 
+  const useLiteMode = !!(elevenSecretId && elevenAgentId);
+  console.log(`[LiveAvatar] Mode: ${useLiteMode ? 'LITE (ElevenLabs)' : 'FULL (fallback)'}`);
+
   try {
-    // Step 1: Create a context (system prompt) for the AI
-    // We create a new context each session so the persona is always fresh.
-    // In production you would pre-create and cache the context_id.
-    let contextId: string | undefined;
-    try {
-      const ctxRes = await fetch(`${LIVEAVATAR_API}/contexts`, {
-        method: 'POST',
-        headers: {
-          'X-API-KEY':    apiKey,
-          'Content-Type': 'application/json',
-          'accept':       'application/json',
+    let body: Record<string, unknown>;
+
+    if (useLiteMode) {
+      // ── LITE mode: ElevenLabs drives voice, HeyGen drives video lip-sync ──
+      body = {
+        mode:      'LITE',
+        avatar_id: AVATAR_ID,
+        eleven_labs_config: {
+          secret_id: elevenSecretId,
+          agent_id:  elevenAgentId,
         },
-        body: JSON.stringify({ text: ARIA_CONTEXT, name: 'Aria Counselor Persona' }),
-      });
-      if (ctxRes.ok) {
-        const ctxData = await ctxRes.json();
-        contextId = ctxData?.data?.id ?? ctxData?.id;
+      };
+    } else {
+      // ── FULL mode fallback: HeyGen handles entire AI pipeline ─────────────
+      let contextId: string | undefined;
+      try {
+        const ctxRes = await fetch(`${LIVEAVATAR_API}/contexts`, {
+          method: 'POST',
+          headers: {
+            'X-API-KEY':    apiKey,
+            'Content-Type': 'application/json',
+            'accept':       'application/json',
+          },
+          body: JSON.stringify({ text: ARIA_CONTEXT, name: 'Aria Counselor Persona' }),
+        });
+        if (ctxRes.ok) {
+          const ctxData = await ctxRes.json();
+          contextId = ctxData?.data?.id ?? ctxData?.id;
+        }
+      } catch {
+        console.warn('[LiveAvatar] Failed to create context, proceeding without it');
       }
-    } catch {
-      // Context creation is best-effort — the session will still work without it
-      console.warn('[LiveAvatar] Failed to create context, proceeding without it');
+
+      body = {
+        mode:      'FULL',
+        avatar_id: AVATAR_ID,
+        avatar_persona: {
+          voice_id: FALLBACK_VOICE_ID,
+          language: 'fr',
+          ...(contextId ? { context_id: contextId } : {}),
+        },
+      };
     }
 
-    // Step 2: Create a session token (FULL mode — avatar handles entire AI pipeline)
-    const body: Record<string, unknown> = {
-      mode:      'FULL',
-      avatar_id: AVATAR_ID,
-      avatar_persona: {
-        voice_id: VOICE_ID,
-        language: 'fr',
-        ...(contextId ? { context_id: contextId } : {}),
-      },
-    };
-
+    // ── Create session token ─────────────────────────────────────────────────
     const tokenRes = await fetch(`${LIVEAVATAR_API}/sessions/token`, {
       method:  'POST',
       headers: {
@@ -122,8 +124,7 @@ export async function POST() {
       );
     }
 
-    const data = await tokenRes.json();
-    // The token is in data.data.session_token or data.session_token
+    const data  = await tokenRes.json();
     const token = data?.data?.session_token ?? data?.session_token;
     if (!token) {
       return NextResponse.json(
@@ -132,7 +133,7 @@ export async function POST() {
       );
     }
 
-    return NextResponse.json({ token });
+    return NextResponse.json({ token, mode: useLiteMode ? 'LITE' : 'FULL' });
   } catch (error: any) {
     console.error('[LiveAvatar] Unexpected error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
