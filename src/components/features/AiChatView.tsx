@@ -90,14 +90,12 @@ export function AiChatView({
 }: AiChatViewProps) {
 
   // ── State ──────────────────────────────────────────────────────────────────
+
+  // Stable ref to latest messages — must be declared BEFORE useState that reads it
+  const messagesRef = useRef<Message[]>([...INITIAL_MESSAGES]);
+
   const [mode,           setMode]          = useState<ConversationMode>('text');
-  // Spread to avoid sharing a reference with the module-level array.
-  // Initialize with a function so messagesRef is always in sync.
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const init = [...INITIAL_MESSAGES];
-    messagesRef.current = init;
-    return init;
-  });
+  const [messages,       setMessages]      = useState<Message[]>([...INITIAL_MESSAGES]);
   const [input,          setInput]         = useState('');
   const [loading,        setLoading]       = useState(false);
   const [sessionEnded,   setSessionEnded]  = useState(false);
@@ -106,9 +104,8 @@ export function AiChatView({
   // Banner: false initially to avoid SSR mismatch; set from localStorage in effect
   const [bannerVisible,  setBannerVisible]  = useState(false);
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
-
-  // Stable ref to latest messages — avoids stale closure in voice callback
-  const messagesRef = useRef<Message[]>([...INITIAL_MESSAGES]);
+  // Pending voice text triggers the Claude→avatar pipeline via useEffect
+  const [pendingVoice,   setPendingVoice]  = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<InteractiveAvatarRef>(null);
@@ -143,79 +140,86 @@ export function AiChatView({
 
   /**
    * Called by InteractiveAvatar when the user finishes a voice utterance.
-   * We add their spoken words as a user message bubble so the conversation
-   * log shows what they said.
+   * ── Hybrid voice pipeline ───────────────────────────────────────────────
+   * Pattern: simple sync callback sets pendingVoice state; a useEffect
+   * picks it up and does the async Claude call. This avoids stale-closure
+   * bugs that silently swallow async errors on mobile browsers.
    */
-  /**
-   * Called by InteractiveAvatar when the user finishes a voice utterance.
-   * ─── Hybrid voice pipeline ───────────────────────────────────────────────
-   * We DON'T rely on HeyGen's autonomous LLM (no guaranteed active agent).
-   * Instead we:
-   *   1. Add the user transcript as a chat bubble
-   *   2. Call Claude via /api/chat with full conversation history
-   *   3. Push Claude's reply directly into the avatar via speak()
-   * This mirrors exactly how the typed-text video mode works.
-   */
-  const handleVoiceTranscript = useCallback(async (text: string) => {
+  const handleVoiceTranscript = useCallback((text: string) => {
     const userMsg: Message = {
       id:        `voice-user-${Date.now()}`,
       role:      'user',
       content:   text,
       timestamp: new Date().toISOString(),
     };
-
-    // Update state AND ref atomically
     const updated = [...messagesRef.current, userMsg];
     messagesRef.current = updated;
     setMessages(updated);
-
-    // ── Call Claude and make the avatar speak the reply ─────────────────
-    const msgId = `voice-ai-${Date.now() + 1}`;
-    setLoading(true);
-    try {
-      const history = updated
-        .filter(m => m.id !== 'init-1' && (m.role === 'user' || m.role === 'assistant'))
-        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-      const firstUser = history.findIndex(m => m.role === 'user');
-      const trimmed   = firstUser >= 0 ? history.slice(firstUser) : history;
-
-      const res  = await fetch('/api/chat', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ messages: trimmed }),
-      });
-      const data  = await res.json();
-      const reply = data.reply ?? "I'm here with you — please continue.";
-
-      // Make avatar speak the Claude reply (session.message = direct TTS on avatar)
-      if (avatarRef.current) {
-        try { avatarRef.current.speak(reply); } catch (e) { console.warn('[AiChat] avatar speak error', e); }
-      }
-
-      const aiMsg: Message = {
-        id:        msgId,
-        role:      'assistant',
-        content:   reply,
-        timestamp: new Date().toISOString(),
-      };
-      const withReply = [...messagesRef.current, aiMsg];
-      messagesRef.current = withReply;
-      setMessages(withReply);
-    } catch (err) {
-      console.error('[AiChat] Voice Claude error:', err);
-    } finally {
-      setLoading(false);
-    }
+    setPendingVoice(text);
   }, []);
 
   /**
-   * Called by InteractiveAvatar when the avatar finishes speaking.
-   * (Transcript is now managed above via handleVoiceTranscript.)
+   * Hybrid voice effect: when pendingVoice is set (user just spoke),
+   * call Claude with full history then make the avatar speak the reply.
    */
-  const handleAvatarResponse = useCallback((_text: string) => {
-    // No-op — avatar responses are added to the chat in handleVoiceTranscript above.
-    // Kept to avoid breaking the prop contract.
-  }, []);
+  useEffect(() => {
+    if (!pendingVoice) return;
+    setPendingVoice(null); // Clear immediately to avoid double-fire
+
+    const currentMessages = messagesRef.current;
+    setLoading(true);
+
+    const history = currentMessages
+      .filter(m => m.id !== 'init-1' && (m.role === 'user' || m.role === 'assistant'))
+      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    const firstUser = history.findIndex(m => m.role === 'user');
+    const trimmed   = firstUser >= 0 ? history.slice(firstUser) : history;
+
+    fetch('/api/chat', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ messages: trimmed }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const reply = data.reply ?? "I'm here with you — please continue.";
+
+        // Make avatar speak the Claude reply
+        if (avatarRef.current) {
+          try { avatarRef.current.speak(reply); } catch (e) {
+            console.warn('[AiChat] avatar speak error', e);
+          }
+        }
+
+        const aiMsg: Message = {
+          id:        `voice-ai-${Date.now()}`,
+          role:      'assistant',
+          content:   reply,
+          timestamp: new Date().toISOString(),
+        };
+        const withReply = [...messagesRef.current, aiMsg];
+        messagesRef.current = withReply;
+        setMessages(withReply);
+      })
+      .catch(err => {
+        console.error('[AiChat] Voice Claude error:', err);
+        // Show visible error in chat so we can debug
+        const errMsg: Message = {
+          id:        `voice-err-${Date.now()}`,
+          role:      'assistant',
+          content:   `(Connection issue — please try again.)`,
+          timestamp: new Date().toISOString(),
+        };
+        const withErr = [...messagesRef.current, errMsg];
+        messagesRef.current = withErr;
+        setMessages(withErr);
+      })
+      .finally(() => setLoading(false));
+  }, [pendingVoice]);
+
+  /** No-op — response is now handled entirely in the useEffect above. */
+  const handleAvatarResponse = useCallback((_text: string) => {}, []);
+
 
   async function sendMessage() {
     if (!input.trim() || loading) return;
