@@ -249,6 +249,10 @@ export function AiChatView({
   // Guard 3 (here): dedup — identical text within 3 s is discarded.
 
   const handleVoiceTranscript = useCallback((text: string) => {
+    // VIDEO mode: HeyGen handles VAD→STT→LLM→TTS server-side.
+    // Calling Claude here creates double latency + double response. Skip entirely.
+    if (mode === 'video') return;
+
     // Guard 2: already processing — drop
     if (loadingRef.current) {
       console.debug('[AiChat] transcript dropped — in-flight lock active');
@@ -272,7 +276,7 @@ export function AiChatView({
     messagesRef.current = updated;
     setMessages(updated);
     setPendingVoice(text);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     if (!pendingVoice) return;
@@ -642,8 +646,11 @@ export function AiChatView({
             )}
           </AnimatePresence>
 
-          {/* Video avatar — always mounted */}
-          <div className={mode === 'video' ? 'mb-4' : 'hidden'} aria-hidden={mode !== 'video'}>
+          {/* Video avatar — full height in video mode, hidden otherwise */}
+          <div
+            className={mode === 'video' ? 'flex-1 flex flex-col mb-4' : 'hidden'}
+            aria-hidden={mode !== 'video'}
+          >
             <InteractiveAvatar
               ref={avatarRef}
               onReady={() => setAvatarStatus('ready')}
@@ -674,7 +681,8 @@ export function AiChatView({
             </motion.div>
           )}
 
-          {/* Messages list */}
+          {/* Messages list — hidden in video mode (pure voice immersion, no bubbles) */}
+          {mode !== 'video' && (
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto scrollbar-thin space-y-4 pr-1 mb-4"
@@ -696,6 +704,7 @@ export function AiChatView({
               )}
             </AnimatePresence>
           </div>
+          )}
 
           {/* "Talk to someone" CTA */}
           <motion.button
@@ -709,6 +718,9 @@ export function AiChatView({
             <ChevronRight size={13} />
           </motion.button>
 
+          {/* Input bar — hidden in video mode (pure voice, no typing needed) */}
+          {mode !== 'video' && (
+          <>
           {/* Pending attachment chips */}
           <AnimatePresence>
             {pendingAttachments.length > 0 && (
@@ -825,6 +837,8 @@ export function AiChatView({
               </p>
             )}
           </div>
+          </>
+          )}
         </>
       )}
     </div>
