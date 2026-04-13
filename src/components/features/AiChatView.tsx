@@ -91,8 +91,13 @@ export function AiChatView({
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [mode,           setMode]          = useState<ConversationMode>('text');
-  // Spread to avoid sharing a reference with the module-level array
-  const [messages,       setMessages]      = useState<Message[]>([...INITIAL_MESSAGES]);
+  // Spread to avoid sharing a reference with the module-level array.
+  // Initialize with a function so messagesRef is always in sync.
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const init = [...INITIAL_MESSAGES];
+    messagesRef.current = init;
+    return init;
+  });
   const [input,          setInput]         = useState('');
   const [loading,        setLoading]       = useState(false);
   const [sessionEnded,   setSessionEnded]  = useState(false);
@@ -101,6 +106,9 @@ export function AiChatView({
   // Banner: false initially to avoid SSR mismatch; set from localStorage in effect
   const [bannerVisible,  setBannerVisible]  = useState(false);
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
+
+  // Stable ref to latest messages — avoids stale closure in voice callback
+  const messagesRef = useRef<Message[]>([...INITIAL_MESSAGES]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<InteractiveAvatarRef>(null);
@@ -138,29 +146,75 @@ export function AiChatView({
    * We add their spoken words as a user message bubble so the conversation
    * log shows what they said.
    */
-  const handleVoiceTranscript = useCallback((text: string) => {
+  /**
+   * Called by InteractiveAvatar when the user finishes a voice utterance.
+   * ─── Hybrid voice pipeline ───────────────────────────────────────────────
+   * We DON'T rely on HeyGen's autonomous LLM (no guaranteed active agent).
+   * Instead we:
+   *   1. Add the user transcript as a chat bubble
+   *   2. Call Claude via /api/chat with full conversation history
+   *   3. Push Claude's reply directly into the avatar via speak()
+   * This mirrors exactly how the typed-text video mode works.
+   */
+  const handleVoiceTranscript = useCallback(async (text: string) => {
     const userMsg: Message = {
       id:        `voice-user-${Date.now()}`,
       role:      'user',
       content:   text,
       timestamp: new Date().toISOString(),
     };
-    setMessages(m => [...m, userMsg]);
+
+    // Update state AND ref atomically
+    const updated = [...messagesRef.current, userMsg];
+    messagesRef.current = updated;
+    setMessages(updated);
+
+    // ── Call Claude and make the avatar speak the reply ─────────────────
+    const msgId = `voice-ai-${Date.now() + 1}`;
+    setLoading(true);
+    try {
+      const history = updated
+        .filter(m => m.id !== 'init-1' && (m.role === 'user' || m.role === 'assistant'))
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      const firstUser = history.findIndex(m => m.role === 'user');
+      const trimmed   = firstUser >= 0 ? history.slice(firstUser) : history;
+
+      const res  = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ messages: trimmed }),
+      });
+      const data  = await res.json();
+      const reply = data.reply ?? "I'm here with you — please continue.";
+
+      // Make avatar speak the Claude reply (session.message = direct TTS on avatar)
+      if (avatarRef.current) {
+        try { avatarRef.current.speak(reply); } catch (e) { console.warn('[AiChat] avatar speak error', e); }
+      }
+
+      const aiMsg: Message = {
+        id:        msgId,
+        role:      'assistant',
+        content:   reply,
+        timestamp: new Date().toISOString(),
+      };
+      const withReply = [...messagesRef.current, aiMsg];
+      messagesRef.current = withReply;
+      setMessages(withReply);
+    } catch (err) {
+      console.error('[AiChat] Voice Claude error:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   /**
-   * Called by InteractiveAvatar when HeyGen's built-in AI (knowledgeBase)
-   * finishes speaking an autonomous voice reply.
-   * We add the spoken text as an assistant bubble for the transcript.
+   * Called by InteractiveAvatar when the avatar finishes speaking.
+   * (Transcript is now managed above via handleVoiceTranscript.)
    */
-  const handleAvatarResponse = useCallback((text: string) => {
-    const aiMsg: Message = {
-      id:        `voice-ai-${Date.now()}`,
-      role:      'assistant',
-      content:   text,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages(m => [...m, aiMsg]);
+  const handleAvatarResponse = useCallback((_text: string) => {
+    // No-op — avatar responses are added to the chat in handleVoiceTranscript above.
+    // Kept to avoid breaking the prop contract.
   }, []);
 
   async function sendMessage() {

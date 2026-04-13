@@ -140,18 +140,22 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             }
           });
 
-          // ── Avatar transcription (final — fires once per avatar reply) ────
-          // ✅ KEY FIX: In FULL mode, VAD pauses while the avatar is speaking
-          // (to avoid self-echo). Re-activate listening after each avatar reply
-          // so the next user turn is picked up automatically.
+          // ── Avatar transcription ─────────────────────────────────────────
+          // Kept for the prop contract; response text is now handled in AiChatView.
           session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
-            if (!mounted) return;
-            if (event.text?.trim()) {
+            if (mounted && event.text?.trim()) {
               onAvatarRef.current?.(event.text.trim());
             }
-            // Re-enter listening mode after avatar finishes speaking
+          });
+
+          // ── Re-activate VAD after avatar finishes speaking ───────────────
+          // ✅ KEY FIX: AVATAR_SPEAK_ENDED fires reliably when session.message()
+          // finishes TTS. Re-call startListening() so the mic VAD activates
+          // for the next user turn (avoids echo during avatar speech).
+          session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+            if (!mounted) return;
             try { session.startListening(); } catch (e) {
-              console.warn('[LiveAvatar] re-startListening failed:', e);
+              console.warn('[LiveAvatar] re-startListening after AVATAR_SPEAK_ENDED failed:', e);
             }
           });
 
