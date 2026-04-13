@@ -109,7 +109,7 @@ export default function EmployeeDashboardPage() {
               <p className="text-xs text-muted mt-0.5">Intensité de vos émotions cette semaine (1–10)</p>
             </div>
             <Link href="/employee/chat" className="text-xs text-violet hover:underline flex items-center gap-0.5">
-             Check in <ChevronRight size={12} />
+             Faire mon bilan <ChevronRight size={12} />
             </Link>
           </div>
 

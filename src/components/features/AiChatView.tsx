@@ -19,6 +19,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Mic, Video, MessageCircle,
@@ -88,6 +89,8 @@ export function AiChatView({
   privacyNote = 'Vos conversations sont chiffrées de bout en bout et ne sont jamais consultées par des humains.',
 }: AiChatViewProps) {
 
+  const router = useRouter();
+
   // ── Saved avatar ───────────────────────────────────────────────────────────
   const [avatarConfig, setAvatarConfig] = useState(() => getSavedAvatar());
   const [avatarDisplayName, setAvatarDisplayName] = useState('');
@@ -109,6 +112,12 @@ export function AiChatView({
   const [bannerVisible,  setBannerVisible]  = useState(false);
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
   const [pendingVoice,   setPendingVoice]  = useState<string | null>(null);
+  // Audio mode — mic active toggle
+  const [audioMicActive, setAudioMicActive] = useState(false);
+  // Timestamp (ms) of when audio mode was *activated*.
+  // Only messages synthesized AFTER this moment will autoPlay — prevents
+  // pre-existing messages from firing audio on mode switch.
+  const audioModeActivatedAt = useRef<number>(0);
 
   // Ref-based loading lock — unlike the `loading` state this is synchronous
   // and can be read inside callbacks without stale-closure risk.
@@ -166,13 +175,14 @@ export function AiChatView({
     }
   }
 
-  async function stopRecording() {
+  async function stopRecording(fromAudioMode = false) {
     if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
     const mr = mediaRecRef.current;
     if (!mr) return;
     mr.stop();
     mr.stream.getTracks().forEach(t => t.stop());
     setRecording(false);
+    if (fromAudioMode) setAudioMicActive(false);
 
     // Wait a tick for final ondataavailable
     await new Promise(r => setTimeout(r, 100));
@@ -180,7 +190,7 @@ export function AiChatView({
     const audioUrl = URL.createObjectURL(blob);
 
     // Try browser speech recognition for transcript
-    let transcript = '[Voice note]';
+    let transcript = '[Note vocale]';
     try {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SR) {
@@ -189,9 +199,9 @@ export function AiChatView({
         sr.maxAlternatives = 1;
         transcript = await new Promise<string>((resolve) => {
           sr.onresult = (e: any) => resolve(e.results[0][0].transcript);
-          sr.onerror  = () => resolve('[Voice note]');
+          sr.onerror  = () => resolve('[Note vocale]');
           sr.start();
-          setTimeout(() => { try { sr.stop(); } catch {} resolve('[Voice note]'); }, 5000);
+          setTimeout(() => { try { sr.stop(); } catch {} resolve('[Note vocale]'); }, 5000);
         });
       }
     } catch {}
@@ -208,6 +218,16 @@ export function AiChatView({
     messagesRef.current = updated;
     setMessages(updated);
     setPendingVoice(transcript);
+  }
+
+  // ── Audio mode mic toggle ──────────────────────────────────────────────────
+  async function toggleAudioMic() {
+    if (audioMicActive) {
+      await stopRecording(true);
+    } else {
+      setAudioMicActive(true);
+      await startRecording();
+    }
   }
 
   function cancelRecording() {
@@ -404,6 +424,16 @@ export function AiChatView({
   const charWarn  = charCount > MAX_INPUT * 0.8;
   const recFmt    = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
+  function switchMode(next: ConversationMode) {
+    if (next === 'audio') {
+      // Record activation time — only messages synthesized AFTER this will autoPlay
+      audioModeActivatedAt.current = Date.now();
+    } else {
+      audioModeActivatedAt.current = 0;
+    }
+    setMode(next);
+  }
+
   function ModeSwitcher({ className = '' }: { className?: string }) {
     return (
       <div className={`flex bg-surface rounded-xl p-1 border border-border gap-0.5 ${className}`}>
@@ -412,7 +442,7 @@ export function AiChatView({
           return (
             <button
               key={m.id}
-              onClick={() => setMode(m.id)}
+              onClick={() => switchMode(m.id)}
               aria-pressed={mode === m.id}
               aria-label={`Passer en mode ${m.label}`}
               className={`flex flex-1 sm:flex-initial items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
@@ -492,7 +522,10 @@ export function AiChatView({
                 ))}
               </div>
 
-              <Button className="w-full rounded-2xl py-3 shadow-brand" onClick={() => setShowExpertPanel(false)}>
+              <Button
+                className="w-full rounded-2xl py-3 shadow-brand"
+                onClick={() => { setShowExpertPanel(false); router.push('/marketplace'); }}
+              >
                 Voir tous les thérapeutes
               </Button>
             </div>
@@ -507,6 +540,9 @@ export function AiChatView({
   function MessageBubble({ msg }: { msg: Message }) {
     const isUser = msg.role === 'user';
     const displayName = avatarDisplayName || avatarConfig.name;
+    // Only autoPlay if this message was synthesized AFTER audio mode was activated.
+    const shouldAutoPlay = audioModeActivatedAt.current > 0
+      && new Date(msg.timestamp).getTime() >= audioModeActivatedAt.current;
 
     return (
       <motion.div
@@ -533,7 +569,7 @@ export function AiChatView({
           {msg.isVoiceNote && msg.audioUrl && (
             <div className="mb-1.5">
               <WaveformPlayer src={msg.audioUrl} autoPlay={false} variant="user" />
-              {msg.content !== '[Voice note]' && (
+              {msg.content !== '[Note vocale]' && (
                 <p className="text-[10px] text-white/60 mt-1 italic">"{msg.content}"</p>
               )}
             </div>
@@ -542,7 +578,7 @@ export function AiChatView({
           {/* Audio mode waveform (AI synthesis) */}
           {msg.role === 'assistant' && mode === 'audio' && msg.audioUrl && (
             <div className="mb-2">
-              <WaveformPlayer src={msg.audioUrl} autoPlay variant="ai" />
+              <WaveformPlayer src={msg.audioUrl} autoPlay={shouldAutoPlay} variant="ai" />
             </div>
           )}
 
@@ -664,20 +700,68 @@ export function AiChatView({
             <motion.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-3 mb-4 py-4"
+              className="flex flex-col items-center gap-4 mb-4 py-4"
             >
+              {/* Avatar */}
               <div className="relative">
                 <img
                   src={avatarConfig.stillUrl}
                   alt={avatarDisplayName || avatarConfig.name}
-                  className="w-20 h-20 rounded-2xl object-cover ring-2 ring-border shadow-brand"
+                  className={`w-24 h-24 rounded-2xl object-cover shadow-brand transition-all duration-300 ${
+                    audioMicActive ? 'ring-4 ring-red-400/70' : 'ring-2 ring-border'
+                  }`}
                 />
-                <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand flex items-center justify-center">
-                  <Mic size={10} className="text-white" />
-                </div>
+                {/* Pulse ring when mic is active */}
+                {audioMicActive && (
+                  <span className="absolute inset-0 rounded-2xl animate-ping bg-red-400/20 pointer-events-none" />
+                )}
               </div>
+
               <p className="text-sm font-semibold text-text">{avatarDisplayName || avatarConfig.name}</p>
-              <p className="text-xs text-muted">Session audio active</p>
+
+              {/* ** Mic toggle button ** */}
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={toggleAudioMic}
+                  aria-label={audioMicActive ? 'Couper le micro' : 'Activer le micro'}
+                  aria-pressed={audioMicActive}
+                  className={`flex items-center justify-center w-16 h-16 rounded-full shadow-lg transition-all duration-200 ${
+                    audioMicActive
+                      ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-red-500/40'
+                      : 'bg-brand hover:bg-violet-600 shadow-brand'
+                  }`}
+                >
+                  {audioMicActive
+                    ? <MicOff size={28} className="text-white" />
+                    : <Mic    size={28} className="text-white" />}
+                </button>
+
+                {/* Live waveform bars during audio-mode recording */}
+                <AnimatePresence>
+                  {audioMicActive && recording && (
+                    <motion.div
+                      initial={{ opacity: 0, scaleY: 0 }}
+                      animate={{ opacity: 1, scaleY: 1 }}
+                      exit={{ opacity: 0, scaleY: 0 }}
+                      className="flex items-end gap-0.5 h-6"
+                    >
+                      {Array.from({ length: 16 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 rounded-full bg-red-400 animate-waveform"
+                          style={{ height: `${30 + Math.random() * 70}%`, animationDelay: `${i * 40}ms` }}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <p className="text-xs text-muted">
+                  {audioMicActive
+                    ? <span className="text-red-400 font-medium">Micro actif — parlez maintenant · {recFmt(recSeconds)}</span>
+                    : 'Appuyez pour parler'}
+                </p>
+              </div>
             </motion.div>
           )}
 
@@ -767,10 +851,10 @@ export function AiChatView({
                   <MicOff size={16} />
                 </button>
                 <button
-                  onClick={stopRecording}
+                  onClick={() => stopRecording(false)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-xl text-xs font-medium hover:bg-red-600 transition-colors"
                 >
-                  <StopCircle size={13} /> Send
+                  <StopCircle size={13} /> Envoyer
                 </button>
               </div>
             ) : (

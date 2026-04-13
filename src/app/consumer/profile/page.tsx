@@ -9,6 +9,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
 import { getSession } from '@/lib/session';
 
+const ROLE_FR: Record<string, string> = {
+  consumer:  'Particulier',
+  employee:  'Employé',
+  hr:        'RH',
+  therapist: 'Thérapeute',
+  admin:     'Admin',
+};
+
 export default function ProfilePage() {
   const session = getSession();
   const user = session?.user;
@@ -28,10 +36,10 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <PageHeader title="My Profile" subtitle="Manage your account and privacy settings" />
+      <PageHeader title="Mon Profil" subtitle="Gérez votre compte et vos paramètres de confidentialité" />
 
       <StaggerList className="space-y-5">
-        {/* Identity */}
+        {/* Identité */}
         <StaggerItem>
           <Card>
             <div className="flex items-center gap-4 mb-4">
@@ -39,30 +47,30 @@ export default function ProfilePage() {
                 {user?.name?.charAt(0) ?? 'U'}
               </div>
               <div>
-                <p className="font-semibold text-text">{user?.name ?? 'Demo User'}</p>
+                <p className="font-semibold text-text">{user?.name ?? 'Utilisateur Démo'}</p>
                 <p className="text-sm text-muted">{user?.email ?? 'demo@confidentia.app'}</p>
-                <Badge size="sm" className="mt-1 capitalize">{user?.role ?? 'consumer'}</Badge>
+                <Badge size="sm" className="mt-1">{ROLE_FR[user?.role ?? 'consumer'] ?? user?.role}</Badge>
               </div>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted bg-surface border border-border rounded-xl px-3 py-2">
               <Shield size={11} className="text-cyan" />
-              Account protected with end-to-end encryption
+              Compte protégé par chiffrement de bout en bout
             </div>
           </Card>
         </StaggerItem>
 
-        {/* Memory Engine */}
+        {/* Moteur de Mémoire */}
         <StaggerItem>
           <Card>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-text text-sm">Memory Engine</h3>
-                <p className="text-xs text-muted mt-0.5">Allows your AI companion to remember past conversations</p>
+                <h3 className="font-semibold text-text text-sm">Moteur de Mémoire</h3>
+                <p className="text-xs text-muted mt-0.5">Permet à votre IA de se souvenir des conversations passées</p>
               </div>
               <button
                 role="switch"
                 aria-checked={memoryEnabled}
-                aria-label="Toggle Memory Engine"
+                aria-label="Activer/désactiver le Moteur de Mémoire"
                 onClick={() => setMemoryEnabled(v => !v)}
                 className={`relative w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0 ${memoryEnabled ? 'bg-brand' : 'bg-border'}`}
               >
@@ -73,50 +81,50 @@ export default function ProfilePage() {
             {memoryEnabled && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="overflow-hidden pt-3 border-t border-border">
                 <label className="text-xs font-medium text-text mb-2 block">
-                  Memory retention: <span className="text-violet">{retention} days</span>
+                  Rétention mémoire : <span className="text-violet">{retention} jours</span>
                 </label>
                 <input
                   type="range" min={7} max={365} step={7}
                   value={retention}
                   onChange={e => setRetention(Number(e.target.value))}
-                  aria-label="Memory retention days"
+                  aria-label="Durée de rétention de la mémoire"
                   className="w-full accent-violet"
                 />
                 <div className="flex justify-between text-[10px] text-muted mt-1">
-                  <span>7 days</span><span>1 year</span>
+                  <span>7 jours</span><span>1 an</span>
                 </div>
               </motion.div>
             )}
           </Card>
         </StaggerItem>
 
-        {/* Data Rights (GDPR / CCPA) */}
+        {/* Droits sur les données (RGPD / CCPA) */}
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-sm text-text mb-3">Your Data Rights</h3>
+            <h3 className="font-semibold text-sm text-text mb-3">Vos droits sur vos données</h3>
             <div className="space-y-2">
               <button className="w-full flex items-center gap-3 text-left p-3 rounded-xl hover:bg-surface border border-border transition-colors">
                 <Download size={14} className="text-cyan flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-text">Export My Data</p>
-                  <p className="text-xs text-muted">Download all your conversations and journal in JSON format</p>
+                  <p className="text-sm font-medium text-text">Exporter mes données</p>
+                  <p className="text-xs text-muted">Téléchargez l&apos;ensemble de vos conversations et journal au format JSON</p>
                 </div>
               </button>
               <button className="w-full flex items-center gap-3 text-left p-3 rounded-xl hover:bg-red-500/5 border border-border hover:border-red-400/30 transition-colors">
                 <Trash2 size={14} className="text-coral flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-text">Delete All My Data</p>
-                  <p className="text-xs text-muted">Permanently erase all your data from Confidentia servers</p>
+                  <p className="text-sm font-medium text-text">Supprimer toutes mes données</p>
+                  <p className="text-xs text-muted">Effacer définitivement toutes vos données des serveurs Confidentia</p>
                 </div>
               </button>
             </div>
             <p className="text-[10px] text-muted mt-3 leading-relaxed">
-              You have the right to access, modify, or erase your data at any time. Requests are processed within 30 days per GDPR Art. 17 and CCPA §1798.105.
+              Vous avez le droit d&apos;accéder, modifier ou effacer vos données à tout moment. Les demandes sont traitées sous 30 jours conformément à l&apos;article 17 du RGPD et au CCPA §1798.105.
             </p>
           </Card>
         </StaggerItem>
 
-        {/* Save */}
+        {/* Enregistrer */}
         <StaggerItem>
           <Button
             onClick={handleSave}
@@ -124,7 +132,7 @@ export default function ProfilePage() {
             fullWidth
             className="shadow-brand"
           >
-            {saved ? <><CheckCircle size={14} />Saved!</> : <><Save size={14} />Save Changes</>}
+            {saved ? <><CheckCircle size={14}/>Enregistré !</> : <><Save size={14}/>Enregistrer</>}
           </Button>
         </StaggerItem>
       </StaggerList>

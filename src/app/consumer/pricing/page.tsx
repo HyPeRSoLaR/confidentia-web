@@ -10,8 +10,8 @@ import { MOCK_PLANS, MOCK_VIDEO_CREDIT_PACKS } from '@/lib/mock-data';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'plans',  label: 'Plans',         icon: Zap },
-  { id: 'packs',  label: 'Video Credits', icon: Film },
+  { id: 'plans',  label: 'Forfaits',       icon: Zap },
+  { id: 'packs',  label: 'Crédits vidéo',  icon: Film },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
@@ -33,12 +33,12 @@ const TIER_ACCENT: Record<string, string> = {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 function VideoMinuteBadge({ minutes }: { minutes: number | 'unlimited' }) {
-  if (minutes === 'unlimited') return <span className="text-xs text-emerald-400 font-semibold">∞ video</span>;
+  if (minutes === 'unlimited') return <span className="text-xs text-emerald-400 font-semibold">∞ vidéo</span>;
   if (minutes === 0) return null;
   return (
     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
       <Video size={10} className="flex-shrink-0" />
-      {minutes} min / month
+      {minutes} min / mois
     </span>
   );
 }
@@ -67,7 +67,7 @@ function PlanCard({ plan, annual }: { plan: (typeof MOCK_PLANS)[0]; annual: bool
       {plan.isPopular && (
         <div className="absolute top-0 right-0">
           <div className="text-[10px] font-bold text-white bg-violet-600 px-3 py-1 rounded-bl-xl tracking-wide uppercase">
-            Most Popular
+            Le plus populaire
           </div>
         </div>
       )}
@@ -99,13 +99,13 @@ function PlanCard({ plan, annual }: { plan: (typeof MOCK_PLANS)[0]; annual: bool
                 transition={{ duration: 0.18 }}
                 className="text-3xl font-black text-text leading-none"
               >
-                {price === 0 ? 'Free' : `€${price.toFixed(2)}`}
+                {price === 0 ? 'Gratuit' : `€${price.toFixed(2)}`}
               </motion.span>
             </AnimatePresence>
-            {price > 0 && <span className="text-muted text-xs mb-0.5">/mo</span>}
+            {price > 0 && <span className="text-muted text-xs mb-0.5">/mois</span>}
           </div>
           {annual && plan.priceAnnual > 0 && (
-            <p className="text-xs text-muted mt-1">Billed as €{plan.priceAnnual} / year</p>
+            <p className="text-xs text-muted mt-1">Facturé €{plan.priceAnnual} / an</p>
           )}
         </div>
 
@@ -123,9 +123,9 @@ function PlanCard({ plan, annual }: { plan: (typeof MOCK_PLANS)[0]; annual: bool
           variant={plan.isPopular ? 'primary' : 'secondary'}
           fullWidth
           className={plan.isPopular ? 'shadow-brand' : ''}
-          aria-label={`Get started with the ${plan.name} plan`}
+          aria-label={`Commencer avec le forfait ${plan.name}`}
         >
-          {price === 0 ? 'Get Started Free' : `Get ${plan.name}`}
+          {price === 0 ? 'Commencer gratuitement' : `Obtenir ${plan.name}`}
           <ChevronRight size={14} className="ml-1" />
         </Button>
       </div>
@@ -156,7 +156,7 @@ function CreditPackCard({ pack }: { pack: (typeof MOCK_VIDEO_CREDIT_PACKS)[0] })
         <p className="text-3xl font-black text-text leading-none">
           {pack.minutes} <span className="text-lg font-semibold text-muted">min</span>
         </p>
-        <p className="text-xs text-muted mt-1">€{pricePerMin}/min video</p>
+        <p className="text-xs text-muted mt-1">€{pricePerMin}/min vidéo</p>
       </div>
 
       <div className="mt-auto">
@@ -165,9 +165,9 @@ function CreditPackCard({ pack }: { pack: (typeof MOCK_VIDEO_CREDIT_PACKS)[0] })
           variant="secondary"
           fullWidth
           className="mt-3 text-sm"
-          aria-label={`Buy the ${pack.label} pack — ${pack.minutes} video minutes`}
+          aria-label={`Acheter le pack ${pack.label} — ${pack.minutes} minutes vidéo`}
         >
-          Buy this pack
+          Acheter ce pack
         </Button>
       </div>
     </motion.div>
@@ -182,12 +182,12 @@ export default function PricingPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="Plans & Pricing"
-        subtitle="Simple, transparent pricing. Upgrade or downgrade anytime."
+        title="Forfaits &amp; Tarifs"
+        subtitle="Tarification simple et transparente. Évoluez ou réduisez à tout moment."
         actions={
           tab === 'plans' && (
             <div className="flex items-center gap-2 text-sm">
-              <span className={!annual ? 'text-text font-semibold' : 'text-muted'}>Monthly</span>
+              <span className={!annual ? 'text-text font-semibold' : 'text-muted'}>Mensuel</span>
               <button
                 role="switch"
                 id="annual-toggle"
@@ -198,7 +198,7 @@ export default function PricingPage() {
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${annual ? 'translate-x-5' : ''}`} />
               </button>
               <span className={annual ? 'text-text font-semibold' : 'text-muted'}>
-                Annual <Badge size="sm" variant="success" className="ml-1">Save 20%</Badge>
+                Annuel <Badge size="sm" variant="success" className="ml-1">Économisez 20%</Badge>
               </span>
             </div>
           )
@@ -249,7 +249,7 @@ export default function PricingPage() {
               ))}
             </div>
             <p className="text-center text-xs text-muted mt-8">
-              All plans include end-to-end encryption and GDPR/CCPA compliance. Cancel anytime.
+              Tous les forfaits incluent le chiffrement de bout en bout et la conformité RGPD/CCPA. Annulable à tout moment.
             </p>
           </motion.div>
         )}
@@ -266,10 +266,9 @@ export default function PricingPage() {
             <div className="mb-6 p-4 rounded-2xl border border-border bg-surface flex gap-3 items-start max-w-2xl mx-auto">
               <Video size={18} className="text-violet flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-text">On-demand video credits</p>
+                <p className="text-sm font-semibold text-text">Crédits vidéo à la demande</p>
                 <p className="text-xs text-muted mt-1 leading-relaxed">
-                  Need more video minutes? Top up anytime. Credits stack on top of your monthly
-                  quota and never expire.
+                  Besoin de plus de minutes vidéo ? Rechargez à tout moment. Les crédits s&apos;ajoutent à votre quota mensuel et n&apos;expirent jamais.
                 </p>
               </div>
             </div>
@@ -281,7 +280,7 @@ export default function PricingPage() {
             </div>
 
             <p className="text-center text-xs text-muted mt-8">
-              Average cost: ~$0.20/min video (HeyGen). Your credits accumulate and never expire.
+              Coût moyen : ~0,20€/min vidéo (HeyGen). Vos crédits s&apos;accumulent et n&apos;expirent jamais.
             </p>
           </motion.div>
         )}

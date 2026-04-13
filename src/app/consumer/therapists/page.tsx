@@ -13,13 +13,13 @@ import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
 import { MOCK_THERAPISTS } from '@/lib/mock-data';
 import type { TherapistProfile } from '@/types';
 
-const SPECIALTY_FILTERS = ['All', 'Anxiety', 'Workplace Stress', 'CBT', 'Grief', 'Mindfulness', 'Trauma'];
-const LANGUAGE_FILTERS  = ['All', 'English', 'Mandarin', 'Spanish', 'Portuguese'];
+const SPECIALTY_FILTERS = ['Tous', 'Anxiety', 'Workplace Stress', 'CBT', 'Grief', 'Mindfulness', 'Trauma'];
+const LANGUAGE_FILTERS  = ['Tous', 'English', 'Mandarin', 'Spanish', 'Portuguese'];
 
 export default function TherapistMarketplacePage() {
   const [search,    setSearch]    = useState('');
-  const [specialty, setSpecialty] = useState('All');
-  const [language,  setLanguage]  = useState('All');
+  const [specialty, setSpecialty] = useState('Tous');
+  const [language,  setLanguage]  = useState('Tous');
   const [selected,  setSelected]  = useState<TherapistProfile | null>(null);
   const [booked,    setBooked]    = useState<string[]>([]);
   const [booking,   setBooking]   = useState(false);
@@ -29,8 +29,8 @@ export default function TherapistMarketplacePage() {
     const q = search.toLowerCase();
     return MOCK_THERAPISTS.filter(t => {
       const matchSearch    = !search || t.name.toLowerCase().includes(q) || t.bio.toLowerCase().includes(q) || t.specialties.some(s => s.toLowerCase().includes(q));
-      const matchSpecialty = specialty === 'All' || t.specialties.includes(specialty);
-      const matchLanguage  = language === 'All'  || t.languages.includes(language);
+      const matchSpecialty = specialty === 'Tous' || t.specialties.includes(specialty);
+      const matchLanguage  = language === 'Tous'  || t.languages.includes(language);
       return matchSearch && matchSpecialty && matchLanguage;
     });
   }, [search, specialty, language]);
@@ -48,18 +48,18 @@ export default function TherapistMarketplacePage() {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="Find a Therapist"
-        subtitle="Confidentia-verified professionals — all sessions stay on platform"
+        title="Trouver un thérapeute"
+        subtitle="Professionnels certifiés Confidentia — toutes les sessions restent sur la plateforme"
         actions={
           <div className="flex items-center gap-1.5 text-xs text-muted bg-surface border border-border rounded-full px-3 py-1.5">
-            <ShieldCheck size={12} className="text-cyan" /><span>Verified partners only</span>
+            <ShieldCheck size={12} className="text-cyan" /><span>Partenaires vérifiés uniquement</span>
           </div>
         }
       />
 
-      {/* Filters */}
+      {/* Filtres */}
       <div className="space-y-3 mb-6">
-        <Input placeholder="Search by name, specialty, or keyword…" value={search} onChange={e => setSearch(e.target.value)} icon={<Search size={14} />} />
+        <Input placeholder="Rechercher par nom, spécialité ou mot-clé…" value={search} onChange={e => setSearch(e.target.value)} icon={<Search size={14} />} />
         <div className="flex gap-2 flex-wrap items-center justify-between">
           <div className="flex gap-1.5 flex-wrap">
             {SPECIALTY_FILTERS.map(s => (
@@ -77,7 +77,7 @@ export default function TherapistMarketplacePage() {
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted">
           <Search size={32} className="mx-auto mb-3 opacity-40" />
-          <p className="text-sm">No therapists match your filters.</p>
+          <p className="text-sm">Aucun thérapeute ne correspond à vos filtres.</p>
         </div>
       ) : (
         <StaggerList className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,7 +97,7 @@ export default function TherapistMarketplacePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <h3 className="font-semibold text-text text-sm truncate">{therapist.name}</h3>
-                        {therapist.isVerified && <ShieldCheck size={12} className="text-cyan flex-shrink-0" aria-label="Verified Confidentia Partner" />}
+                        {therapist.isVerified && <ShieldCheck size={12} className="text-cyan flex-shrink-0" aria-label="Partenaire Confidentia vérifié" />}
                       </div>
                       <div className="flex items-center gap-0.5 mb-2">
                         {[1,2,3,4,5].map(star => (
@@ -117,11 +117,11 @@ export default function TherapistMarketplacePage() {
                   <div className="flex items-center gap-3 text-xs text-muted mb-4">
                     <span className="flex items-center gap-1"><Globe size={10} />{therapist.languages.slice(0, 2).join(', ')}</span>
                     <span className="flex items-center gap-1"><Clock size={10} />50 min</span>
-                    <span className="font-semibold text-violet ml-auto text-sm">${therapist.ratePerSession}<span className="text-muted font-normal">/session</span></span>
+                    <span className="font-semibold text-violet ml-auto text-sm">€{therapist.ratePerSession}<span className="text-muted font-normal">/séance</span></span>
                   </div>
 
-                  <Button onClick={() => !isBooked && setSelected(therapist)} variant={isBooked ? 'secondary' : 'primary'} size="sm" fullWidth disabled={isBooked} aria-label={`Book a session with ${therapist.name}`}>
-                    {isBooked ? <><CheckCircle size={13} />Session Requested</> : <><Send size={13} />Book Session</>}
+                  <Button onClick={() => !isBooked && setSelected(therapist)} variant={isBooked ? 'secondary' : 'primary'} size="sm" fullWidth disabled={isBooked} aria-label={`Réserver une session avec ${therapist.name}`}>
+                    {isBooked ? <><CheckCircle size={13} />Session demandée</> : <><Send size={13} />Réserver une session</>}
                   </Button>
                 </Card>
               </StaggerItem>
@@ -130,8 +130,8 @@ export default function TherapistMarketplacePage() {
         </StaggerList>
       )}
 
-      {/* Booking modal */}
-      <Modal open={!!selected && !success} onClose={() => setSelected(null)} title="Request a Session" size="sm">
+      {/* Modal de réservation */}
+      <Modal open={!!selected && !success} onClose={() => setSelected(null)} title="Demander une session" size="sm">
         {selected && (
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-border">
@@ -143,24 +143,24 @@ export default function TherapistMarketplacePage() {
             </div>
             <div className="text-xs text-muted leading-relaxed p-3 bg-violet/5 border border-violet/20 rounded-xl">
               <ShieldCheck size={12} className="inline mr-1.5 text-violet" />
-              Your request is sent privately. {selected.name} will confirm a time slot shortly.
-              All sessions take place within Confidentia — your data never leaves the platform.
+              Votre demande est envoyée de façon privée. {selected.name} vous confirmera un créneau sous peu.
+              Toutes les sessions ont lieu dans Confidentia — vos données ne quittent jamais la plateforme.
             </div>
-            <Button onClick={handleBook} loading={booking} fullWidth className="shadow-brand">Confirm Request</Button>
-            <button onClick={() => setSelected(null)} className="w-full text-xs text-muted hover:text-text transition-colors py-2" aria-label="Cancel">Cancel</button>
+            <Button onClick={handleBook} loading={booking} fullWidth className="shadow-brand">Confirmer la demande</Button>
+            <button onClick={() => setSelected(null)} className="w-full text-xs text-muted hover:text-text transition-colors py-2" aria-label="Annuler">Annuler</button>
           </div>
         )}
       </Modal>
 
-      {/* Success overlay */}
+      {/* Overlay de succès */}
       <AnimatePresence>
         {success && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.85, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, y: 20 }} className="relative glass p-8 text-center max-w-xs mx-4">
               <CheckCircle size={52} className="mx-auto text-emerald-400 mb-4" />
-              <h3 className="font-bold text-xl text-text mb-2">Request Sent!</h3>
-              <p className="text-sm text-muted">{selected?.name} will confirm your session shortly.</p>
+              <h3 className="font-bold text-xl text-text mb-2">Demande envoyée !</h3>
+              <p className="text-sm text-muted">{selected?.name} va confirmer votre session sous peu.</p>
             </motion.div>
           </motion.div>
         )}

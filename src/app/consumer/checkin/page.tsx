@@ -9,6 +9,17 @@ import type { EmotionLabel } from '@/types';
 
 const EMOTIONS: EmotionLabel[] = ['calm','happy','anxious','stressed','angry','sad','energized','neutral'];
 
+const EMOTION_FR: Record<EmotionLabel, string> = {
+  calm:      'Calme',
+  happy:     'Joyeux·se',
+  anxious:   'Anxieux·se',
+  stressed:  'Stressé·e',
+  angry:     'En colère',
+  sad:       'Triste',
+  energized: 'Dynamisé·e',
+  neutral:   'Neutre',
+};
+
 export default function CheckInPage() {
   const [selected, setSelected] = useState<EmotionLabel | null>(null);
   const [intensity, setIntensity] = useState(5);
@@ -20,7 +31,7 @@ export default function CheckInPage() {
 
   return (
     <div className="max-w-md mx-auto">
-      <PageHeader title="Emotion Check-in" subtitle="How are you feeling right now?" />
+      <PageHeader title="Bilan émotionnel" subtitle="Comment vous sentez-vous en ce moment ?" />
 
       <AnimatePresence mode="wait">
         {done ? (
@@ -32,14 +43,16 @@ export default function CheckInPage() {
             className="flex flex-col items-center gap-4 py-12 text-center"
           >
             <div className="text-6xl">{selected ? EMOTION_EMOJI[selected] : '✅'}</div>
-            <h2 className="text-xl font-bold text-text">Checked in!</h2>
-            <p className="text-sm text-muted">Your {selected} feeling (intensity {intensity}/10) has been logged.</p>
-            <Button variant="secondary" onClick={reset}>Check in again</Button>
+            <h2 className="text-xl font-bold text-text">Bilan enregistré !</h2>
+            <p className="text-sm text-muted">
+              Votre émotion <strong>{selected ? EMOTION_FR[selected] : ''}</strong> (intensité {intensity}/10) a été enregistrée.
+            </p>
+            <Button variant="secondary" onClick={reset}>Faire un nouveau bilan</Button>
           </motion.div>
         ) : (
           <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
             <Card>
-              <h3 className="font-semibold text-text mb-4">Select your emotion</h3>
+              <h3 className="font-semibold text-text mb-4">Choisissez votre émotion</h3>
               <div className="grid grid-cols-4 gap-3">
                 {EMOTIONS.map(em => (
                   <motion.button
@@ -54,7 +67,7 @@ export default function CheckInPage() {
                     style={selected === em ? { background: EMOTION_COLORS[em], boxShadow: `0 0 16px ${EMOTION_COLORS[em]}60` } : {}}
                   >
                     <span className="text-2xl">{EMOTION_EMOJI[em]}</span>
-                    <span className="text-[10px] font-medium capitalize">{em}</span>
+                    <span className="text-[10px] font-medium">{EMOTION_FR[em]}</span>
                   </motion.button>
                 ))}
               </div>
@@ -64,23 +77,25 @@ export default function CheckInPage() {
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
                 <Card>
                   <h3 className="font-semibold text-text mb-4">
-                    Intensity: <span className="text-brand">{intensity}/10</span>
+                    Intensité : <span className="text-brand">{intensity}/10</span>
                   </h3>
                   <input
                     type="range" min={1} max={10} value={intensity}
                     onChange={e => setIntensity(+e.target.value)}
                     className="w-full accent-violet"
+                    aria-label="Intensité de l'émotion"
                   />
-                  <div className="flex justify-between text-xs text-muted mt-1"><span>Mild</span><span>Intense</span></div>
+                  <div className="flex justify-between text-xs text-muted mt-1"><span>Faible</span><span>Intense</span></div>
                   <div className="mt-4">
                     <textarea
-                      placeholder="Optional: add a short note…"
+                      placeholder="Optionnel : ajoutez une courte note…"
                       value={note} onChange={e => setNote(e.target.value)}
                       rows={3}
                       className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-sm text-text placeholder:text-muted/60 resize-none focus:outline-none focus:border-violet"
+                      aria-label="Note optionnelle"
                     />
                   </div>
-                  <Button fullWidth onClick={submit} className="mt-4">Log check-in</Button>
+                  <Button fullWidth onClick={submit} className="mt-4">Enregistrer le bilan</Button>
                 </Card>
               </motion.div>
             )}

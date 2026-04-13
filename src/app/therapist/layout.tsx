@@ -18,7 +18,7 @@ const NAV: NavItem[] = [
 ];
 
 export default function TherapistLayout({ children }: { children: React.ReactNode }) {
-  const [name, setName] = useState('Therapist');
+  const [name, setName] = useState('Thérapeute');
   useEffect(() => { const s = getSession(); if (s.user?.name) setName(s.user.name); }, []);
   return (
     <div className="flex h-screen bg-bg overflow-hidden">

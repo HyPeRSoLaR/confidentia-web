@@ -2,7 +2,7 @@
 /**
  * app/therapist/notifications/page.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Therapist notification feed with push/email settings toggle.
+ * Fil de notifications thérapeute avec paramètres push/e-mail.
  */
 
 import { useState } from 'react';
@@ -19,10 +19,10 @@ import { timeAgo } from '@/lib/utils';
 import type { TherapistNotification, NotificationType } from '@/types';
 
 const TYPE_META: Record<NotificationType, { icon: React.ElementType; color: string; label: string }> = {
-  new_request:      { icon: Inbox,         color: 'text-violet  bg-violet/10',   label: 'New Request' },
-  session_reminder: { icon: Clock,         color: 'text-cyan    bg-cyan/10',     label: 'Reminder' },
-  request_expired:  { icon: AlertTriangle, color: 'text-amber-400 bg-amber-400/10', label: 'Expired' },
-  system:           { icon: Info,          color: 'text-muted   bg-border',      label: 'System' },
+  new_request:      { icon: Inbox,         color: 'text-violet  bg-violet/10',         label: 'Nouvelle demande' },
+  session_reminder: { icon: Clock,         color: 'text-cyan    bg-cyan/10',           label: 'Rappel'            },
+  request_expired:  { icon: AlertTriangle, color: 'text-amber-400 bg-amber-400/10',   label: 'Expirée'           },
+  system:           { icon: Info,          color: 'text-muted   bg-border',            label: 'Système'           },
 };
 
 export default function NotificationsPage() {
@@ -44,21 +44,21 @@ export default function NotificationsPage() {
     <div className="max-w-2xl mx-auto">
       <PageHeader
         title="Notifications"
-        subtitle={unread > 0 ? `${unread} unread` : 'All caught up'}
+        subtitle={unread > 0 ? `${unread} non lue${unread > 1 ? 's' : ''}` : 'Tout est à jour'}
         actions={
           unread > 0
-            ? <button onClick={markAllRead} className="text-xs text-violet hover:underline flex items-center gap-1"><Check size={12} /> Mark all read</button>
+            ? <button onClick={markAllRead} className="text-xs text-violet hover:underline flex items-center gap-1"><Check size={12} /> Tout marquer comme lu</button>
             : null
         }
       />
 
       <div className="grid gap-6">
 
-        {/* ── Notification settings card ── */}
+        {/* ── Paramètres de notification ── */}
         <Card>
           <div className="flex items-center gap-2 mb-4">
             <Settings size={14} className="text-muted" />
-            <h2 className="text-sm font-semibold text-text">Notification Preferences</h2>
+            <h2 className="text-sm font-semibold text-text">Préférences de notification</h2>
           </div>
           <div className="space-y-3">
             {/* Push */}
@@ -68,13 +68,13 @@ export default function NotificationsPage() {
                   <Smartphone size={14} className="text-violet" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-text">Push notifications</p>
-                  <p className="text-xs text-muted">Instant alerts on your device</p>
+                  <p className="text-sm font-medium text-text">Notifications push</p>
+                  <p className="text-xs text-muted">Alertes instantanées sur votre appareil</p>
                 </div>
               </div>
               <button
                 onClick={() => setPushEnabled(e => !e)}
-                className={`w-10 h-5.5 rounded-full transition-all duration-200 relative flex-shrink-0 ${pushEnabled ? 'bg-brand' : 'bg-border'}`}
+                className={`relative flex-shrink-0 transition-all duration-200 rounded-full ${pushEnabled ? 'bg-brand' : 'bg-border'}`}
                 style={{ height: 22, width: 40 }}
               >
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${pushEnabled ? 'left-5' : 'left-0.5'}`} />
@@ -88,8 +88,8 @@ export default function NotificationsPage() {
                   <Mail size={14} className="text-cyan" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-text">Email notifications</p>
-                  <p className="text-xs text-muted">Sent to your registered address</p>
+                  <p className="text-sm font-medium text-text">Notifications par e-mail</p>
+                  <p className="text-xs text-muted">Envoyées à votre adresse enregistrée</p>
                 </div>
               </div>
               <button
@@ -104,20 +104,20 @@ export default function NotificationsPage() {
             {!pushEnabled && !emailEnabled && (
               <div className="flex items-center gap-2 p-3 bg-amber-400/5 border border-amber-400/20 rounded-xl text-xs text-amber-400">
                 <BellOff size={13} />
-                All notifications are off. You may miss important session requests.
+                Toutes les notifications sont désactivées. Vous risquez de manquer des demandes de session importantes.
               </div>
             )}
           </div>
         </Card>
 
-        {/* ── Feed ── */}
+        {/* ── Fil ── */}
         <div>
-          <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Recent</p>
+          <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Récentes</p>
           <AnimatePresence>
             {notifications.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
                 <Bell size={32} className="mx-auto text-muted mb-3" />
-                <p className="text-sm text-muted">No notifications yet.</p>
+                <p className="text-sm text-muted">Aucune notification pour l&apos;instant.</p>
               </motion.div>
             ) : (
               <div className="space-y-2">

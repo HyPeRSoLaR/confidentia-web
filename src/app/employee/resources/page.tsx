@@ -28,10 +28,24 @@ const CATEGORY_COLOR: Record<ResourceCategory, string> = {
   guide:    'text-amber-400 bg-amber-400/10',
 };
 
+const CATEGORY_FR: Record<ResourceCategory | 'all', string> = {
+  all:      'Tout',
+  article:  'Article',
+  video:    'Vidéo',
+  exercise: 'Exercice',
+  guide:    'Guide',
+};
+
 const DIFFICULTY_COLOR: Record<ResourceDifficulty, string> = {
   beginner:     'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
   intermediate: 'text-amber-400  bg-amber-400/10  border-amber-400/20',
   advanced:     'text-red-400    bg-red-400/10    border-red-400/20',
+};
+
+const DIFFICULTY_FR: Record<ResourceDifficulty, string> = {
+  beginner:     'Débutant',
+  intermediate: 'Intermédiaire',
+  advanced:     'Avancé',
 };
 
 const CATEGORIES: (ResourceCategory | 'all')[] = ['all', 'article', 'guide', 'exercise', 'video'];
@@ -49,7 +63,7 @@ export default function ResourcesPage() {
   const quickWins  = MOCK_RESOURCES.filter(r => r.tags.some(t => QUICK_WIN_TAGS.includes(t)));
 
   const filtered = MOCK_RESOURCES.filter(r => {
-    if (r.isFeatured) return false; // featured shown separately
+    if (r.isFeatured) return false;
     const q = search.toLowerCase();
     const matchSearch = !search
       || r.title.toLowerCase().includes(q)
@@ -64,16 +78,16 @@ export default function ResourcesPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <PageHeader
-        title="Well-being Library"
-        subtitle={`${MOCK_RESOURCES.length} curated resources — articles, guides, exercises, and videos`}
+        title="Bibliothèque bien-être"
+        subtitle={`${MOCK_RESOURCES.length} ressources sélectionnées — articles, guides, exercices et vidéos`}
       />
 
-      {/* ── Featured row ── */}
+      {/* ── À la une ── */}
       {!search && cat === 'all' && (
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-3">
             <Star size={13} className="text-amber-400" />
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-widest">Featured this week</h2>
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-widest">À la une cette semaine</h2>
           </div>
           <div className="grid gap-3">
             {featured.map(r => (
@@ -83,12 +97,12 @@ export default function ResourcesPage() {
         </section>
       )}
 
-      {/* ── Quick Wins ── */}
+      {/* ── Gains rapides ── */}
       {!search && cat === 'all' && (
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-3">
             <Zap size={13} className="text-violet" />
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-widest">Quick wins — under 5 min</h2>
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-widest">Gains rapides — moins de 5 min</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin">
             {quickWins.map(r => (
@@ -98,10 +112,10 @@ export default function ResourcesPage() {
         </section>
       )}
 
-      {/* ── Search & Filter ── */}
+      {/* ── Recherche & Filtres ── */}
       <div className="space-y-3 mb-6">
         <Input
-          placeholder="Search by topic, keyword, or tag…"
+          placeholder="Rechercher par thème, mot-clé ou tag…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           icon={<Search size={14} />}
@@ -111,30 +125,30 @@ export default function ResourcesPage() {
             <button
               key={c}
               onClick={() => setCat(c)}
-              className={`px-3 py-1 rounded-full text-xs border capitalize transition-all ${
+              className={`px-3 py-1 rounded-full text-xs border transition-all ${
                 cat === c
                   ? 'bg-violet text-white border-transparent shadow-brand'
                   : 'border-border text-muted hover:text-text hover:border-violet/40'
               }`}
             >
-              {c}
+              {CATEGORY_FR[c]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Library list ── */}
+      {/* ── Bibliothèque ── */}
       <section>
         {(search || cat !== 'all') && (
           <p className="text-xs text-muted mb-3">
-            {filtered.length === 0 ? 'No results' : `${filtered.length} resource${filtered.length !== 1 ? 's' : ''} found`}
+            {filtered.length === 0 ? 'Aucun résultat' : `${filtered.length} ressource${filtered.length !== 1 ? 's' : ''} trouvée${filtered.length !== 1 ? 's' : ''}`}
           </p>
         )}
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-muted">
             <BookOpen size={32} className="mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No resources matched. Try a different keyword or category.</p>
+            <p className="text-sm">Aucun résultat. Essayez un autre mot-clé ou catégorie.</p>
           </div>
         ) : (
           <StaggerList className="space-y-3">
@@ -174,7 +188,7 @@ function FeaturedCard({
             <div className="flex items-center gap-2 flex-shrink-0">
               {resource.difficulty && (
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize ${DIFFICULTY_COLOR[resource.difficulty]}`}>
-                  {resource.difficulty}
+                  {DIFFICULTY_FR[resource.difficulty]}
                 </span>
               )}
               <div className="flex items-center gap-1 text-[10px] text-muted whitespace-nowrap">
@@ -184,7 +198,6 @@ function FeaturedCard({
           </div>
           <p className="text-xs text-muted mt-1 leading-relaxed">{resource.description}</p>
 
-          {/* Takeaways */}
           {resource.keyTakeaways && (
             <>
               {expanded && (
@@ -201,7 +214,7 @@ function FeaturedCard({
                 onClick={onToggle}
                 className="flex items-center gap-1 text-[10px] text-violet mt-2 hover:underline"
               >
-                {expanded ? <><ChevronUp size={11} /> Hide takeaways</> : <><ChevronDown size={11} /> Key takeaways</>}
+                {expanded ? <><ChevronUp size={11} />Masquer les points clés</> : <><ChevronDown size={11} />Points clés</>}
               </button>
             </>
           )}
@@ -216,7 +229,7 @@ function FeaturedCard({
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-[10px] text-violet hover:underline"
             >
-              Read <ExternalLink size={10} />
+              Lire <ExternalLink size={10} />
             </a>
           </div>
         </div>
@@ -258,8 +271,8 @@ function ResourceCard({
             <h3 className="font-semibold text-text text-sm leading-snug">{resource.title}</h3>
             <div className="flex items-center gap-2 flex-shrink-0">
               {resource.difficulty && (
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize ${DIFFICULTY_COLOR[resource.difficulty]}`}>
-                  {resource.difficulty}
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${DIFFICULTY_COLOR[resource.difficulty]}`}>
+                  {DIFFICULTY_FR[resource.difficulty]}
                 </span>
               )}
               <div className="flex items-center gap-1 text-[10px] text-muted whitespace-nowrap">
@@ -285,7 +298,7 @@ function ResourceCard({
                 onClick={onToggle}
                 className="flex items-center gap-1 text-[10px] text-violet mt-2 hover:underline"
               >
-                {expanded ? <><ChevronUp size={11} /> Hide takeaways</> : <><ChevronDown size={11} /> Key takeaways</>}
+                {expanded ? <><ChevronUp size={11} />Masquer les points clés</> : <><ChevronDown size={11} />Points clés</>}
               </button>
             </>
           )}

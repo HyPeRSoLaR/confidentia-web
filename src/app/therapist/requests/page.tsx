@@ -12,6 +12,7 @@ import { formatDateTime, timeAgo } from '@/lib/utils';
 import type { SessionRequest } from '@/types';
 
 const URGENCY_VARIANT = { low: 'default', medium: 'warning', high: 'danger' } as const;
+const URGENCY_LABEL: Record<string, string> = { low: 'faible urgence', medium: 'urgence moyenne', high: 'haute urgence' };
 const REASSIGN_THERAPIST = MOCK_THERAPISTS[2]; // Elena Rodriguez
 
 /** Returns { expired, msRemaining, label } */
@@ -29,7 +30,7 @@ function useCountdown(expiresAt: string) {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  const label = expired ? 'Expired' : `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+  const label = expired ? 'Expirée' : `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
   const pct   = expired ? 0 : Math.min(100, (ms / (24 * 3_600_000)) * 100);
 
   return { expired, ms, label, pct };
@@ -73,7 +74,7 @@ function RequestCard({
         {expired && !isFeedback && (
           <div className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center z-10 bg-amber-400/5 border border-amber-400/20">
             <RefreshCw size={20} className="text-amber-400 mb-1.5" />
-            <p className="text-xs font-semibold text-amber-400">Auto-reassigned to</p>
+            <p className="text-xs font-semibold text-amber-400">Réattribué automatiquement à</p>
             <p className="text-xs text-text font-medium">{REASSIGN_THERAPIST.name}</p>
           </div>
         )}
@@ -83,15 +84,15 @@ function RequestCard({
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-semibold text-text text-sm">{req.clientName}</span>
-              <Badge variant={URGENCY_VARIANT[req.urgency]} size="sm">{req.urgency} urgency</Badge>
+              <Badge variant={URGENCY_VARIANT[req.urgency]} size="sm">{URGENCY_LABEL[req.urgency] ?? req.urgency}</Badge>
               <span className="text-xs text-muted ml-auto">{timeAgo(req.requestedAt)}</span>
             </div>
             <p className="text-xs text-muted mb-2">
-              Topic: <span className="text-text">{req.topic}</span>
+              Sujet : <span className="text-text">{req.topic}</span>
             </p>
             <div className="flex items-center gap-1.5 text-xs text-muted mb-3">
               <Clock size={11} />
-              Preferred: {formatDateTime(req.preferredDate)}
+              Préféré : {formatDateTime(req.preferredDate)}
             </div>
 
             {/* 24h countdown bar */}
@@ -99,7 +100,7 @@ function RequestCard({
               <div className="flex items-center justify-between text-[10px]">
                 <div className="flex items-center gap-1 text-muted">
                   <Timer size={9} />
-                  <span>Response window</span>
+                  <span>Fenêtre de réponse</span>
                 </div>
                 <span className={`font-semibold ${expired ? 'text-amber-400' : pct < 20 ? 'text-red-400' : pct < 50 ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {label}
@@ -120,11 +121,11 @@ function RequestCard({
 
         {!expired && (
           <div className="flex gap-2 mt-4 pt-3 border-t border-border">
-            <Button size="sm" onClick={() => onAccept(req.id)} className="flex-1" disabled={!!isFeedback} aria-label={`Accept request from ${req.clientName}`}>
-              <Check size={13} /> Accept
+            <Button size="sm" onClick={() => onAccept(req.id)} className="flex-1" disabled={!!isFeedback} aria-label={`Accepter la demande de ${req.clientName}`}>
+              <Check size={13} /> Accepter
             </Button>
-            <Button variant="danger" size="sm" onClick={() => onDecline(req.id)} className="flex-1" disabled={!!isFeedback} aria-label={`Decline request from ${req.clientName}`}>
-              <X size={13} /> Decline
+            <Button variant="danger" size="sm" onClick={() => onDecline(req.id)} className="flex-1" disabled={!!isFeedback} aria-label={`Refuser la demande de ${req.clientName}`}>
+              <X size={13} /> Refuser
             </Button>
           </div>
         )}
@@ -132,7 +133,7 @@ function RequestCard({
         {expired && (
           <div className="mt-4 pt-3 border-t border-border flex items-center gap-2 text-xs text-muted">
             <AlertTriangle size={11} className="text-amber-400" />
-            Expired — patient forwarded to {REASSIGN_THERAPIST.name}
+            Expirée — patient transféré à {REASSIGN_THERAPIST.name}
           </div>
         )}
       </Card>
@@ -158,21 +159,21 @@ export default function RequestsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <PageHeader
-        title="Session Requests"
-        subtitle={`${active.length} active · ${expired.length} expired`}
+        title="Demandes de session"
+        subtitle={`${active.length} active${active.length > 1 ? 's' : ''} · ${expired.length} expirée${expired.length > 1 ? 's' : ''}`}
       />
 
       <AnimatePresence>
         {requests.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
             <CheckCircle size={40} className="mx-auto text-emerald-400 mb-3" />
-            <p className="text-muted text-sm">All caught up! No pending requests.</p>
+            <p className="text-muted text-sm">Tout est à jour ! Aucune demande en attente.</p>
           </motion.div>
         ) : (
           <div className="space-y-4">
             {active.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Active ({active.length})</p>
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Actives ({active.length})</p>
                 <div className="space-y-4">
                   {active.map(req => (
                     <RequestCard key={req.id} req={req} onAccept={id => handleAction(id, 'accept')} onDecline={id => handleAction(id, 'decline')} feedback={feedback} />
@@ -183,7 +184,7 @@ export default function RequestsPage() {
             {expired.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-amber-400/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <AlertTriangle size={11} /> Expired ({expired.length})
+                  <AlertTriangle size={11} /> Expirées ({expired.length})
                 </p>
                 <div className="space-y-4">
                   {expired.map(req => (

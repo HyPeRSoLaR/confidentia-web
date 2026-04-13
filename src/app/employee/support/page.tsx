@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-const EMOTIONS = ['😣 Overwhelmed', '😰 Anxious', '😞 Low mood', '😴 Exhausted', '😐 Okay', '🙂 Good'];
-const STEPS = ['How are you feeling?', 'Tell us more (optional)', 'Done'];
+const EMOTIONS = ['😣 Submergé(e)', '😰 Anxieux·se', '😞 Moral bas', '😴 Épuisé(e)', '😐 Ça va', '🙂 Bien'];
+const STEPS    = ['Comment vous sentez-vous ?', 'Précisions (optionnel)', 'Terminé'];
 
 export default function SupportPage() {
   const [step,        setStep]        = useState(0);
@@ -24,9 +24,9 @@ export default function SupportPage() {
 
   return (
     <div className="max-w-md mx-auto">
-      <PageHeader title="Anonymous Support Check-in" subtitle="Your response is completely anonymous — no identifying data is collected" />
+      <PageHeader title="Bilan anonyme de soutien" subtitle="Votre réponse est totalement anonyme — aucune donnée permettant de vous identifier n'est collectée" />
 
-      {/* Step indicator */}
+      {/* Indicateur d'étapes */}
       <div className="flex gap-2 mb-8">
         {STEPS.map((_, i) => (
           <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${step >= i ? 'bg-brand' : 'bg-border'}`} />
@@ -34,11 +34,11 @@ export default function SupportPage() {
       </div>
 
       <AnimatePresence mode="wait">
-        {/* Step 0: Emotion picker */}
+        {/* Étape 0 : Choix de l'émotion */}
         {step === 0 && (
           <motion.div key="s0" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
             <Card>
-              <h2 className="font-semibold text-text mb-4">How are you feeling today?</h2>
+              <h2 className="font-semibold text-text mb-4">Comment vous sentez-vous aujourd&apos;hui ?</h2>
               <div className="grid grid-cols-2 gap-2">
                 {EMOTIONS.map(e => (
                   <button
@@ -52,45 +52,45 @@ export default function SupportPage() {
                 ))}
               </div>
               <Button onClick={() => setStep(1)} disabled={!emotion} fullWidth className="mt-4 shadow-brand">
-                Continue <ChevronRight size={14} />
+                Continuer <ChevronRight size={14} />
               </Button>
             </Card>
           </motion.div>
         )}
 
-        {/* Step 1: Optional detail */}
+        {/* Étape 1 : Précisions optionnelles */}
         {step === 1 && (
           <motion.div key="s1" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
             <Card>
-              <h2 className="font-semibold text-text mb-2">Anything you'd like to share?</h2>
-              <p className="text-xs text-muted mb-4">This is optional and completely anonymous. Your employer cannot see individual responses.</p>
+              <h2 className="font-semibold text-text mb-2">Quelque chose à partager ?</h2>
+              <p className="text-xs text-muted mb-4">C&apos;est optionnel et totalement anonyme. Votre employeur ne peut pas voir les réponses individuelles.</p>
               <textarea
                 value={detail}
                 onChange={e => setDetail(e.target.value)}
                 rows={4}
-                placeholder="What's on your mind? (optional)"
+                placeholder="Qu'est-ce qui vous pèse ? (optionnel)"
                 className="w-full bg-bg border border-border rounded-xl p-3 text-sm text-text placeholder:text-muted/60 resize-none outline-none focus:ring-2 focus:ring-brand/50 transition-all"
-                aria-label="Optional support detail"
+                aria-label="Précisions optionnelles"
               />
               <div className="flex gap-2 mt-4">
-                <Button variant="secondary" onClick={() => setStep(0)} className="px-4" aria-label="Go back">Back</Button>
-                <Button onClick={handleSubmit} loading={submitting} fullWidth className="shadow-brand">Submit Anonymously</Button>
+                <Button variant="secondary" onClick={() => setStep(0)} className="px-4" aria-label="Retour">Retour</Button>
+                <Button onClick={handleSubmit} loading={submitting} fullWidth className="shadow-brand">Envoyer anonymement</Button>
               </div>
             </Card>
           </motion.div>
         )}
 
-        {/* Step 2: Success */}
+        {/* Étape 2 : Succès */}
         {step === 2 && (
           <motion.div key="s2" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
             <Card>
               <CheckCircle size={52} className="mx-auto text-emerald-400 mb-4" />
-              <h2 className="font-bold text-xl text-text mb-2">Thank you</h2>
+              <h2 className="font-bold text-xl text-text mb-2">Merci</h2>
               <p className="text-sm text-muted leading-relaxed mb-6">
-                Your check-in has been submitted anonymously. Your wellbeing matters — if you need immediate support, your employer has confidential EAP resources available.
+                Votre bilan a été soumis anonymement. Votre bien-être compte — si vous avez besoin d&apos;un soutien immédiat, votre employeur dispose de ressources PAE confidentielles.
               </p>
               <Button onClick={() => { setStep(0); setEmotion(''); setDetail(''); }} variant="secondary" fullWidth>
-                Submit Another
+                Envoyer un autre bilan
               </Button>
             </Card>
           </motion.div>

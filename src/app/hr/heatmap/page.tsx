@@ -2,7 +2,7 @@
 /**
  * app/hr/heatmap/page.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Simplified heatmap — Day view (Mon–Sun) | Week view (4 weeks).
+ * Simplified heatmap — Day view (Lun–Dim) | Week view (4 weeks).
  * Filter by All employees OR a specific department pole.
  * Dropped hourly granularity — not actionable and privacy risk.
  */
@@ -19,7 +19,7 @@ import {
 import type { DayHeatCell } from '@/lib/mock-data';
 import { EMOTION_COLORS } from '@/lib/utils';
 
-const DAYS        = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS        = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const K_ANON      = 5;
 
 type HeatView = 'day' | 'week';
@@ -50,7 +50,7 @@ function PoleSelector({
         ) : (
           <>
             <Users size={11} className="text-muted" />
-            <span>All employees</span>
+            <span>Tous les employés</span>
           </>
         )}
         <ChevronDown size={11} className={`text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -68,7 +68,7 @@ function PoleSelector({
               onClick={() => { onChange(null); setOpen(false); }}
               className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs text-left hover:bg-panel transition-colors ${!selected ? 'font-semibold text-violet' : 'text-text'}`}
             >
-              <Users size={11} className="text-muted" /> All employees
+              <Users size={11} className="text-muted" /> Tous les employés
             </button>
             <div className="border-t border-border" />
             {MOCK_POLES.map(pole => (
@@ -102,7 +102,7 @@ function DayView({ cells }: { cells: DayHeatCell[] }) {
 
   return (
     <div className="glass p-6 rounded-2xl">
-      <p className="text-sm font-semibold text-text mb-5">This week — daily snapshot</p>
+      <p className="text-sm font-semibold text-text mb-5">Cette semaine — aperçu quotidien</p>
       <div className="grid grid-cols-7 gap-3">
         {DAYS.map((day, dayIdx) => {
           const cell      = getCell(dayIdx);
@@ -135,7 +135,7 @@ function DayView({ cells }: { cells: DayHeatCell[] }) {
                 {tipOpen && !isPrivate && cell && (
                   <div className="absolute z-20 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-panel border border-border rounded-xl px-3 py-2 text-[10px] text-text whitespace-nowrap pointer-events-none shadow-brand">
                     <p className="capitalize font-semibold">{cell.dominantEmotion}</p>
-                    <p className="text-muted">{cell.participantCount} people · avg {cell.averageScore.toFixed(1)}/10</p>
+                    <p className="text-muted">{cell.participantCount} personnes · moy. {cell.averageScore.toFixed(1)}/10</p>
                   </div>
                 )}
               </div>
@@ -149,7 +149,7 @@ function DayView({ cells }: { cells: DayHeatCell[] }) {
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-        <span className="text-[10px] text-muted">Wellbeing score scale</span>
+        <span className="text-[10px] text-muted">Échelle de score bien-être</span>
         <div className="flex items-center gap-2">
           <div className="h-1.5 w-24 rounded-full" style={{ background: 'linear-gradient(to right, #EF4444, #F59E0B, #10B981)' }} />
           <div className="flex justify-between w-24 text-[9px] text-muted">
@@ -183,14 +183,15 @@ function WeekView({ cells, poleId }: { cells: DayHeatCell[]; poleId: string | nu
   // Fall back to company-wide wellbeing trends for the week view if no pole selected
   const fallbackTrends = !poleId ? [...MOCK_WELLBEING_TRENDS].reverse() : null;
 
+  const weekLabels = ['Cette semaine', 'La semaine dernière', 'Il y a 2 semaines', 'Il y a 3 semaines'];
+
   return (
     <div className="space-y-3">
       <div className="glass p-6 rounded-2xl space-y-3">
-        <p className="text-sm font-semibold text-text mb-5">Last 4 weeks — weekly trend</p>
+        <p className="text-sm font-semibold text-text mb-5">4 dernières semaines — tendance hebdomadaire</p>
 
         {weeks.map((w, idx) => {
-          // If pole-specific data, use aggregated cells; otherwise fall back to wellbeing trends
-          const label   = idx === 0 ? 'This week' : idx === 1 ? 'Last week' : `${idx} weeks ago`;
+          const label   = weekLabels[idx] ?? `Il y a ${idx} semaines`;
           const score   = poleId ? (w?.avgScore ?? null) : (fallbackTrends?.[idx]?.averageScore ?? null);
           const emotion = poleId ? (w?.dominant ?? null) : (fallbackTrends?.[idx]?.dominantEmotion ?? null);
           const people  = poleId ? (w?.totalPeople ?? null) : (fallbackTrends?.[idx]?.participantCount ?? null);
@@ -198,10 +199,10 @@ function WeekView({ cells, poleId }: { cells: DayHeatCell[]; poleId: string | nu
           if (score === null) {
             return (
               <div key={idx} className="flex items-center gap-4">
-                <span className="text-xs text-muted w-24 flex-shrink-0">{label}</span>
+                <span className="text-xs text-muted w-32 flex-shrink-0">{label}</span>
                 <div className="flex-1 h-8 bg-panel rounded-2xl overflow-hidden flex items-center gap-2 px-3">
                   <EyeOff size={11} className="text-muted" />
-                  <span className="text-[10px] text-muted">Not enough data (k &lt; {K_ANON})</span>
+                  <span className="text-[10px] text-muted">Données insuffisantes (k &lt; {K_ANON})</span>
                 </div>
               </div>
             );
@@ -212,7 +213,7 @@ function WeekView({ cells, poleId }: { cells: DayHeatCell[]; poleId: string | nu
 
           return (
             <div key={idx} className="flex items-center gap-4">
-              <span className="text-xs text-muted w-24 flex-shrink-0">{label}</span>
+              <span className="text-xs text-muted w-32 flex-shrink-0">{label}</span>
               <div className="flex-1 h-8 bg-panel rounded-2xl overflow-hidden relative">
                 <motion.div
                   initial={{ width: 0 }}
@@ -231,7 +232,7 @@ function WeekView({ cells, poleId }: { cells: DayHeatCell[]; poleId: string | nu
                 <span className="text-xs text-muted">/ 10</span>
               </div>
               {people !== null && (
-                <span className="text-xs text-muted flex-shrink-0">{people} people</span>
+                <span className="text-xs text-muted flex-shrink-0">{people} personnes</span>
               )}
             </div>
           );
@@ -247,7 +248,7 @@ function WeekView({ cells, poleId }: { cells: DayHeatCell[]; poleId: string | nu
         return delta !== null ? (
           <div className="glass p-4 rounded-2xl">
             <p className="text-xs text-muted text-center">
-              Week-on-week: <strong className={isUp ? 'text-emerald-400' : 'text-red-400'}>{isUp ? '+' : ''}{delta.toFixed(1)}</strong> pts average wellbeing
+              Semaine sur semaine : <strong className={isUp ? 'text-emerald-400' : 'text-red-400'}>{isUp ? '+' : ''}{delta.toFixed(1)}</strong> pts de bien-être moyen
             </p>
           </div>
         ) : null;
@@ -272,11 +273,11 @@ export default function HeatmapPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <PageHeader
-        title="Emotion Heatmap"
+        title="Carte thermique des émotions"
         subtitle={
           activePole
-            ? `${activePole.emoji} ${activePole.name} — anonymised wellbeing`
-            : 'Company-wide — anonymised wellbeing patterns'
+            ? `${activePole.emoji} ${activePole.name} — bien-être anonymisé`
+            : "À l'échelle de l'entreprise — patterns de bien-être anonymisés"
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
@@ -285,9 +286,9 @@ export default function HeatmapPage() {
             {/* Pole selector */}
             <PoleSelector selected={poleId} onChange={setPoleId} />
 
-            {/* Day / Week toggle */}
+            {/* Jour / Semaine toggle */}
             <div className="flex bg-surface rounded-xl p-1 border border-border gap-0.5">
-              {([['day', 'Day', CalendarDays], ['week', 'Week', Calendar]] as const).map(([id, label, Icon]) => (
+              {([['day', 'Jour', CalendarDays], ['week', 'Semaine', Calendar]] as const).map(([id, label, Icon]) => (
                 <button
                   key={id}
                   onClick={() => setView(id)}
@@ -314,13 +315,13 @@ export default function HeatmapPage() {
           <span className="text-lg">{activePole.emoji}</span>
           <div>
             <p className="text-sm font-semibold text-text">{activePole.name}</p>
-            <p className="text-xs text-muted">{activePole.memberCount} members · pole heatmap</p>
+            <p className="text-xs text-muted">{activePole.memberCount} membres · carte du pôle</p>
           </div>
           <button
             onClick={() => setPoleId(null)}
             className="ml-auto text-xs text-muted hover:text-text underline"
           >
-            Show all
+            Tout afficher
           </button>
         </motion.div>
       )}
@@ -335,7 +336,7 @@ export default function HeatmapPage() {
         ))}
         <div className="flex items-center gap-1.5 ml-4">
           <div className="w-3 h-3 rounded-sm bg-border" />
-          <span className="text-xs text-muted">Private (&lt;{K_ANON})</span>
+          <span className="text-xs text-muted">Privé (&lt;{K_ANON})</span>
         </div>
       </div>
 
@@ -352,7 +353,7 @@ export default function HeatmapPage() {
       </AnimatePresence>
 
       <p className="text-xs text-muted mt-4 text-center">
-        Cells with fewer than {K_ANON} participants are hidden to protect individual privacy.
+        Les cellules avec moins de {K_ANON} participants sont masquées pour protéger la vie privée individuelle.
       </p>
     </div>
   );

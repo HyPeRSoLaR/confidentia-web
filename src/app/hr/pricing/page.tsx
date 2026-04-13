@@ -32,7 +32,7 @@ function PlatformCard({ plan }: { plan: (typeof MOCK_B2B_PLATFORM_PLANS)[0] }) {
       {plan.isPopular && (
         <div className="absolute top-0 right-0">
           <div className="text-[10px] font-bold text-white bg-violet-600 px-3 py-1 rounded-bl-xl tracking-wide uppercase">
-            Recommended
+            Recommandé
           </div>
         </div>
       )}
@@ -52,9 +52,9 @@ function PlatformCard({ plan }: { plan: (typeof MOCK_B2B_PLATFORM_PLANS)[0] }) {
         {/* Price */}
         <div className="mb-5">
           <span className="text-3xl font-black text-text">€{plan.priceMonthly}</span>
-          <span className="text-muted text-xs ml-1">/month</span>
+          <span className="text-muted text-xs ml-1">/mois</span>
           <p className="text-xs text-muted mt-0.5">
-            €{(plan.priceAnnual / 12).toFixed(0)}/mo billed annually
+            €{(plan.priceAnnual / 12).toFixed(0)}/mois facturé annuellement
           </p>
         </div>
 
@@ -71,9 +71,9 @@ function PlatformCard({ plan }: { plan: (typeof MOCK_B2B_PLATFORM_PLANS)[0] }) {
         <Button
           variant={plan.isPopular ? 'primary' : 'secondary'}
           fullWidth
-          aria-label={`Contact us for the ${plan.name} plan`}
+          aria-label={`Nous contacter pour le forfait ${plan.name}`}
         >
-          Contact Sales
+          Contacter les ventes
           <ChevronRight size={14} className="ml-1" />
         </Button>
       </div>
@@ -97,7 +97,7 @@ function EmployeeCard({ plan }: { plan: (typeof MOCK_B2B_EMPLOYEE_PLANS)[0] }) {
     >
       {plan.isPopular && (
         <span className="absolute top-3 right-3 text-[10px] font-bold bg-violet-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
-          ⭐ Best value
+          ⭐ Meilleur rapport
         </span>
       )}
 
@@ -127,9 +127,9 @@ function EmployeeCard({ plan }: { plan: (typeof MOCK_B2B_EMPLOYEE_PLANS)[0] }) {
           variant={plan.isPopular ? 'primary' : 'secondary'}
           fullWidth
           className={plan.isPopular ? 'shadow-brand' : ''}
-          aria-label={`Select the ${plan.name} employee plan`}
+          aria-label={`Choisir le forfait employé ${plan.name}`}
         >
-          Select {plan.name}
+          Choisir {plan.name}
         </Button>
       </div>
     </motion.div>
@@ -141,16 +141,16 @@ export default function HRPricingPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-12">
       <PageHeader
-        title="B2B Pricing"
-        subtitle="Flexible plans for your organisation — platform access and per-seat employee licences."
+        title="Tarifs B2B"
+        subtitle="Des forfaits flexibles pour votre organisation — accès plateforme et licences employés par siège."
       />
 
       {/* ── HR Platform ── */}
       <section>
         <div className="flex items-center gap-2 mb-5">
           <Building2 size={16} className="text-muted" />
-          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">HR Platform (SaaS)</h2>
-          <Badge size="sm" variant="default" className="ml-1">Billed per organisation</Badge>
+          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Plateforme RH (SaaS)</h2>
+          <Badge size="sm" variant="default" className="ml-1">Facturé par organisation</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {MOCK_B2B_PLATFORM_PLANS.map(plan => (
@@ -163,22 +163,22 @@ export default function HRPricingPage() {
       <section>
         <div className="flex items-center gap-2 mb-5">
           <Briefcase size={16} className="text-muted" />
-          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Executive Access</h2>
-          <Badge size="sm" variant="default" className="ml-1">Per seat</Badge>
+          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Accès Dirigeant</h2>
+          <Badge size="sm" variant="default" className="ml-1">Par siège</Badge>
         </div>
         <div className="rounded-2xl border border-border bg-surface p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 justify-between">
           <div>
-            <p className="font-bold text-text">Executive Licence</p>
+            <p className="font-bold text-text">Licence Dirigeant</p>
             <p className="text-xs text-muted mt-1 max-w-sm">
-              Advanced dashboard, detailed analytics &amp; reporting — for each member of management.
+              Tableau de bord avancé, analytiques détaillées &amp; reporting — pour chaque membre de la direction.
             </p>
           </div>
           <div className="flex items-end gap-1 flex-shrink-0">
             <span className="text-3xl font-black text-text">€29</span>
-            <span className="text-xs text-muted mb-1">/user/month</span>
+            <span className="text-xs text-muted mb-1">/utilisateur/mois</span>
           </div>
-          <Button variant="secondary" aria-label="Contact us for Executive Access">
-            Contact Sales
+          <Button variant="secondary" aria-label="Nous contacter pour l'accès Dirigeant">
+            Contacter les ventes
           </Button>
         </div>
       </section>
@@ -187,8 +187,8 @@ export default function HRPricingPage() {
       <section>
         <div className="flex items-center gap-2 mb-5">
           <Users size={16} className="text-muted" />
-          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Employee Plans</h2>
-          <Badge size="sm" variant="default" className="ml-1">Per seat</Badge>
+          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Forfaits Employés</h2>
+          <Badge size="sm" variant="default" className="ml-1">Par siège</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {MOCK_B2B_EMPLOYEE_PLANS.map(plan => (
@@ -198,8 +198,8 @@ export default function HRPricingPage() {
       </section>
 
       <p className="text-center text-xs text-muted pb-6">
-        Average real B2B cost: €2–4 / employee / month. All plans include GDPR compliance,
-        k-anonymity &amp; SSO. Volume discounts available — contact sales.
+        Coût B2B moyen réel : 2–4€ / employé / mois. Tous les forfaits incluent la conformité RGPD,
+        le k-anonymat &amp; le SSO. Remises sur volume disponibles — contactez notre équipe commerciale.
       </p>
     </div>
   );

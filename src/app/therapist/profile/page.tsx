@@ -23,7 +23,7 @@ export default function TherapistProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto">
-      <PageHeader title="My Profile" subtitle="Visible to clients browsing the therapist marketplace" />
+      <PageHeader title="Mon Profil" subtitle="Visible aux clients sur le marketplace des thérapeutes" />
 
       <StaggerList className="space-y-5">
         {/* Avatar + stats */}
@@ -48,7 +48,7 @@ export default function TherapistProfilePage() {
                     </span>
                   ))}
                   <span className="flex items-center gap-1 text-[10px] text-muted border border-border rounded-md px-1.5 py-0.5">
-                    <Clock size={9}/>50 min · ${profile.ratePerSession}
+                    <Clock size={9}/>50 min · €{profile.ratePerSession}
                   </span>
                 </div>
               </div>
@@ -59,13 +59,13 @@ export default function TherapistProfilePage() {
         {/* Bio */}
         <StaggerItem>
           <Card>
-            <label className="text-xs font-medium text-text mb-2 block">Professional Bio</label>
+            <label className="text-xs font-medium text-text mb-2 block">Biographie professionnelle</label>
             <textarea
               rows={4}
               value={profile.bio}
               onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))}
               className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50 resize-none"
-              aria-label="Professional bio"
+              aria-label="Biographie professionnelle"
             />
           </Card>
         </StaggerItem>
@@ -73,38 +73,38 @@ export default function TherapistProfilePage() {
         {/* Specialties */}
         <StaggerItem>
           <Card>
-            <label className="text-xs font-medium text-text mb-2 block">Specialties</label>
+            <label className="text-xs font-medium text-text mb-2 block">Spécialités</label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {profile.specialties.map(s => (
                 <Badge key={s} size="sm" className="cursor-pointer hover:opacity-80">{s}</Badge>
               ))}
             </div>
-            <p className="text-[10px] text-muted">Specialty editing via the full profile edit flow (coming soon)</p>
+            <p className="text-[10px] text-muted">Modification des spécialités via le flux complet d&apos;édition du profil (bientôt disponible)</p>
           </Card>
         </StaggerItem>
 
         {/* Rate */}
         <StaggerItem>
           <Card>
-            <label className="text-xs font-medium text-text mb-2 block">Session Rate (per 50 min)</label>
+            <label className="text-xs font-medium text-text mb-2 block">Tarif par séance (50 min)</label>
             <div className="flex items-center gap-2">
-              <span className="text-muted text-sm">$</span>
+              <span className="text-muted text-sm">€</span>
               <input
                 type="number" min={0}
                 value={profile.ratePerSession}
                 onChange={e => setProfile(p => ({ ...p, ratePerSession: Number(e.target.value) }))}
                 className="flex-1 bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50"
-                aria-label="Session rate in USD"
+                aria-label="Tarif de séance en EUR"
               />
             </div>
-            <p className="text-[10px] text-muted mt-1.5">Platform fee: 20%. Your net: ${Math.round(profile.ratePerSession * 0.8)}/session</p>
+            <p className="text-[10px] text-muted mt-1.5">Commission plateforme : 20%. Votre net : €{Math.round(profile.ratePerSession * 0.8)}/séance</p>
           </Card>
         </StaggerItem>
 
         {/* Save */}
         <StaggerItem>
           <Button onClick={handleSave} loading={saving} fullWidth className="shadow-brand">
-            {saved ? <><CheckCircle size={14}/>Saved!</> : <><Save size={14}/>Save Profile</>}
+            {saved ? <><CheckCircle size={14}/>Enregistré !</> : <><Save size={14}/>Enregistrer le profil</>}
           </Button>
         </StaggerItem>
       </StaggerList>

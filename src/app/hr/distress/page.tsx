@@ -131,11 +131,11 @@ function RequestCard({ request, onUpdate }: { request: DistressRequest; onUpdate
                 {request.status !== 'resolved' && (
                   <div className="flex gap-2 pt-1">
                     <a
-                      href={`mailto:${request.employeeEmail}?subject=Re: Your support request&body=Hi ${request.employeeName},%0D%0A%0D%0AThank you for reaching out. I'd like to connect with you to discuss your situation.%0D%0A%0D%0ABest,%0D%0AHR Team`}
+                      href={`mailto:${request.employeeEmail}?subject=Re: Votre demande de soutien&body=Bonjour ${request.employeeName},%0D%0A%0D%0AMerci de vous être manifesté(e). J'aimerais échanger avec vous au sujet de votre situation.%0D%0A%0D%0ACordialement,%0D%0AL'équipe RH`}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-violet/10 text-violet hover:bg-violet/20 transition-colors"
                     >
                       <Mail size={12} />
-                      Reply by email
+                      Répondre par e-mail
                     </a>
 
                     {!request.acknowledged && (
@@ -231,11 +231,11 @@ export default function HRDistressPage() {
           <div className="w-14 h-14 rounded-full bg-surface border border-border flex items-center justify-center mx-auto mb-4">
             <Inbox size={22} className="text-muted" />
           </div>
-          <p className="font-semibold text-text mb-1">No requests</p>
+          <p className="font-semibold text-text mb-1">Aucune demande</p>
           <p className="text-xs text-muted">
             {filter === 'all'
-              ? 'No support requests have been submitted yet.'
-              : `No ${filter.replace('_', ' ')} requests.`}
+              ? 'Aucune demande de soutien n\'a encore été soumise.'
+              : `Aucune demande ${filter === 'pending' ? 'en attente' : filter === 'in_progress' ? 'en cours' : 'résolue'}.`}
           </p>
         </motion.div>
       )}

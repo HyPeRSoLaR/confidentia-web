@@ -7,10 +7,10 @@ import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
 import { MOCK_THERAPY_SESSIONS } from '@/lib/mock-data';
 
 const STATUS_CONFIG = {
-  confirmed:  { icon: CheckCircle, color: 'text-emerald-400', variant: 'success'  as const, label: 'Confirmed' },
-  pending:    { icon: Clock,        color: 'text-amber-400',   variant: 'warning'  as const, label: 'Pending'   },
-  completed:  { icon: CheckCircle,  color: 'text-muted',       variant: 'default'  as const, label: 'Completed' },
-  cancelled:  { icon: XCircle,      color: 'text-coral',       variant: 'danger'   as const, label: 'Cancelled' },
+  confirmed:  { icon: CheckCircle, color: 'text-emerald-400', variant: 'success'  as const, label: 'Confirmée'  },
+  pending:    { icon: Clock,        color: 'text-amber-400',   variant: 'warning'  as const, label: 'En attente' },
+  completed:  { icon: CheckCircle,  color: 'text-muted',       variant: 'default'  as const, label: 'Terminée'   },
+  cancelled:  { icon: XCircle,      color: 'text-coral',       variant: 'danger'   as const, label: 'Annulée'    },
 };
 
 export default function TherapistSessionsPage() {
@@ -21,14 +21,14 @@ export default function TherapistSessionsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader title="My Sessions" subtitle="Upcoming and past client sessions" />
+      <PageHeader title="Mes sessions" subtitle="Sessions à venir et passées" />
 
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Total Sessions', value: totalSessions.toString(), icon: CheckCircle, color: 'text-violet' },
-          { label: 'Completed',      value: completed.length.toString(), icon: CheckCircle, color: 'text-emerald-400' },
-          { label: 'Net Earned',     value: `$${totalEarned.toLocaleString()}`, icon: DollarSign, color: 'text-cyan' },
+          { label: 'Total sessions', value: totalSessions.toString(), icon: CheckCircle, color: 'text-violet' },
+          { label: 'Terminées',      value: completed.length.toString(), icon: CheckCircle, color: 'text-emerald-400' },
+          { label: 'Net perçu',      value: `€${totalEarned.toLocaleString('fr-FR')}`, icon: DollarSign, color: 'text-cyan' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -42,10 +42,10 @@ export default function TherapistSessionsPage() {
       </div>
 
       <StaggerList className="space-y-6">
-        {/* Upcoming */}
+        {/* À venir */}
         {upcoming.length > 0 && (
           <StaggerItem>
-            <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Upcoming</h3>
+            <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">À venir</h3>
             <div className="space-y-3">
               {upcoming.map(session => {
                 const cfg  = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.completed;
@@ -63,12 +63,12 @@ export default function TherapistSessionsPage() {
                           <Badge variant={cfg.variant} size="sm">{cfg.label}</Badge>
                         </div>
                         <p className="text-xs text-muted">
-                          {date.toLocaleDateString()} at {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {date.toLocaleDateString('fr-FR')} à {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           {' · '}{session.durationMin} min
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-violet">${Math.round(session.grossAmount * (1 - session.platformFeeRate))}</p>
+                        <p className="text-sm font-semibold text-violet">€{Math.round(session.grossAmount * (1 - session.platformFeeRate))}</p>
                         <p className="text-[10px] text-muted">net</p>
                       </div>
                     </div>
@@ -79,9 +79,9 @@ export default function TherapistSessionsPage() {
           </StaggerItem>
         )}
 
-        {/* Past sessions */}
+        {/* Sessions passées */}
         <StaggerItem>
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Past Sessions</h3>
+          <h3 className="text-xs font-semibold text-muted uppercase tracking-widest mb-3">Sessions passées</h3>
           <div className="space-y-2">
             {completed.map(session => {
               const date = new Date(session.date);
@@ -89,10 +89,10 @@ export default function TherapistSessionsPage() {
                 <div key={session.id} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-xl text-sm">
                   <div className="flex-1">
                     <span className="font-medium text-text">{session.clientName}</span>
-                    <span className="text-muted ml-2 text-xs">{date.toLocaleDateString()}</span>
+                    <span className="text-muted ml-2 text-xs">{date.toLocaleDateString('fr-FR')}</span>
                   </div>
-                  <Badge variant="default" size="sm">Completed</Badge>
-                  <span className="text-xs text-violet font-semibold">${Math.round(session.grossAmount * (1 - session.platformFeeRate))}</span>
+                  <Badge variant="default" size="sm">Terminée</Badge>
+                  <span className="text-xs text-violet font-semibold">€{Math.round(session.grossAmount * (1 - session.platformFeeRate))}</span>
                 </div>
               );
             })}

@@ -25,23 +25,23 @@ export default function InsightsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader title="Insights" subtitle="AI-powered summary of your well-being journey" />
+      <PageHeader title="Aperçus" subtitle="Résumé IA de votre parcours bien-être" />
 
       <StaggerList className="space-y-5">
-        {/* Weekly summary */}
+        {/* Résumé hebdomadaire */}
         <StaggerItem>
           <Card variant="brand-border">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-brand text-xs font-semibold uppercase tracking-widest">Weekly Summary</span>
+              <span className="text-brand text-xs font-semibold uppercase tracking-widest">Résumé hebdomadaire</span>
             </div>
             <p className="text-sm text-text/90 leading-relaxed">{weeklySummary}</p>
           </Card>
         </StaggerItem>
 
-        {/* Mood chart */}
+        {/* Graphique d'humeur */}
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-text mb-4">Mood This Week</h3>
+            <h3 className="font-semibold text-text mb-4">Humeur cette semaine</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={moodTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
@@ -71,10 +71,10 @@ export default function InsightsPage() {
           </Card>
         </StaggerItem>
 
-        {/* Themes */}
+        {/* Thèmes clés */}
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-text mb-3">Key Themes</h3>
+            <h3 className="font-semibold text-text mb-3">Thèmes clés</h3>
             <div className="flex flex-wrap gap-2">
               {themes.map(t => (
                 <Badge key={t} variant="info" size="md">{t}</Badge>

@@ -10,7 +10,7 @@ import type { NavItem } from '@/components/layout/Sidebar';
 const UNREAD_ALERTS = MOCK_ORG_ALERTS.filter(a => !a.acknowledged).length;
 
 export default function HRLayout({ children }: { children: React.ReactNode }) {
-  const [name,           setName]           = useState('HR Manager');
+  const [name,           setName]           = useState('Responsable RH');
   const [distressBadge,  setDistressBadge]  = useState(0);
 
   useEffect(() => {

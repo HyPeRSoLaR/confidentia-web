@@ -26,19 +26,27 @@ export default function HRSettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <PageHeader title="HR Settings" subtitle="Configure organisation-wide well-being monitoring" />
+      <PageHeader title="Paramètres RH" subtitle="Configurer la surveillance du bien-être à l'échelle de l'organisation" />
 
       <StaggerList className="space-y-5">
         {/* Notifications */}
         <StaggerItem>
           <Card>
             <h3 className="font-semibold text-text text-sm mb-4 flex items-center gap-2">
-              <Bell size={14} className="text-violet" /> Notification Preferences
+              <Bell size={14} className="text-violet" /> Préférences de notification
             </h3>
 
             {[
-              { key: 'weeklyReportEnabled' as const, label: 'Weekly Summary Report', desc: 'Receive a weekly digest of anonymized org well-being trends every Monday' },
-              { key: 'alertsEnabled' as const,        label: 'Critical Alerts',        desc: 'Get notified immediately when anomalies exceed configurable thresholds' },
+              {
+                key: 'weeklyReportEnabled' as const,
+                label: 'Rapport hebdomadaire',
+                desc: 'Recevez un résumé hebdomadaire des tendances de bien-être anonymisées chaque lundi',
+              },
+              {
+                key: 'alertsEnabled' as const,
+                label: 'Alertes critiques',
+                desc: 'Soyez notifié immédiatement lorsque des anomalies dépassent les seuils configurés',
+              },
             ].map(item => (
               <div key={item.key} className="flex items-start justify-between gap-4 py-3 border-b border-border last:border-0 last:pb-0">
                 <div>
@@ -48,7 +56,7 @@ export default function HRSettingsPage() {
                 <button
                   role="switch"
                   aria-checked={settings[item.key]}
-                  aria-label={`Toggle ${item.label}`}
+                  aria-label={`Activer/désactiver ${item.label}`}
                   onClick={() => toggle(item.key)}
                   className={`relative w-10 h-5 flex-shrink-0 mt-0.5 rounded-full transition-colors ${settings[item.key] ? 'bg-brand' : 'bg-border'}`}
                 >
@@ -63,37 +71,37 @@ export default function HRSettingsPage() {
         <StaggerItem>
           <Card>
             <h3 className="font-semibold text-text text-sm mb-3 flex items-center gap-2">
-              <Mail size={14} className="text-cyan" /> Notification Email
+              <Mail size={14} className="text-cyan" /> E-mail de notification
             </h3>
             <input
               type="email"
               value={settings.notificationEmail}
               onChange={e => setSettings(s => ({ ...s, notificationEmail: e.target.value }))}
               className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50 transition-all"
-              aria-label="Notification email address"
-              placeholder="hr@yourcompany.com"
+              aria-label="Adresse e-mail de notification"
+              placeholder="rh@votreentreprise.com"
             />
-            <p className="text-[10px] text-muted mt-2">Reports and alerts are sent exclusively to this address — never to individual employees.</p>
+            <p className="text-[10px] text-muted mt-2">Les rapports et alertes sont envoyés exclusivement à cette adresse — jamais aux employés individuels.</p>
           </Card>
         </StaggerItem>
 
         {/* k-anonymity threshold */}
         <StaggerItem>
           <Card>
-            <h3 className="font-semibold text-sm text-text mb-1">Privacy Threshold (k-Anonymity)</h3>
+            <h3 className="font-semibold text-sm text-text mb-1">Seuil de confidentialité (k-Anonymat)</h3>
             <p className="text-xs text-muted mb-3 leading-relaxed">
-              Aggregated statistics are only shown when at least <strong>{settings.kAnonymityThreshold}</strong> employees contributed. This prevents reverse-engineering individual responses.
+              Les statistiques agrégées ne sont affichées que lorsqu'au moins <strong>{settings.kAnonymityThreshold}</strong> employés ont contribué. Cela empêche de rétro-ingénierer les réponses individuelles.
             </p>
             <input
               type="range" min={3} max={20} step={1}
               value={settings.kAnonymityThreshold}
               onChange={e => setSettings(s => ({ ...s, kAnonymityThreshold: Number(e.target.value) }))}
-              aria-label="k-anonymity threshold"
+              aria-label="Seuil k-anonymat"
               className="w-full accent-violet"
             />
             <div className="flex justify-between text-[10px] text-muted mt-1">
               <span>3 (minimum)</span>
-              <span className="font-semibold text-violet">{settings.kAnonymityThreshold} respondents</span>
+              <span className="font-semibold text-violet">{settings.kAnonymityThreshold} répondants</span>
               <span>20</span>
             </div>
           </Card>
@@ -102,7 +110,7 @@ export default function HRSettingsPage() {
         {/* Save */}
         <StaggerItem>
           <Button onClick={handleSave} loading={saving} fullWidth className="shadow-brand">
-            {saved ? <><CheckCircle size={14} />Saved!</> : <><Save size={14} />Save Settings</>}
+            {saved ? <><CheckCircle size={14} />Enregistré !</> : <><Save size={14} />Enregistrer</>}
           </Button>
         </StaggerItem>
       </StaggerList>

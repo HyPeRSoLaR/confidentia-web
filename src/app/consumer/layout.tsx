@@ -20,7 +20,7 @@ const NAV: NavItem[] = [
 ];
 
 export default function ConsumerLayout({ children }: { children: React.ReactNode }) {
-  const [name, setName] = useState('User');
+  const [name, setName] = useState('Utilisateur');
   useEffect(() => {
     const s = getSession();
     if (s.user?.name) setName(s.user.name);

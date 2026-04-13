@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { MOCK_THERAPIST_PROFILE } from '@/lib/mock-data';
 import type { AvailabilitySlot } from '@/types';
 
-const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS  = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function AvailabilityPage() {
@@ -31,9 +31,9 @@ export default function AvailabilityPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="Availability"
-        subtitle="Click slots to toggle open/closed"
-        actions={<Button size="sm" onClick={save}>{saved ? '✓ Saved' : 'Save'}</Button>}
+        title="Disponibilités"
+        subtitle="Cliquez sur un créneau pour le basculer ouvert/fermé"
+        actions={<Button size="sm" onClick={save}>{saved ? '✓ Enregistré' : 'Enregistrer'}</Button>}
       />
 
       <Card className="overflow-x-auto scrollbar-thin">
@@ -61,7 +61,7 @@ export default function AvailabilityPage() {
                     className={`flex-1 h-5 rounded-sm transition-colors duration-150 ${
                       avail ? 'bg-cyan/70 hover:bg-cyan' : 'bg-border/50 hover:bg-border'
                     }`}
-                    title={`${day} ${hour}:00 — ${avail ? 'Available' : 'Unavailable'}`}
+                    title={`${day} ${hour}:00 — ${avail ? 'Disponible' : 'Indisponible'}`}
                   />
                 );
               })}
@@ -69,8 +69,8 @@ export default function AvailabilityPage() {
           </div>
         ))}
         <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
-          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan/70"/><span className="text-xs text-muted">Available</span></div>
-          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-border/50"/><span className="text-xs text-muted">Unavailable</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan/70"/><span className="text-xs text-muted">Disponible</span></div>
+          <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-border/50"/><span className="text-xs text-muted">Indisponible</span></div>
         </div>
       </Card>
     </div>

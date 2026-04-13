@@ -15,6 +15,17 @@ import type { JournalEntry, EmotionLabel } from '@/types';
 
 const EMOTIONS: EmotionLabel[] = ['calm','happy','anxious','stressed','angry','sad','energized','neutral'];
 
+const EMOTION_FR: Record<EmotionLabel, string> = {
+  calm:      'Calme',
+  happy:     'Joyeux·se',
+  anxious:   'Anxieux·se',
+  stressed:  'Stressé·e',
+  angry:     'En colère',
+  sad:       'Triste',
+  energized: 'Dynamisé·e',
+  neutral:   'Neutre',
+};
+
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>(MOCK_JOURNAL_ENTRIES);
   const [open, setOpen] = useState(false);
@@ -44,8 +55,8 @@ export default function JournalPage() {
     <div className="max-w-2xl mx-auto">
       <PageHeader
         title="Journal"
-        subtitle={`${entries.length} entries`}
-        actions={<Button size="sm" onClick={() => setOpen(true)}><Plus size={14}/>New entry</Button>}
+        subtitle={`${entries.length} entrée${entries.length > 1 ? 's' : ''}`}
+        actions={<Button size="sm" onClick={() => setOpen(true)}><Plus size={14}/>Nouvelle entrée</Button>}
       />
 
       <StaggerList className="space-y-4">
@@ -56,7 +67,7 @@ export default function JournalPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     {entry.mood && (
-                      <span className="text-lg" title={entry.mood}>{EMOTION_EMOJI[entry.mood]}</span>
+                      <span className="text-lg" title={EMOTION_FR[entry.mood] ?? entry.mood}>{EMOTION_EMOJI[entry.mood]}</span>
                     )}
                     <h3 className="font-semibold text-text">{entry.title}</h3>
                   </div>
@@ -73,12 +84,12 @@ export default function JournalPage() {
         ))}
       </StaggerList>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="New Journal Entry" size="md">
+      <Modal open={open} onClose={() => setOpen(false)} title="Nouvelle entrée de journal" size="md">
         <div className="space-y-4">
-          <Input label="Title" placeholder="What's on your mind?" value={title} onChange={e => setTitle(e.target.value)} />
-          <Textarea label="Write freely…" rows={6} placeholder="This is a safe space. No one but you will read this." value={body} onChange={e => setBody(e.target.value)} />
+          <Input label="Titre" placeholder="Qu'avez-vous en tête ?" value={title} onChange={e => setTitle(e.target.value)} />
+          <Textarea label="Écrivez librement…" rows={6} placeholder="C'est un espace sûr. Personne d'autre que vous ne lira ceci." value={body} onChange={e => setBody(e.target.value)} />
           <div>
-            <p className="text-sm font-medium text-muted mb-2">Mood</p>
+            <p className="text-sm font-medium text-muted mb-2">Humeur</p>
             <div className="flex flex-wrap gap-2">
               {EMOTIONS.map(em => (
                 <button
@@ -91,16 +102,16 @@ export default function JournalPage() {
                   }`}
                   style={mood === em ? { background: EMOTION_COLORS[em] } : {}}
                 >
-                  {EMOTION_EMOJI[em]} {em}
+                  {EMOTION_EMOJI[em]} {EMOTION_FR[em]}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted mb-2">Tags</p>
+            <p className="text-sm font-medium text-muted mb-2">Étiquettes</p>
             <div className="flex gap-2">
-              <Input placeholder="Add tag…" value={tag} onChange={e => setTag(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} icon={<Tag size={14}/>} />
-              <Button variant="secondary" size="sm" onClick={addTag}>Add</Button>
+              <Input placeholder="Ajouter une étiquette…" value={tag} onChange={e => setTag(e.target.value)} onKeyDown={e => e.key === 'Enter' && addTag()} icon={<Tag size={14}/>} />
+              <Button variant="secondary" size="sm" onClick={addTag}>Ajouter</Button>
             </div>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
@@ -112,7 +123,7 @@ export default function JournalPage() {
               </div>
             )}
           </div>
-          <Button fullWidth onClick={saveEntry}>Save entry</Button>
+          <Button fullWidth onClick={saveEntry}>Enregistrer</Button>
         </div>
       </Modal>
     </div>
