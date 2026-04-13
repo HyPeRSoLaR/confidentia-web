@@ -56,8 +56,12 @@ export async function POST() {
     );
   }
 
-  const useLiteMode = !!(elevenSecretId && elevenAgentId);
-  console.log(`[LiveAvatar] Mode: ${useLiteMode ? 'LITE (ElevenLabs)' : 'FULL (fallback)'}`);
+  // FORCE_FULL_MODE=true disables LITE mode (e.g. for stable demo builds).
+  // Remove this env var to re-enable ElevenLabs LITE mode after the presentation.
+  const forceFullMode = process.env.FORCE_FULL_MODE === 'true';
+  const useLiteMode = !forceFullMode && !!(elevenSecretId && elevenAgentId);
+  console.log(`[LiveAvatar] Mode: ${useLiteMode ? 'LITE (ElevenLabs)' : 'FULL'} ${forceFullMode ? '(forced)' : ''}`);
+
 
   try {
     let body: Record<string, unknown>;
