@@ -9,26 +9,25 @@ import { NextResponse } from 'next/server';
  * Avatar chosen:  Judy Doctor Standing  (0f563214-1cb5-4dc0-a2f9-43f44e5e6b57)
  *   → warm, professional female avatar with a medical/counselor look
  *
- * Voice chosen: Yvette - Warm  (255f8e3f-207d-4cf5-8632-f0ee48ea75ef)
- *   → Native French (fr-FR / Parisian) warm female voice from HeyGen voice library.
- *   → Previously used "Judy - Professional" (4f3b1e99) which is an English-labeled voice;
- *     it was responding in English despite the fr-FR language config.
+ * Voice: Judy - Professional (4f3b1e99-b580-4f05-9b67-a5f585be0232)
+ *   → LiveAvatar preset voice (only /v1/voices IDs are accepted by sessions/start).
+ *   → General HeyGen voice library IDs (/v3/voices) are REJECTED at sessions/start
+ *     with "Errors validating session token" — confirmed via browser debug.
  *
- * French female voice alternatives (from GET /v3/voices?language=French&gender=female):
- *   • Yvette - Warm           255f8e3f-207d-4cf5-8632-f0ee48ea75ef  ← ACTIVE
- *   • Josephine - Calm        ba61b3b0-a56d-463d-bff1-0eeccd3a899a
- *   • Sylvie - Professional   64cc0b12-9ac3-4e04-a521-cb4627126923
- *   • Ariane - Natural        0e051caf-8e09-47a1-8870-ee24bbbfce36
- *   • Celeste - Professional  0f059f9e-5428-4391-b483-00f916cc6a01
- *   • Camille Martin          59bb21cd-39f4-4b83-98a6-4530b83e008f
- *   • Denise - Friendly       5531756441d34f408e7e60821f2e52a6
+ * ⚠ IMPORTANT CONSTRAINT: LiveAvatar FULL mode only accepts voice IDs from its own
+ *   preset library (/v1/voices). All presets are tagged "en" but the LLM context
+ *   forces French output — the TTS synthesises whatever text the LLM generates.
+ *   French voices from /v3/voices are NOT compatible with LiveAvatar sessions.
  *
- * FULL mode: LiveAvatar handles VAD ▸ STT ▸ LLM ▸ TTS entirely server-side.
- * Language set to fr-FR (Parisian French) — avatar speaks and understands French.
+ * LiveAvatar preset female voices (all tagged "en" but support multilingual TTS):
+ *   • Judy - Professional      4f3b1e99-b580-4f05-9b67-a5f585be0232  ← ACTIVE
+ *   • Marianne - IA            8a504f9b-95dd-42d4-8b0c-edc2567b6382  (French name)
+ *   • June - Lifelike          62bbb4b2-bb26-4727-bc87-cfb2bd4e0cc8
+ *   • Elenora - Professional   254ffe1e-c89f-430f-8c36-9e7611d310c0
+ *   • Amina - IA               e948b062-7dce-4f2b-bcf6-98bd3511106b
  *
  * ── ElevenLabs LITE mode integration (future build) ─────────────────────────
- * For premium voice quality, HeyGen LiveAvatar supports LITE mode where ElevenLabs
- * handles audio orchestration and HeyGen handles avatar lip-sync only.
+ * For REAL native French TTS, use LITE mode where ElevenLabs handles audio.
  * Architecture:
  *   1. Register ElevenLabs API key at POST /v1/secrets → get secret_id
  *   2. Create an ElevenLabs Conversational AI agent (PCM 24000 Hz audio format)
@@ -41,8 +40,8 @@ const LIVEAVATAR_API = 'https://api.liveavatar.com/v1';
 
 // The avatar and voice used for the Aria counselor persona
 const AVATAR_ID = '0f563214-1cb5-4dc0-a2f9-43f44e5e6b57'; // Judy Doctor Standing
-// Yvette - Warm: native French (fr-FR) female voice — warm, natural Parisian accent
-const VOICE_ID  = '255f8e3f-207d-4cf5-8632-f0ee48ea75ef';
+// Judy - Professional: confirmed-working LiveAvatar preset voice
+const VOICE_ID  = '4f3b1e99-b580-4f05-9b67-a5f585be0232';
 
 const ARIA_CONTEXT = `Tu es Aria, une conseillère en santé mentale IA chaleureuse et empathique travaillant pour Confidentia — une plateforme confidentielle de bien-être mental.
 
@@ -99,7 +98,7 @@ export async function POST() {
       avatar_id: AVATAR_ID,
       avatar_persona: {
         voice_id: VOICE_ID,
-        language: 'fr-FR',
+        language: 'fr',
         ...(contextId ? { context_id: contextId } : {}),
       },
     };
