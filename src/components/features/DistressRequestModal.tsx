@@ -5,12 +5,17 @@
  * Employee emotional distress request — non-anonymous, voluntary.
  * Employee explicitly consents and writes exactly what HR will see.
  * GDPR-compliant: employee owns the disclosure, gives explicit consent.
+ *
+ * On submit, the request is persisted to localStorage so HR managers
+ * can see it live in the /hr/distress page (no backend required for demo).
  */
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle, Check, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { getSession } from '@/lib/session';
+import { submitDistressRequest } from '@/lib/distress-store';
 import type { DistressCategory } from '@/types';
 
 interface DistressRequestModalProps {
@@ -23,37 +28,37 @@ interface DistressRequestModalProps {
 const CATEGORIES: { id: DistressCategory; emoji: string; label: string; example: string }[] = [
   {
     id:      'wellbeing',
-    emoji:   '\uD83D\uDE14',
+    emoji:   '😔',
     label:   "I'm not feeling well",
     example: 'I need mental health support',
   },
   {
     id:      'time_off',
-    emoji:   '\uD83C\uDFD6',
+    emoji:   '🏖',
     label:   'I need time off',
     example: 'A day or half-day for personal wellbeing',
   },
   {
     id:      'speak_hr',
-    emoji:   '\uD83D\uDCAC',
+    emoji:   '💬',
     label:   "I'd like to speak with HR",
     example: "About something personal I'd prefer not to write",
   },
   {
     id:      'overload',
-    emoji:   '\u26A1',
+    emoji:   '⚡',
     label:   "I'm experiencing overload",
     example: 'I need help prioritising my workload',
   },
   {
     id:      'urgent',
-    emoji:   '\uD83D\uDEA8',
+    emoji:   '🚨',
     label:   'I need urgent support',
     example: 'This situation requires immediate attention',
   },
   {
     id:      'other',
-    emoji:   '\u270D\uFE0F',
+    emoji:   '✍️',
     label:   'Something else',
     example: "I'll describe it below",
   },
@@ -69,7 +74,6 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
   const [loading,  setLoading]  = useState(false);
 
   function handleClose() {
-    // Reset on close
     setStep('form');
     setCategory(null);
     setNote('');
@@ -78,9 +82,24 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
   }
 
   async function submit() {
+    if (!category) return;
     setLoading(true);
-    // Simulated API call
+
+    // Get current session user for the request payload
+    const session = getSession();
+    const user    = session.user;
+
     await new Promise(r => setTimeout(r, 1200));
+
+    // Persist to localStorage so HR can see it immediately
+    submitDistressRequest({
+      employeeId:    user?.id    ?? 'demo-employee',
+      employeeName:  user?.name  ?? 'Demo Employee',
+      employeeEmail: user?.email ?? 'demo@employee.com',
+      category,
+      note: note.trim() || undefined,
+    });
+
     setLoading(false);
     setStep('sent');
   }
@@ -193,7 +212,7 @@ export function DistressRequestModal({ open, onClose, hrManagerName = 'your HR m
                     disabled={!category || !consent}
                     className="w-full rounded-2xl py-3 bg-red-500 hover:bg-red-600 text-white border-0 shadow-none"
                   >
-                    Review & Send
+                    Review &amp; Send
                   </Button>
                 </>
               )}
