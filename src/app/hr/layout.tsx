@@ -2,7 +2,7 @@
 import { Sidebar } from '@/components/layout/Sidebar';
 import { getSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
-import { BarChart2, Grid3X3, Bell, Settings, Users2 } from 'lucide-react';
+import { BarChart2, Grid3X3, Bell, Settings, Users2, CreditCard } from 'lucide-react';
 import { MOCK_ORG_ALERTS } from '@/lib/mock-data';
 import type { NavItem } from '@/components/layout/Sidebar';
 
@@ -13,6 +13,7 @@ const NAV: NavItem[] = [
   { label: 'Heatmap',   href: '/hr/heatmap',   icon: Grid3X3 },
   { label: 'Poles',     href: '/hr/poles',      icon: Users2 },
   { label: 'Alerts',    href: '/hr/alerts',     icon: Bell, badge: UNREAD_ALERTS },
+  { label: 'Pricing',   href: '/hr/pricing',    icon: CreditCard },
   { label: 'Settings',  href: '/hr/settings',   icon: Settings },
 ];
 

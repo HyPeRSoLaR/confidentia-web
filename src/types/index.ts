@@ -175,17 +175,35 @@ export interface HRSettings {
 
 // ─── Company & Plans ─────────────────────────────────────────────────────────
 
-export type PlanTier = 'free' | 'pro' | 'premium' | 'enterprise';
+export type PlanTier = 'free' | 'standard' | 'premium' | 'pro';
+export type PlanAudience = 'b2c' | 'b2b-platform' | 'b2b-employee';
 
 export interface Plan {
   id: string;
   name: string;
   tier: PlanTier;
+  audience: PlanAudience;
   priceMonthly: number;
   priceAnnual: number;
   features: string[];
+  videoMinutes: number | 'unlimited'; // minutes per month
   maxUsers?: number;
   isPopular?: boolean;
+  /** For B2B platform plans: employee range label e.g. '0–50' */
+  employeeRange?: string;
+  /** For B2B per-seat plans: label shown under price */
+  perUnit?: string;
+  /** Cost estimate shown internally for margin tracking */
+  costEst?: number;
+  marginPct?: string;
+}
+
+export interface VideoCreditPack {
+  id: string;
+  label: string;          // XS / S / M / L
+  minutes: number;
+  price: number;          // in €
+  color: string;          // Tailwind/CSS accent
 }
 
 export interface Company {

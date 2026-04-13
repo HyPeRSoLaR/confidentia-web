@@ -9,7 +9,7 @@ import type {
   JournalEntry, EmotionEntry, Conversation, TherapySession,
   SessionRequest, TherapistProfile, WellbeingTrend, HeatmapCell,
   OrgAlert, HRSettings, Plan, Company, Resource, User, Message,
-  DistressRequest, Pole, PoleMember, TherapistNotification,
+  DistressRequest, Pole, PoleMember, TherapistNotification, VideoCreditPack,
 } from '@/types';
 
 // ─── Journal ─────────────────────────────────────────────────────────────────
@@ -87,23 +87,143 @@ export const MOCK_INSIGHTS = {
 
 // ─── Plans ───────────────────────────────────────────────────────────────────
 
+// ── B2C consumer plans ────────────────────────────────────────────────────────
 export const MOCK_PLANS: Plan[] = [
   {
-    id: 'plan-free', name: 'Free', tier: 'free',
+    id: 'plan-free', name: 'Freemium', tier: 'free', audience: 'b2c',
     priceMonthly: 0, priceAnnual: 0,
-    features: ['5 AI conversations/month', 'Basic journal', 'Emotion check-in', 'Text mode only'],
+    videoMinutes: 3,
+    features: [
+      'Unlimited text',
+      'Limited audio',
+      '3 video minutes / month',
+    ],
   },
   {
-    id: 'plan-pro', name: 'Pro', tier: 'pro',
-    priceMonthly: 19, priceAnnual: 179,
-    features: ['Unlimited AI conversations', 'Full journal + insights', 'Audio mode', 'Weekly summaries', 'Priority support'],
+    id: 'plan-standard', name: 'Standard', tier: 'standard', audience: 'b2c',
+    priceMonthly: 14.90, priceAnnual: 143,
+    videoMinutes: 20,
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '20 video minutes / month',
+    ],
+    costEst: 4, marginPct: '70–75%',
+  },
+  {
+    id: 'plan-premium', name: 'Premium', tier: 'premium', audience: 'b2c',
+    priceMonthly: 24.90, priceAnnual: 239,
+    videoMinutes: 50,
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '50 video minutes / month',
+    ],
     isPopular: true,
+    costEst: 9, marginPct: '60%',
   },
   {
-    id: 'plan-premium', name: 'Premium', tier: 'premium',
-    priceMonthly: 49, priceAnnual: 449,
-    features: ['Everything in Pro', 'Video avatar (HeyGen)', 'Therapist sessions', 'Advanced analytics', 'Custom avatar voice'],
+    id: 'plan-pro', name: 'Pro', tier: 'pro', audience: 'b2c',
+    priceMonthly: 39.90, priceAnnual: 383,
+    videoMinutes: 120,
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '120 video minutes / month',
+      'Priority access & optimised experience',
+    ],
+    costEst: 22, marginPct: '45–50%',
   },
+];
+
+// ── B2B platform (HR SaaS) plans ──────────────────────────────────────────────
+export const MOCK_B2B_PLATFORM_PLANS: Plan[] = [
+  {
+    id: 'b2b-smb', name: 'SMB', tier: 'standard', audience: 'b2b-platform',
+    priceMonthly: 349, priceAnnual: 3351,
+    videoMinutes: 0,
+    employeeRange: '0–50 employees',
+    features: [
+      'HR dashboard',
+      'Wellbeing analytics',
+      'Anonymised employee tracking',
+      'Automated alerts',
+    ],
+  },
+  {
+    id: 'b2b-mid', name: 'Mid-Market', tier: 'premium', audience: 'b2b-platform',
+    priceMonthly: 490, priceAnnual: 4704,
+    videoMinutes: 0,
+    employeeRange: '50–200 employees',
+    isPopular: true,
+    features: [
+      'Everything in SMB',
+      'Weekly reports',
+      'Department segmentation',
+      'GDPR data export',
+    ],
+  },
+  {
+    id: 'b2b-enterprise', name: 'Enterprise', tier: 'pro', audience: 'b2b-platform',
+    priceMonthly: 790, priceAnnual: 7584,
+    videoMinutes: 0,
+    employeeRange: '200+ employees',
+    features: [
+      'Everything in Mid-Market',
+      'Dedicated account manager',
+      'Custom HRIS integration',
+      'Premium SLA 99.9%',
+    ],
+  },
+];
+
+// ── B2B employee (per-seat) plans ─────────────────────────────────────────────
+export const MOCK_B2B_EMPLOYEE_PLANS: Plan[] = [
+  {
+    id: 'b2b-emp-light', name: 'Light', tier: 'standard', audience: 'b2b-employee',
+    priceMonthly: 6, priceAnnual: 58,
+    videoMinutes: 5,
+    perUnit: '/employee/month',
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '5 video min / month',
+    ],
+    costEst: 1.5, marginPct: '>60%',
+  },
+  {
+    id: 'b2b-emp-standard', name: 'Standard', tier: 'premium', audience: 'b2b-employee',
+    priceMonthly: 9, priceAnnual: 86,
+    videoMinutes: 15,
+    perUnit: '/employee/month',
+    isPopular: true,
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '15 video min / month',
+    ],
+    costEst: 3.5, marginPct: '~60%',
+  },
+  {
+    id: 'b2b-emp-premium', name: 'Premium', tier: 'pro', audience: 'b2b-employee',
+    priceMonthly: 14, priceAnnual: 134,
+    videoMinutes: 30,
+    perUnit: '/employee/month',
+    features: [
+      'Unlimited text',
+      'Unlimited audio',
+      '30 video min / month',
+    ],
+    costEst: 5.5, marginPct: '~60%',
+  },
+];
+
+// ── Video credit top-up packs ─────────────────────────────────────────────────
+export const MOCK_VIDEO_CREDIT_PACKS: VideoCreditPack[] = [
+  { id: 'pack-xs', label: 'XS', minutes: 10,  price: 4.99,  color: '#10B981' }, // green
+  { id: 'pack-s',  label: 'S',  minutes: 25,  price: 9.99,  color: '#0EA5E9' }, // blue
+  { id: 'pack-m',  label: 'M',  minutes: 60,  price: 19.99, color: '#9B6FE8' }, // violet
+  { id: 'pack-l',  label: 'L',  minutes: 120, price: 34.99, color: '#F59E0B' }, // amber
 ];
 
 // ─── Resources ───────────────────────────────────────────────────────────────
