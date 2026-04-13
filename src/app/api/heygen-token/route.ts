@@ -8,17 +8,41 @@ import { NextResponse } from 'next/server';
  *
  * Avatar chosen:  Judy Doctor Standing  (0f563214-1cb5-4dc0-a2f9-43f44e5e6b57)
  *   → warm, professional female avatar with a medical/counselor look
- * Voice   chosen: Judy - Professional   (4f3b1e99-b580-4f05-9b67-a5f585be0232)
+ *
+ * Voice chosen: Yvette - Warm  (255f8e3f-207d-4cf5-8632-f0ee48ea75ef)
+ *   → Native French (fr-FR / Parisian) warm female voice from HeyGen voice library.
+ *   → Previously used "Judy - Professional" (4f3b1e99) which is an English-labeled voice;
+ *     it was responding in English despite the fr-FR language config.
+ *
+ * French female voice alternatives (from GET /v3/voices?language=French&gender=female):
+ *   • Yvette - Warm           255f8e3f-207d-4cf5-8632-f0ee48ea75ef  ← ACTIVE
+ *   • Josephine - Calm        ba61b3b0-a56d-463d-bff1-0eeccd3a899a
+ *   • Sylvie - Professional   64cc0b12-9ac3-4e04-a521-cb4627126923
+ *   • Ariane - Natural        0e051caf-8e09-47a1-8870-ee24bbbfce36
+ *   • Celeste - Professional  0f059f9e-5428-4391-b483-00f916cc6a01
+ *   • Camille Martin          59bb21cd-39f4-4b83-98a6-4530b83e008f
+ *   • Denise - Friendly       5531756441d34f408e7e60821f2e52a6
  *
  * FULL mode: LiveAvatar handles VAD ▸ STT ▸ LLM ▸ TTS entirely server-side.
- * No manual speak() pipeline needed — the avatar listens and responds autonomously.
+ * Language set to fr-FR (Parisian French) — avatar speaks and understands French.
+ *
+ * ── ElevenLabs LITE mode integration (future build) ─────────────────────────
+ * For premium voice quality, HeyGen LiveAvatar supports LITE mode where ElevenLabs
+ * handles audio orchestration and HeyGen handles avatar lip-sync only.
+ * Architecture:
+ *   1. Register ElevenLabs API key at POST /v1/secrets → get secret_id
+ *   2. Create an ElevenLabs Conversational AI agent (PCM 24000 Hz audio format)
+ *   3. Pass { eleven_labs_config: { secret_id, agent_id } } in the session body
+ *   4. Session mode becomes 'LITE' — ElevenLabs drives voice, HeyGen drives video
+ * See: https://elevenlabs.io/docs/conversational-ai/guides/conversational-ai-with-heygen
  */
 
 const LIVEAVATAR_API = 'https://api.liveavatar.com/v1';
 
 // The avatar and voice used for the Aria counselor persona
 const AVATAR_ID = '0f563214-1cb5-4dc0-a2f9-43f44e5e6b57'; // Judy Doctor Standing
-const VOICE_ID  = '4f3b1e99-b580-4f05-9b67-a5f585be0232'; // Judy - Professional
+// Yvette - Warm: native French (fr-FR) female voice — warm, natural Parisian accent
+const VOICE_ID  = '255f8e3f-207d-4cf5-8632-f0ee48ea75ef';
 
 const ARIA_CONTEXT = `Tu es Aria, une conseillère en santé mentale IA chaleureuse et empathique travaillant pour Confidentia — une plateforme confidentielle de bien-être mental.
 
@@ -75,7 +99,7 @@ export async function POST() {
       avatar_id: AVATAR_ID,
       avatar_persona: {
         voice_id: VOICE_ID,
-        language: 'fr',
+        language: 'fr-FR',
         ...(contextId ? { context_id: contextId } : {}),
       },
     };
