@@ -338,24 +338,23 @@ export function AiChatView({
     const msgId = (Date.now() + 1).toString();
 
     try {
-      if (mode !== 'video') {
-        const allHistory = updatedMessages
-          .filter(m => m.id !== 'init-1')
-          .filter(m => m.role === 'user' || m.role === 'assistant')
-          .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-        const firstUserIdx = allHistory.findIndex(m => m.role === 'user');
-        const history = firstUserIdx >= 0 ? allHistory.slice(firstUserIdx) : allHistory;
+      // All modes (text, audio, video) call Claude — so response always shows as a bubble.
+      // In video FULL mode: avatarRef.current.speak(text) also makes the avatar say it.
+      // In video LITE mode: speak() is a no-op — ElevenLabs drives voice autonomously.
+      const allHistory = updatedMessages
+        .filter(m => m.id !== 'init-1')
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+      const firstUserIdx = allHistory.findIndex(m => m.role === 'user');
+      const history = firstUserIdx >= 0 ? allHistory.slice(firstUserIdx) : allHistory;
 
-        const res = await fetch('/api/chat', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: history }),
-        });
-        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error ?? `Chat API error ${res.status}`); }
-        const data = await res.json();
-        text = data.reply ?? '';
-      } else {
-        text = input;
-      }
+      const res = await fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error ?? `Chat API error ${res.status}`); }
+      const data = await res.json();
+      text = data.reply ?? '';
     } catch (err) {
       console.error('[AiChat] Claude error:', err);
       text = "Je suis là pour vous. Pourriez-vous m'en dire un peu plus sur ce qui vous préoccupe ?";
