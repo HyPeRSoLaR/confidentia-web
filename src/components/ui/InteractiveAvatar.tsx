@@ -114,15 +114,15 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
                 console.warn('[LiveAvatar] startListening failed:', e);
               }
 
-              // ✅ NEW: Avatar speaks first — sends a greeting prompt through the
-              // AVATAR_SPEAK_RESPONSE pipeline (LLM → TTS → video via Aria persona).
-              // Small delay lets the audio/video stream fully settle before speaking.
+              // Avatar speaks first — sends greeting through LLM → TTS → video.
+              // After the avatar finishes the greeting, AVATAR_TRANSCRIPTION fires
+              // and re-calls startListening() automatically (see handler below).
               setTimeout(() => {
                 if (!mounted || !sessionRef.current) return;
                 try { session.message(GREETING_PROMPT); } catch (e) {
                   console.warn('[LiveAvatar] greeting failed:', e);
                 }
-              }, 800);
+              }, 1000);
             }
           });
 
@@ -141,9 +141,17 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           });
 
           // ── Avatar transcription (final — fires once per avatar reply) ────
+          // ✅ KEY FIX: In FULL mode, VAD pauses while the avatar is speaking
+          // (to avoid self-echo). Re-activate listening after each avatar reply
+          // so the next user turn is picked up automatically.
           session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
-            if (mounted && event.text?.trim()) {
+            if (!mounted) return;
+            if (event.text?.trim()) {
               onAvatarRef.current?.(event.text.trim());
+            }
+            // Re-enter listening mode after avatar finishes speaking
+            try { session.startListening(); } catch (e) {
+              console.warn('[LiveAvatar] re-startListening failed:', e);
             }
           });
 
