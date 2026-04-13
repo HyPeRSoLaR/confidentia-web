@@ -110,6 +110,13 @@ export function AiChatView({
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
   const [pendingVoice,   setPendingVoice]  = useState<string | null>(null);
 
+  // Ref-based loading lock — unlike the `loading` state this is synchronous
+  // and can be read inside callbacks without stale-closure risk.
+  const loadingRef          = useRef(false);
+  // Stores the last accepted transcript text + timestamp for dedup:
+  // if the same (or very similar) text arrives within 3 s, it is dropped.
+  const lastTranscriptRef   = useRef<{ text: string; ts: number }>({ text: '', ts: 0 });
+
   // ── Voice note (record in text mode) ──────────────────────────────────────
   const [recording,      setRecording]     = useState(false);
   const [recSeconds,     setRecSeconds]    = useState(0);
@@ -237,8 +244,27 @@ export function AiChatView({
   }, []);
 
   // ── Voice transcript from avatar (video mode) ──────────────────────────────
+  // Guard 1 (InteractiveAvatar): transcript suppressed while avatar is speaking / cooldown.
+  // Guard 2 (here): dropped if another request is already in-flight (loadingRef).
+  // Guard 3 (here): dedup — identical text within 3 s is discarded.
 
   const handleVoiceTranscript = useCallback((text: string) => {
+    // Guard 2: already processing — drop
+    if (loadingRef.current) {
+      console.debug('[AiChat] transcript dropped — in-flight lock active');
+      return;
+    }
+    // Guard 3: dedup
+    const now = Date.now();
+    if (
+      text.trim() === lastTranscriptRef.current.text &&
+      now - lastTranscriptRef.current.ts < 3000
+    ) {
+      console.debug('[AiChat] transcript dropped — duplicate within 3 s');
+      return;
+    }
+    lastTranscriptRef.current = { text: text.trim(), ts: now };
+
     const userMsg: Message = {
       id: `voice-user-${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString(),
     };
@@ -251,8 +277,10 @@ export function AiChatView({
   useEffect(() => {
     if (!pendingVoice) return;
     setPendingVoice(null);
-    const currentMessages = messagesRef.current;
+    // Sync the ref lock so concurrent transcript events are gated out
+    loadingRef.current = true;
     setLoading(true);
+    const currentMessages = messagesRef.current;
 
     const history = currentMessages
       .filter(m => m.id !== 'init-1' && (m.role === 'user' || m.role === 'assistant'))
@@ -274,12 +302,15 @@ export function AiChatView({
         setMessages(withReply);
       })
       .catch(() => {
-        const errMsg: Message = { id: `voice-err-${Date.now()}`, role: 'assistant', content: `(Connection issue — please try again.)`, timestamp: new Date().toISOString() };
+        const errMsg: Message = { id: `voice-err-${Date.now()}`, role: 'assistant', content: '(Connection issue — please try again.)', timestamp: new Date().toISOString() };
         const withErr = [...messagesRef.current, errMsg];
         messagesRef.current = withErr;
         setMessages(withErr);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        loadingRef.current = false;
+        setLoading(false);
+      });
   }, [pendingVoice]);
 
   const handleAvatarResponse = useCallback((_text: string) => {}, []);

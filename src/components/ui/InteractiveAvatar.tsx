@@ -61,6 +61,16 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
     const [isMuted,   setIsMuted]   = useState(false);
     const [hasError,  setHasError]  = useState(false);
+
+    // ── Echo-loop prevention ────────────────────────────────────────────────────
+    // isSpeakingRef = true while the avatar is mid-speech.
+    // USER_TRANSCRIPTION events fired during this window are discarded — they are
+    // the avatar's own audio leaking back through the mic / WebRTC loopback.
+    const isSpeakingRef       = useRef(false);
+    // Timestamp of the last time avatar speech ENDED. We enforce a 1.5 s cooldown
+    // before re-enabling VAD so reverb / speaker tail audio doesn't trigger STT.
+    const speakEndedAtRef     = useRef(0);
+    const COOLDOWN_MS         = 1500;
     // ── Webcam PiP ─────────────────────────────────────────────────────────────
     const [webcamOn,    setWebcamOn]   = useState(false);
     const [webcamError, setWebcamError] = useState(false);
@@ -140,29 +150,52 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
           });
 
           // ── User transcription (final — fires once per utterance) ─────────
+          // GATE: discard any transcript that arrives while the avatar is speaking
+          // or within COOLDOWN_MS after it finished — those are echo artifacts.
           session.on(AgentEventsEnum.USER_TRANSCRIPTION, (event) => {
-            if (mounted && event.text?.trim()) {
-              onVoiceRef.current?.(event.text.trim());
+            if (!mounted || !event.text?.trim()) return;
+            if (isSpeakingRef.current) {
+              console.debug('[LiveAvatar] USER_TRANSCRIPTION suppressed — avatar is speaking (echo guard)');
+              return;
             }
+            const msSinceEnd = Date.now() - speakEndedAtRef.current;
+            if (msSinceEnd < COOLDOWN_MS) {
+              console.debug(`[LiveAvatar] USER_TRANSCRIPTION suppressed — cooldown (${msSinceEnd}ms < ${COOLDOWN_MS}ms)`);
+              return;
+            }
+            onVoiceRef.current?.(event.text.trim());
           });
 
           // ── Avatar transcription ─────────────────────────────────────────
-          // Kept for the prop contract; response text is now handled in AiChatView.
           session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
             if (mounted && event.text?.trim()) {
               onAvatarRef.current?.(event.text.trim());
             }
           });
 
-          // ── Re-activate VAD after avatar finishes speaking ───────────────
-          // ✅ KEY FIX: AVATAR_SPEAK_ENDED fires reliably when session.message()
-          // finishes TTS. Re-call startListening() so the mic VAD activates
-          // for the next user turn (avoids echo during avatar speech).
+          // ── Avatar starts speaking → kill VAD immediately ────────────────
+          // Prevents the avatar's own audio from being picked up by the mic.
+          // AVATAR_SPEAK_STARTED is the earliest possible signal.
+          session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+            if (!mounted) return;
+            isSpeakingRef.current = true;
+            try { session.stopListening(); } catch (e) {
+              console.warn('[LiveAvatar] stopListening on AVATAR_SPEAK_STARTED failed:', e);
+            }
+          });
+
+          // ── Avatar finishes speaking → re-enable VAD after cooldown ─────
           session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
             if (!mounted) return;
-            try { session.startListening(); } catch (e) {
-              console.warn('[LiveAvatar] re-startListening after AVATAR_SPEAK_ENDED failed:', e);
-            }
+            isSpeakingRef.current = false;
+            speakEndedAtRef.current = Date.now();
+            // Wait COOLDOWN_MS before re-enabling VAD to let speaker audio decay.
+            setTimeout(() => {
+              if (!mounted) return;
+              try { session.startListening(); } catch (e) {
+                console.warn('[LiveAvatar] re-startListening after AVATAR_SPEAK_ENDED failed:', e);
+              }
+            }, COOLDOWN_MS);
           });
 
           // 3. Start the session (LiveKit WebRTC handshake)
@@ -211,9 +244,21 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
       speak: (text: string) => {
         const session = sessionRef.current;
         if (session && isConnected) {
-          // session.message() sends text into the LLM pipeline;
-          // the avatar autonomously generates and speaks a response.
-          try { session.message(text); } catch (e) { console.warn('[LiveAvatar] speak error', e); }
+          // 1. Mark avatar as speaking and Stop VAD BEFORE sending the message.
+          //    This closes the echo loop at the source — the mic is dead before
+          //    the avatar's first audio frame arrives.
+          isSpeakingRef.current = true;
+          try { session.stopListening(); } catch (e) {
+            console.warn('[LiveAvatar] stopListening before speak failed:', e);
+          }
+          // 2. Send text — avatar TTS starts asynchronously.
+          //    AVATAR_SPEAK_STARTED will fire and confirm the speaking state.
+          //    AVATAR_SPEAK_ENDED will re-enable VAD after the cooldown.
+          try { session.message(text); } catch (e) {
+            // If message() throws, reset the speaking flag so VAD comes back.
+            isSpeakingRef.current = false;
+            console.warn('[LiveAvatar] speak error', e);
+          }
         }
       },
     }), [isConnected]);
