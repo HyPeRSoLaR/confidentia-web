@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck, HeartPulse, BrainCircuit, Users, Check, Zap, Star } from 'lucide-react';
+import { ShieldCheck, HeartPulse, BrainCircuit, Users, Check, Zap, Star, Building2, Video, Briefcase } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Confidentia — Bien-être émotionnel propulsé par l\'IA',
@@ -25,10 +25,84 @@ const SOCIAL_PROOF = [
   { quote: "L'anonymat m'a permis de me livrer sur mon stress au travail.", name: "Jordan K.", role: "Directrice Commerciale" },
 ];
 
-const PLAN_HIGHLIGHTS = [
-  { name: 'Gratuit',  price: '0€',  feature: '5 sessions/mois',              cta: 'Commencer gratuitement', variant: 'secondary' as const },
-  { name: 'Pro',      price: '19€', feature: 'IA illimitée + Avatar vidéo',  cta: 'Essayer Pro',            variant: 'primary'   as const, popular: true },
-  { name: 'Premium',  price: '49€', feature: 'Tout + Sessions humaines',     cta: 'Passer Premium',         variant: 'secondary' as const },
+// ── B2C consumer plans (aligned with MOCK_PLANS in mock-data.ts) ─────────────
+const B2C_PLANS = [
+  {
+    name: 'Freemium',
+    price: '0€',
+    period: '/mois',
+    features: ['Texte illimité', 'Audio limité', '3 min vidéo / mois'],
+    cta: 'Commencer gratuitement',
+    href: '/onboarding',
+    popular: false,
+  },
+  {
+    name: 'Standard',
+    price: '14,90€',
+    period: '/mois',
+    features: ['Texte illimité', 'Audio illimité', '20 min vidéo / mois'],
+    cta: 'Essayer Standard',
+    href: '/select-role',
+    popular: false,
+  },
+  {
+    name: 'Premium',
+    price: '24,90€',
+    period: '/mois',
+    features: ['Texte illimité', 'Audio illimité', '50 min vidéo / mois'],
+    cta: 'Passer Premium',
+    href: '/select-role',
+    popular: true,
+  },
+  {
+    name: 'Pro',
+    price: '39,90€',
+    period: '/mois',
+    features: ['Texte illimité', 'Audio illimité', '120 min vidéo / mois', 'Accès prioritaire'],
+    cta: 'Passer Pro',
+    href: '/select-role',
+    popular: false,
+  },
+];
+
+// ── B2C video credit packs (aligned with MOCK_VIDEO_CREDIT_PACKS) ─────────────
+const VIDEO_PACKS = [
+  { label: 'XS', minutes: 10,  price: '4,99€', color: '#10B981' },
+  { label: 'S',  minutes: 25,  price: '9,99€', color: '#0EA5E9' },
+  { label: 'M',  minutes: 60,  price: '19,99€', color: '#9B6FE8' },
+  { label: 'L',  minutes: 120, price: '34,99€', color: '#F59E0B' },
+];
+
+// ── B2B platform plans (aligned with MOCK_B2B_PLATFORM_PLANS) ────────────────
+const B2B_PLATFORM_PLANS = [
+  {
+    name: 'PME',
+    range: '0–50 employés',
+    price: '349€',
+    features: ['Tableau de bord RH', 'Analytiques bien-être', 'Suivi anonymisé', 'Alertes automatiques'],
+    popular: false,
+  },
+  {
+    name: 'Intermédiaire',
+    range: '50–200 employés',
+    price: '490€',
+    features: ['Tout PME inclus', 'Rapports hebdomadaires', 'Segmentation par département', 'Export RGPD'],
+    popular: true,
+  },
+  {
+    name: 'Entreprise',
+    range: '200+ employés',
+    price: '790€',
+    features: ['Tout Intermédiaire inclus', 'Chargé de compte dédié', 'Intégration SIRH personnalisée', 'SLA 99,9 %'],
+    popular: false,
+  },
+];
+
+// ── B2B per-seat employee plans (aligned with MOCK_B2B_EMPLOYEE_PLANS) ────────
+const B2B_EMPLOYEE_PLANS = [
+  { name: 'Essentiel', price: '6€', videoMin: 5,   popular: false },
+  { name: 'Standard',  price: '9€', videoMin: 15,  popular: true  },
+  { name: 'Premium',   price: '14€', videoMin: 30, popular: false },
 ];
 
 export default function LandingPage() {
@@ -127,22 +201,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing highlight ── */}
-      <section className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <h2 className="text-3xl font-serif font-bold mb-4">Des tarifs simples, sans surprise.</h2>
-        <p className="text-muted mb-10">Commencez gratuitement. Évoluez quand vous êtes prêt.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {PLAN_HIGHLIGHTS.map(p => (
-            <div key={p.name} className={`glass p-6 rounded-2xl border flex flex-col gap-3 ${p.popular ? 'border-violet ring-2 ring-violet' : 'border-border'}`}>
+      {/* ── Audience badges ── */}
+      <section className="max-w-4xl mx-auto px-6 pb-10 text-center">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-4">Une plateforme pour tous</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex items-center gap-2 bg-violet/10 border border-violet/25 text-violet text-sm font-semibold rounded-full px-5 py-2">
+            <HeartPulse size={14} /> Particuliers (B2C)
+          </div>
+          <div className="flex items-center gap-2 bg-cyan/10 border border-cyan/25 text-cyan text-sm font-semibold rounded-full px-5 py-2">
+            <Building2 size={14} /> Entreprises (B2B)
+          </div>
+          <div className="flex items-center gap-2 bg-pink/10 border border-pink/25 text-pink text-sm font-semibold rounded-full px-5 py-2">
+            <Briefcase size={14} /> Thérapeutes
+          </div>
+        </div>
+      </section>
+
+      {/* ── B2C Pricing ── */}
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 text-xs bg-violet/10 text-violet border border-violet/20 rounded-full px-4 py-1.5 mb-4">
+            <HeartPulse size={12} /> Pour les particuliers
+          </div>
+          <h2 className="text-3xl font-serif font-bold mb-3">Tarifs individuels</h2>
+          <p className="text-muted">Commencez gratuitement. Ajoutez des minutes vidéo dès que vous en avez besoin.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {B2C_PLANS.map(p => (
+            <div key={p.name} className={`glass p-6 rounded-2xl border flex flex-col gap-3 ${
+              p.popular ? 'border-violet ring-2 ring-violet/50 shadow-[0_0_24px_-6px_rgba(155,111,232,0.35)]' : 'border-border'
+            }`}>
               {p.popular && <span className="text-xs text-violet font-semibold uppercase tracking-wide">Le plus populaire</span>}
               <div>
-                <p className="font-bold text-text text-lg">{p.name}</p>
-                <p className="text-3xl font-bold text-text mt-1">{p.price}<span className="text-sm font-normal text-muted">/mois</span></p>
+                <p className="font-bold text-text text-base">{p.name}</p>
+                <p className="text-3xl font-bold text-text mt-1">{p.price}<span className="text-sm font-normal text-muted">{p.period}</span></p>
               </div>
-              <p className="text-xs text-muted flex items-center gap-1.5"><Check size={11} className="text-brand" />{p.feature}</p>
+              <ul className="space-y-1.5 flex-1">
+                {p.features.map(f => (
+                  <li key={f} className="text-xs text-muted flex items-center gap-1.5">
+                    <Check size={10} className="text-brand flex-shrink-0" />{f}
+                  </li>
+                ))}
+              </ul>
               <Link
-                href="/select-role"
-                className={`mt-auto py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                href={p.href}
+                className={`mt-auto py-2.5 rounded-xl text-sm font-semibold transition-all text-center ${
                   p.popular
                     ? 'bg-brand text-white shadow-brand hover:opacity-90'
                     : 'border border-border text-text hover:bg-surface'
@@ -152,6 +255,91 @@ export default function LandingPage() {
               </Link>
             </div>
           ))}
+        </div>
+
+        {/* Video packs */}
+        <div className="mt-10">
+          <div className="flex items-center justify-center gap-2 mb-5">
+            <Video size={15} className="text-muted" />
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Packs minutes vidéo supplémentaires</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {VIDEO_PACKS.map(pack => (
+              <div key={pack.label} className="glass rounded-2xl border border-border p-4 text-center hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200">
+                <div className="w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center text-xs font-black text-white" style={{ background: pack.color }}>
+                  {pack.label}
+                </div>
+                <p className="text-xl font-black text-text">{pack.price}</p>
+                <p className="text-xs text-muted mt-0.5">{pack.minutes} min vidéo</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── B2B Enterprise Pricing ── */}
+      <section className="bg-surface border-y border-border py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 text-xs bg-cyan/10 text-cyan border border-cyan/20 rounded-full px-4 py-1.5 mb-4">
+              <Building2 size={12} /> Pour les entreprises
+            </div>
+            <h2 className="text-3xl font-serif font-bold mb-3">Tarifs entreprise</h2>
+            <p className="text-muted max-w-xl mx-auto">Plateforme RH + licences employés. Conformité RGPD, k-anonymat et SSO inclus. Remises volume disponibles.</p>
+          </div>
+
+          {/* Platform plans */}
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-4 flex items-center gap-2">
+            <Building2 size={12} /> Accès plateforme RH <span className="text-[10px] normal-case">— facturé par organisation / mois</span>
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {B2B_PLATFORM_PLANS.map(p => (
+              <div key={p.name} className={`glass p-6 rounded-2xl border flex flex-col gap-4 ${
+                p.popular ? 'border-violet/60 ring-2 ring-violet/20' : 'border-border'
+              }`}>
+                {p.popular && <span className="text-xs text-violet font-semibold uppercase tracking-wide">Recommandé</span>}
+                <div>
+                  <p className="font-bold text-text">{p.name}</p>
+                  <p className="text-xs text-muted mt-0.5">{p.range}</p>
+                  <p className="text-3xl font-black text-text mt-2">{p.price}<span className="text-sm font-normal text-muted">/mois</span></p>
+                </div>
+                <ul className="space-y-1.5 flex-1">
+                  {p.features.map(f => (
+                    <li key={f} className="text-xs text-muted flex items-start gap-1.5">
+                      <Check size={10} className="text-emerald-400 flex-shrink-0 mt-0.5" />{f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/hr" className={`py-2.5 rounded-xl text-sm font-semibold transition-all text-center ${
+                  p.popular ? 'bg-brand text-white shadow-brand hover:opacity-90' : 'border border-border text-text hover:bg-bg'
+                }`}>Contacter les ventes</Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Employee per-seat plans */}
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-4 flex items-center gap-2">
+            <Users size={12} /> Licences employés <span className="text-[10px] normal-case">— par siège / mois</span>
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {B2B_EMPLOYEE_PLANS.map(p => (
+              <div key={p.name} className={`glass p-5 rounded-2xl border flex items-center justify-between gap-4 ${
+                p.popular ? 'border-violet/60' : 'border-border'
+              }`}>
+                <div>
+                  <p className="font-semibold text-text text-sm">{p.name}</p>
+                  <p className="text-xs text-muted mt-0.5 flex items-center gap-1">
+                    <Video size={10} className="inline" /> {p.videoMin} min vidéo / mois incluses
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-2xl font-black text-text">{p.price}</p>
+                  <p className="text-[10px] text-muted">/emp./mois</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-muted mt-6">Coût moyen réel : 2–4€ / employé / mois · Devis sur mesure disponible</p>
         </div>
       </section>
 

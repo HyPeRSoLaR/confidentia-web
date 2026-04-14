@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import {
-  Check, Building2, Users, Briefcase, Crown, Star, Zap, ChevronRight,
+  Check, Building2, Users, Briefcase, Crown, Star, Zap, ChevronRight, Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import {
   MOCK_B2B_PLATFORM_PLANS,
   MOCK_B2B_EMPLOYEE_PLANS,
+  MOCK_VIDEO_CREDIT_PACKS,
 } from '@/lib/mock-data';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -193,6 +194,40 @@ export default function HRPricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {MOCK_B2B_EMPLOYEE_PLANS.map(plan => (
             <EmployeeCard key={plan.id} plan={plan} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Video Credit Packs ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-5">
+          <Video size={16} className="text-muted" />
+          <h2 className="text-sm font-semibold text-text uppercase tracking-widest">Packs Minutes Vidéo</h2>
+          <Badge size="sm" variant="default" className="ml-1">Recharges à la demande</Badge>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {MOCK_VIDEO_CREDIT_PACKS.map(pack => (
+            <motion.div
+              key={pack.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-3 rounded-2xl border border-border p-5 text-center hover:border-brand/30 hover:-translate-y-0.5 transition-all duration-200"
+              style={{ background: 'linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%)' }}
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black text-white shadow"
+                style={{ background: pack.color }}
+              >
+                {pack.label}
+              </div>
+              <div>
+                <p className="text-2xl font-black text-text">€{pack.price}</p>
+                <p className="text-xs text-muted mt-0.5">{pack.minutes} minutes vidéo</p>
+              </div>
+              <Button variant="secondary" fullWidth aria-label={`Acheter le pack vidéo ${pack.label}`}>
+                Acheter
+              </Button>
+            </motion.div>
           ))}
         </div>
       </section>
