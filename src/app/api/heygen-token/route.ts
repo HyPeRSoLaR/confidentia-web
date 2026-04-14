@@ -14,13 +14,13 @@ import { NextResponse } from 'next/server';
  *   ElevenLabs handles VAD → STT → LLM → TTS, HeyGen handles lip-sync only.
  *
  * Avatar:  Ann Therapist          (513fd1b7-7ef9-466d-9af2-344e51eeb833)
- * Voice:   Alice - ElevenLabs    (fc73c076-1b17-475d-859d-018ef4af8d76)  ← 3rd-party, confirmed working
+ * Voice:   Ingrid - ElevenLabs   (85420b7d-7d8a-4f3e-80af-d7771026f1d6)  ← 3rd-party, warm & calm, confirmed
  * Context: Welcome to LiveAvatar (98eff136-665c-48ab-a322-0ad3c8c769e0)
  */
 
 const LIVEAVATAR_API = 'https://api.liveavatar.com/v1';
 const AVATAR_ID      = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Ann Therapist
-const VOICE_ID       = 'fc73c076-1b17-475d-859d-018ef4af8d76'; // Alice - ElevenLabs (3rd-party imported)
+const VOICE_ID       = '85420b7d-7d8a-4f3e-80af-d7771026f1d6'; // Ingrid - ElevenLabs (Warm, Calm and Authentic)
 
 // Pre-built context IDs (GET /contexts confirmed working, POST 422 on this plan)
 const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0'; // "Welcome to LiveAvatar"
