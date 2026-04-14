@@ -13,20 +13,20 @@ import { NextResponse } from 'next/server';
  * LITE mode (future — requires FORCE_FULL_MODE=false + ELEVEN_LABS_* vars):
  *   ElevenLabs handles VAD → STT → LLM → TTS, HeyGen handles lip-sync only.
  *
- * Avatar:  Judy Doctor Standing  (0f563214-1cb5-4dc0-a2f9-43f44e5e6b57)
- * Voice:   Judy - Professional   (4f3b1e99-b580-4f05-9b67-a5f585be0232)
+ * Avatar:  Ann Therapist          (513fd1b7-7ef9-466d-9af2-344e51eeb833)
+ * Voice:   Alice - ElevenLabs    (fc73c076-1b17-475d-859d-018ef4af8d76)  ← 3rd-party, imported
  * Context: Welcome to LiveAvatar (98eff136-665c-48ab-a322-0ad3c8c769e0)
  */
 
 const LIVEAVATAR_API = 'https://api.liveavatar.com/v1';
-const AVATAR_ID      = '0f563214-1cb5-4dc0-a2f9-43f44e5e6b57';
-const VOICE_ID       = '4f3b1e99-b580-4f05-9b67-a5f585be0232';
+const AVATAR_ID      = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Ann Therapist
+const VOICE_ID       = 'fc73c076-1b17-475d-859d-018ef4af8d76'; // Alice - ElevenLabs (3rd-party imported)
 
 // Pre-built context IDs (GET /contexts confirmed working, POST 422 on this plan)
 const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0'; // "Welcome to LiveAvatar"
 
 // French greeting — sent as `greeting` field so the avatar opens the session
-const ARIA_GREETING = 'Bonjour, je suis Aria. Je suis ici pour vous écouter en toute confidentialité. Comment vous sentez-vous aujourd\'hui ?';
+const ARIA_GREETING = 'Bonjour, je suis Ann. Je suis ici pour vous écouter en toute confidentialité. Comment vous sentez-vous aujourd\'hui ?';
 
 export async function POST() {
   const apiKey         = process.env.LIVEAVATAR_API_KEY;
