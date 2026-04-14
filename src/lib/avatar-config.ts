@@ -1,12 +1,11 @@
 /**
  * lib/avatar-config.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * The 8 predefined Confidentia AI companion avatars.
- * Diverse across gender and ethnicity — 4 women, 4 men.
+ * Single fixed Confidentia AI companion: Ann Therapist.
  *
- * `stillUrl`    → Used in text mode (photo beside AI messages)
- * `heygenId`    → HeyGen avatar ID for video mode (configure per your plan)
- * `persona`     → Default personality style (user can override in onboarding)
+ * `stillUrl`  → Real LiveAvatar preview image (same face as the video avatar)
+ * `heygenId`  → LiveAvatar avatar ID used by /api/heygen-token
+ * `persona`   → Personality style (can be overridden in onboarding)
  */
 
 export type AvatarPersona =
@@ -21,99 +20,29 @@ export interface AvatarConfig {
   gender: 'female' | 'male';
   ethnicity: 'asian' | 'black' | 'hispanic' | 'white';
   persona: AvatarPersona;
-  /** Unsplash still image for text/audio mode */
+  /** Real preview image from LiveAvatar — same face as the video avatar */
   stillUrl: string;
-  /** HeyGen avatar ID — replace with your plan's IDs */
+  /** LiveAvatar avatar ID used in /api/heygen-token */
   heygenId: string;
-  /** Short teaser shown on the avatar selection card */
+  /** Short teaser shown on the companion card */
   tagline: string;
 }
 
-export const AVATARS: AvatarConfig[] = [
-  // ── Women ────────────────────────────────────────────────────────────────
-  {
-    id: 'av-aisha',
-    name: 'Aisha',
-    gender: 'female',
-    ethnicity: 'black',
-    persona: 'warm',
-    stillUrl: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Abigal_expressive_2024112501',
-    tagline: 'Chaleureuse, présente et sans jugement.',
-  },
-  {
-    id: 'av-mei',
-    name: 'Mei',
-    gender: 'female',
-    ethnicity: 'asian',
-    persona: 'calm',
-    stillUrl: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Erika_public_3',
-    tagline: 'Claire, réfléchie et apaisante.',
-  },
-  {
-    id: 'av-sofia',
-    name: 'Sofia',
-    gender: 'female',
-    ethnicity: 'hispanic',
-    persona: 'energetic',
-    stillUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Daisy-inskirt-20220818',
-    tagline: 'Une énergie vibrante pour vous porter vers l’avant.',
-  },
-  {
-    id: 'av-emma',
-    name: 'Emma',
-    gender: 'female',
-    ethnicity: 'white',
-    persona: 'gentle',
-    stillUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Angela-inblackskirt-20220820',
-    tagline: 'Douce, stable et rassurante.',
-  },
+/** The one fixed AI companion — Ann Therapist */
+export const ANN_THERAPIST: AvatarConfig = {
+  id: 'av-ann',
+  name: 'Ann',
+  gender: 'female',
+  ethnicity: 'white',
+  persona: 'warm',
+  // Real LiveAvatar preview — exact same face as the video avatar
+  stillUrl: 'https://files2.heygen.ai/avatar/v3/75e0a87b7fd94f0981ff398b593dd47f_45570/preview_talk_4.webp',
+  heygenId: '513fd1b7-7ef9-466d-9af2-344e51eeb833',
+  tagline: 'Chaleureuse, présente et sans jugement.',
+};
 
-  // ── Men ───────────────────────────────────────────────────────────────────
-  {
-    id: 'av-kai',
-    name: 'Kai',
-    gender: 'male',
-    ethnicity: 'asian',
-    persona: 'calm',
-    stillUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Eric_public_pro1',
-    tagline: 'Mesuré, attentif et précis.',
-  },
-  {
-    id: 'av-marcus',
-    name: 'Marcus',
-    gender: 'male',
-    ethnicity: 'black',
-    persona: 'warm',
-    stillUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Mike_public_pro1',
-    tagline: 'Franc et sincèrement bienveillant.',
-  },
-  {
-    id: 'av-diego',
-    name: 'Diego',
-    gender: 'male',
-    ethnicity: 'hispanic',
-    persona: 'energetic',
-    stillUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Tyler-incasualsuit-20220721',
-    tagline: 'Une impulsion positive quand vous en avez besoin.',
-  },
-  {
-    id: 'av-james',
-    name: 'James',
-    gender: 'male',
-    ethnicity: 'white',
-    persona: 'gentle',
-    stillUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80',
-    heygenId: 'Josh_public_pro1',
-    tagline: 'Patient, sans précipitation, profondément attentionné.',
-  },
-];
+/** Keep AVATARS as a single-element array for any legacy references */
+export const AVATARS: AvatarConfig[] = [ANN_THERAPIST];
 
 export const PERSONA_META: Record<AvatarPersona, {
   label: string;
@@ -153,11 +82,9 @@ const AVATAR_KEY  = 'confidentia_avatar_id';
 const NAME_KEY    = 'confidentia_avatar_name';
 const PERSONA_KEY = 'confidentia_avatar_persona';
 
+/** Always returns Ann Therapist — the single fixed companion. */
 export function getSavedAvatar(): AvatarConfig {
-  try {
-    const id = localStorage.getItem(AVATAR_KEY);
-    return AVATARS.find(a => a.id === id) ?? AVATARS[0];
-  } catch { return AVATARS[0]; }
+  return ANN_THERAPIST;
 }
 
 export function getSavedAvatarName(avatar: AvatarConfig): string {

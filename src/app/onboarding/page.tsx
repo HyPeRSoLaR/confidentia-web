@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, HeartPulse, BrainCircuit, Coffee,
-  Moon, CloudRain, ChevronRight, Lock, Check, Pencil,
+  Moon, CloudRain, ChevronRight, Lock, Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { AVATARS, PERSONA_META, saveAvatarPrefs } from '@/lib/avatar-config';
+import { PERSONA_META, saveAvatarPrefs, ANN_THERAPIST } from '@/lib/avatar-config';
 import type { AvatarPersona } from '@/lib/avatar-config';
 
 const USAGE_CONTEXTS = [
@@ -19,15 +19,12 @@ const USAGE_CONTEXTS = [
   { id: 'burnout',    label: 'Burn-out précoce',       icon: BrainCircuit, desc: 'Épuisement émotionnel et cynisme vis-à-vis du travail ou de la vie.' },
 ];
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step,            setStep]            = useState(1);
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
-  const [selectedAvatar,  setSelectedAvatar]  = useState(AVATARS[0].id);
-  const [avatarName,      setAvatarName]      = useState('');
-  const [editingName,     setEditingName]     = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<AvatarPersona>('warm');
   const [loading,         setLoading]         = useState(false);
 
@@ -36,12 +33,11 @@ export default function OnboardingPage() {
 
   const completeOnboarding = async () => {
     setLoading(true);
-    saveAvatarPrefs(selectedAvatar, avatarName, selectedPersona);
+    saveAvatarPrefs(ANN_THERAPIST.id, ANN_THERAPIST.name, selectedPersona);
     await new Promise(r => setTimeout(r, 1200));
     router.push('/consumer/chat');
   };
 
-  const chosenAvatar = AVATARS.find(a => a.id === selectedAvatar) ?? AVATARS[0];
 
   return (
     <div className="min-h-screen bg-surface-glow flex flex-col items-center justify-center p-6">
@@ -125,84 +121,13 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 3 : Choix de l'avatar ── */}
+          {/* ── ÉTAPE 3 : Personnalité ── */}
           {step === 3 && (
-            <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-serif font-bold text-text mb-2">Choisissez votre compagnon</h2>
-                <p className="text-muted text-sm leading-relaxed">
-                  C&apos;est avec lui que vous allez parler. Vous pouvez le changer à tout moment.
-                </p>
-              </div>
-
-              {/* Grille 2×4 avatars */}
-              <div className="grid grid-cols-4 gap-3 mb-5">
-                {AVATARS.map(av => {
-                  const active = selectedAvatar === av.id;
-                  return (
-                    <button
-                      key={av.id}
-                      onClick={() => { setSelectedAvatar(av.id); setAvatarName(''); }}
-                      className={`flex flex-col items-center gap-1.5 p-2 rounded-2xl border transition-all duration-200 ${
-                        active ? 'border-transparent ring-2 ring-violet bg-violet/5 shadow-brand' : 'border-border bg-surface hover:border-violet/40'
-                      }`}
-                    >
-                      <div className="relative">
-                        <img src={av.stillUrl} alt={av.name} className="w-14 h-14 rounded-xl object-cover" />
-                        {active && (
-                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand flex items-center justify-center">
-                            <Check size={9} className="text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <span className={`text-[11px] font-semibold ${active ? 'text-violet' : 'text-muted'}`}>{av.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Prévisualisation compagnon + nom optionnel */}
-              <div className="glass p-4 rounded-2xl flex items-center gap-4 mb-6">
-                <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  {editingName ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={avatarName}
-                      onChange={e => setAvatarName(e.target.value.slice(0, 24))}
-                      onBlur={() => setEditingName(false)}
-                      onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
-                      placeholder={`Nom personnalisé (défaut : ${chosenAvatar.name})`}
-                      className="w-full bg-transparent text-text text-sm outline-none border-b border-violet pb-0.5 placeholder:text-muted/50"
-                    />
-                  ) : (
-                    <button
-                      onClick={() => setEditingName(true)}
-                      className="flex items-center gap-1.5 group text-left"
-                    >
-                      <span className="text-sm font-semibold text-text">{avatarName || chosenAvatar.name}</span>
-                      <Pencil size={11} className="text-muted group-hover:text-violet transition-colors" />
-                    </button>
-                  )}
-                  <p className="text-xs text-muted mt-0.5">{chosenAvatar.tagline}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
-                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continuer</Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── ÉTAPE 4 : Personnalité ── */}
-          {step === 4 && (
             <motion.div key="step4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
-                <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
+                <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">
-                  Comment {avatarName || chosenAvatar.name} doit-il vous aborder ?
+                  Comment Ann doit-elle vous aborder ?
                 </h2>
                 <p className="text-muted text-sm">Choisissez le style de personnalité qui vous correspond le mieux.</p>
               </div>
@@ -236,8 +161,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 5 : Consentement confidentialité ── */}
-          {step === 5 && (
+          {/* ── ÉTAPE 4 : Consentement confidentialité ── */}
+          {step === 4 && (
             <motion.div key="step5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
               <div className="w-16 h-16 bg-surface border border-border rounded-2xl mx-auto flex items-center justify-center mb-6">
                 <Lock className="w-8 h-8 text-violet" />
@@ -270,10 +195,10 @@ export default function OnboardingPage() {
 
               {/* Récapitulatif des choix */}
               <div className="glass p-4 rounded-2xl flex items-center gap-3 mb-6 text-left">
-                <img src={chosenAvatar.stillUrl} alt={chosenAvatar.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-text">{avatarName || chosenAvatar.name} · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
-                  <p className="text-xs text-muted">Votre compagnon IA est prêt</p>
+                  <p className="text-sm font-semibold text-text">Ann · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
+                  <p className="text-xs text-muted">Votre compagnon IA est prête</p>
                 </div>
               </div>
 
