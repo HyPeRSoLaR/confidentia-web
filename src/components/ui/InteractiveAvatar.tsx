@@ -18,6 +18,7 @@ export interface InteractiveAvatarRef {
 interface Props {
   avatarId?:          string;
   avatarName?:        string;
+  voiceId?:           string;
   onReady?:           () => void;
   onError?:           () => void;
   onDisconnected?:    () => void;
@@ -32,7 +33,7 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
 }
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
-  ({ avatarId, avatarName, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
+  ({ avatarId, avatarName, voiceId, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
 
     const mediaRef   = useRef<HTMLVideoElement>(null);
     const sessionRef = useRef<LiveAvatarSession | null>(null);
@@ -136,6 +137,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
             body: JSON.stringify({
               avatarId:   avatarId   || undefined,
               avatarName: avatarName || undefined,
+              voiceId:    voiceId    || undefined,
             }),
           });
           if (!res.ok) {

@@ -18,10 +18,10 @@ import { NextResponse } from 'next/server';
  * Context: Welcome to LiveAvatar (98eff136-665c-48ab-a322-0ad3c8c769e0)
  */
 
-const LIVEAVATAR_API    = 'https://api.liveavatar.com/v1';
-const DEFAULT_AVATAR_ID = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Anna
-const DEFAULT_NAME      = 'Anna';
-const VOICE_ID          = '85420b7d-7d8a-4f3e-80af-d7771026f1d6'; // Ingrid - ElevenLabs
+const LIVEAVATAR_API     = 'https://api.liveavatar.com/v1';
+const DEFAULT_AVATAR_ID  = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Anna
+const DEFAULT_NAME       = 'Anna';
+const DEFAULT_VOICE_ID   = 'de5574fc-009e-4a01-a881-9919ef8f5a0c'; // Ann - IA (native)
 const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0'; // Welcome to LiveAvatar
 
 function makeGreeting(name: string) {
@@ -43,10 +43,12 @@ export async function POST(req: Request) {
   // Accept optional avatarId + avatarName from request body
   let avatarId   = DEFAULT_AVATAR_ID;
   let avatarName = DEFAULT_NAME;
+  let voiceId    = DEFAULT_VOICE_ID;
   try {
     const body = await req.json();
     if (body?.avatarId)   avatarId   = body.avatarId;
     if (body?.avatarName) avatarName = body.avatarName;
+    if (body?.voiceId)    voiceId    = body.voiceId;
   } catch {} // empty body is fine — use defaults
 
   // FORCE_FULL_MODE=true keeps FULL mode for stable demo (bypasses LITE).
@@ -72,7 +74,7 @@ export async function POST(req: Request) {
         mode:      'FULL',
         avatar_id: avatarId,
         avatar_persona: {
-          voice_id:   VOICE_ID,
+          voice_id:   voiceId,
           language:   'fr',
           context_id: CONTEXT_ID_WELCOME,
           greeting:   makeGreeting(avatarName),
