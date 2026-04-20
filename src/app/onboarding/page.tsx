@@ -8,8 +8,8 @@ import {
   Moon, CloudRain, ChevronRight, Lock, Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { PERSONA_META, saveAvatarPrefs, ANN_THERAPIST } from '@/lib/avatar-config';
-import type { AvatarPersona } from '@/lib/avatar-config';
+import { PERSONA_META, AVATARS, ANN_THERAPIST, saveAvatarPrefs } from '@/lib/avatar-config';
+import type { AvatarPersona, AvatarConfig } from '@/lib/avatar-config';
 
 const USAGE_CONTEXTS = [
   { id: 'stress',      label: 'Surcharge de travail',  icon: Coffee,       desc: 'Se sentir submergé par les tâches quotidiennes et la pression professionnelle.' },
@@ -19,12 +19,13 @@ const USAGE_CONTEXTS = [
   { id: 'burnout',    label: 'Burn-out précoce',       icon: BrainCircuit, desc: 'Épuisement émotionnel et cynisme vis-à-vis du travail ou de la vie.' },
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step,            setStep]            = useState(1);
   const [selectedContext, setSelectedContext] = useState<string | null>(null);
+  const [selectedAvatar,  setSelectedAvatar]  = useState<AvatarConfig>(ANN_THERAPIST);
   const [selectedPersona, setSelectedPersona] = useState<AvatarPersona>('warm');
   const [loading,         setLoading]         = useState(false);
 
@@ -33,7 +34,7 @@ export default function OnboardingPage() {
 
   const completeOnboarding = async () => {
     setLoading(true);
-    saveAvatarPrefs(ANN_THERAPIST.id, ANN_THERAPIST.name, selectedPersona);
+    saveAvatarPrefs(selectedAvatar.id, selectedAvatar.name, selectedPersona);
     await new Promise(r => setTimeout(r, 1200));
     router.push('/consumer/chat');
   };
@@ -88,7 +89,7 @@ export default function OnboardingPage() {
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">Qu&apos;est-ce qui vous amène ?</h2>
                 <p className="text-muted text-sm leading-relaxed">
-                  Sélectionnez le domaine sur lequel vous souhaitez vous concentrer. Nous adapterons l&apos;approche d&apos;Anna à vos besoins.
+                  Sélectionnez le domaine sur lequel vous souhaitez vous concentrer. Nous adapterons l&apos;approche de votre assistant à vos besoins.
                 </p>
               </div>
               <div className="grid gap-3 mb-8">
@@ -121,13 +122,76 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 3 : Personnalité ── */}
+          {/* ── ÉTAPE 3 : Choix d'avatar ── */}
           {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-serif font-bold text-text mb-2">
+                  Choisissez votre assistant
+                </h2>
+                <p className="text-muted text-sm">Sélectionnez la personne avec qui vous souhaitez échanger.</p>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3 mb-8">
+                {AVATARS.map(avatar => {
+                  const active = selectedAvatar.id === avatar.id;
+                  return (
+                    <button
+                      key={avatar.id}
+                      onClick={() => setSelectedAvatar(avatar)}
+                      className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-200 ${
+                        active
+                          ? 'border-transparent ring-2 ring-violet bg-white/5 shadow-brand'
+                          : 'border-border bg-surface hover:border-violet/40 hover:bg-white/5'
+                      }`}
+                    >
+                      {/* Avatar preview */}
+                      <div className="relative">
+                        <img
+                          src={avatar.stillUrl}
+                          alt={avatar.name}
+                          className={`w-16 h-16 rounded-xl object-cover transition-all duration-200 ${
+                            active ? 'ring-2 ring-violet shadow-brand' : 'ring-1 ring-border'
+                          }`}
+                        />
+                        {active && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-violet flex items-center justify-center shadow-brand">
+                            <Check size={10} className="text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                      {/* Name */}
+                      <p className={`text-xs font-semibold ${active ? 'text-text' : 'text-muted'}`}>
+                        {avatar.name}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Selected avatar tagline */}
+              <div className="glass p-4 rounded-2xl flex items-center gap-3 mb-6">
+                <img src={selectedAvatar.stillUrl} alt={selectedAvatar.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 ring-2 ring-border" />
+                <div>
+                  <p className="text-sm font-semibold text-text">{selectedAvatar.name}</p>
+                  <p className="text-xs text-muted">{selectedAvatar.tagline}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
+                <Button onClick={handleNext} className="flex-1 rounded-2xl py-3 shadow-brand">Continuer</Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── ÉTAPE 4 : Personnalité ── */}
+          {step === 4 && (
             <motion.div key="step4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
-                <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
+                <img src={selectedAvatar.stillUrl} alt={selectedAvatar.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">
-                  Comment Anna doit-elle vous aborder ?
+                  Comment {selectedAvatar.name} doit-{selectedAvatar.gender === 'male' ? 'il' : 'elle'} vous aborder ?
                 </h2>
                 <p className="text-muted text-sm">Choisissez le style de personnalité qui vous correspond le mieux.</p>
               </div>
@@ -161,8 +225,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 4 : Consentement confidentialité ── */}
-          {step === 4 && (
+          {/* ── ÉTAPE 5 : Consentement confidentialité ── */}
+          {step === 5 && (
             <motion.div key="step5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
               <div className="w-16 h-16 bg-surface border border-border rounded-2xl mx-auto flex items-center justify-center mb-6">
                 <Lock className="w-8 h-8 text-violet" />
@@ -195,10 +259,10 @@ export default function OnboardingPage() {
 
               {/* Récapitulatif des choix */}
               <div className="glass p-4 rounded-2xl flex items-center gap-3 mb-6 text-left">
-                <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                <img src={selectedAvatar.stillUrl} alt={selectedAvatar.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-text">Anna · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
-                  <p className="text-xs text-muted">Votre assistant émotionnel IA est prête</p>
+                  <p className="text-sm font-semibold text-text">{selectedAvatar.name} · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
+                  <p className="text-xs text-muted">Votre assistant émotionnel IA est prêt{selectedAvatar.gender === 'female' ? 'e' : ''}</p>
                 </div>
               </div>
 

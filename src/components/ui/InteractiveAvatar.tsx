@@ -16,6 +16,8 @@ export interface InteractiveAvatarRef {
 }
 
 interface Props {
+  avatarId?:          string;
+  avatarName?:        string;
   onReady?:           () => void;
   onError?:           () => void;
   onDisconnected?:    () => void;
@@ -30,7 +32,7 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
 }
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
-  ({ onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
+  ({ avatarId, avatarName, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
 
     const mediaRef   = useRef<HTMLVideoElement>(null);
     const sessionRef = useRef<LiveAvatarSession | null>(null);
@@ -128,7 +130,14 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
       async function init() {
         try {
-          const res = await fetch('/api/heygen-token', { method: 'POST' });
+          const res = await fetch('/api/heygen-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              avatarId:   avatarId   || undefined,
+              avatarName: avatarName || undefined,
+            }),
+          });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err?.error ?? `Token failed: ${res.status}`);
@@ -333,7 +342,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     }
 
     function micText() {
-      if (isSpeaking)            return 'Anna parle…';
+      if (isSpeaking)            return `${avatarName || 'Anna'} parle…`;
       if (!micActive)            return 'Activer le micro';
       if (isMuted)               return 'Micro coupé — toucher pour réactiver';
       return 'Micro actif — toucher pour couper';
