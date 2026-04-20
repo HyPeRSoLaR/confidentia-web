@@ -10,19 +10,19 @@ import { NextResponse } from 'next/server';
  *   "Welcome to LiveAvatar" (98eff136) is the most neutral base context.
  *   language: 'fr' instructs HeyGen to use French STT + TTS.
  *
- * LITE mode (future — requires FORCE_FULL_MODE=false + ELEVEN_LABS_* vars):
+ * LITE mode (requires ELEVEN_LABS_* vars + no FORCE_FULL_MODE):
  *   ElevenLabs handles VAD → STT → LLM → TTS, HeyGen handles lip-sync only.
  *
- * Avatar:  Anna                   (513fd1b7-7ef9-466d-9af2-344e51eeb833)
- * Voice:   Ingrid - ElevenLabs   (85420b7d-7d8a-4f3e-80af-d7771026f1d6)  ← 3rd-party, warm & calm, confirmed
+ * Voice:   Ingrid - ElevenLabs   (85420b7d-7d8a-4f3e-80af-d7771026f1d6)
  * Context: Welcome to LiveAvatar (98eff136-665c-48ab-a322-0ad3c8c769e0)
  */
 
 const LIVEAVATAR_API     = 'https://api.liveavatar.com/v1';
 const DEFAULT_AVATAR_ID  = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Anna
 const DEFAULT_NAME       = 'Anna';
-const DEFAULT_VOICE_ID   = 'de5574fc-009e-4a01-a881-9919ef8f5a0c'; // Ann - IA (native)
-const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0'; // Welcome to LiveAvatar
+// Ingrid — warm, calm, authentic French voice (UUID format accepted by LiveAvatar)
+const INGRID_VOICE_ID    = '85420b7d-7d8a-4f3e-80af-d7771026f1d6';
+const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0';
 
 function makeGreeting(name: string) {
   return `Bonjour, je suis ${name}. Je suis ici pour vous écouter en toute confidentialité. Comment vous sentez-vous aujourd'hui ?`;
@@ -43,12 +43,10 @@ export async function POST(req: Request) {
   // Accept optional avatarId + avatarName from request body
   let avatarId   = DEFAULT_AVATAR_ID;
   let avatarName = DEFAULT_NAME;
-  let voiceId    = DEFAULT_VOICE_ID;
   try {
     const body = await req.json();
     if (body?.avatarId)   avatarId   = body.avatarId;
     if (body?.avatarName) avatarName = body.avatarName;
-    if (body?.voiceId)    voiceId    = body.voiceId;
   } catch {} // empty body is fine — use defaults
 
   // FORCE_FULL_MODE=true keeps FULL mode for stable demo (bypasses LITE).
@@ -69,12 +67,13 @@ export async function POST(req: Request) {
         },
       };
     } else {
-      // FULL mode — use a pre-built context_id (custom context POST returns 422)
+      // FULL mode — Ingrid voice (French, warm) for ALL avatars
+      // The same voice works across all avatar faces — LiveAvatar just lip-syncs
       requestBody = {
         mode:      'FULL',
         avatar_id: avatarId,
         avatar_persona: {
-          voice_id:   voiceId,
+          voice_id:   INGRID_VOICE_ID,
           language:   'fr',
           context_id: CONTEXT_ID_WELCOME,
           greeting:   makeGreeting(avatarName),
