@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Star, Globe, Check, X, Clock,
   Calendar, ChevronRight, SlidersHorizontal,
-  Filter,
+  Filter, ShieldCheck,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -182,9 +182,13 @@ function TherapistCard({ therapist, onBook }: { therapist: TherapistProfile; onB
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
               <h3 className="font-bold text-text text-sm">{therapist.name}</h3>
               {therapist.isVerified && (
-                <div className="w-4 h-4 rounded-full bg-emerald-400/15 flex items-center justify-center flex-shrink-0">
-                  <Check size={9} className="text-emerald-400" strokeWidth={3} />
-                </div>
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/10 border border-emerald-400/30 text-emerald-400 text-[10px] font-semibold"
+                  title="Diplôme vérifié par Confidentia — ADELI / ARS"
+                >
+                  <ShieldCheck size={10} strokeWidth={2.5} />
+                  Vérifié
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted flex-wrap mb-2">
