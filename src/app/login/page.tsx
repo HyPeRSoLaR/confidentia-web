@@ -55,7 +55,7 @@ export default function LoginPage() {
             </svg>
           </motion.div>
           <h1 className="text-2xl font-bold text-text">Confidentia</h1>
-          <p className="text-sm text-muted mt-1">Votre compagnon bien-être privé</p>
+          <p className="text-sm text-muted mt-1">Votre assistant émotionnel IA</p>
         </div>
 
         {/* Card */}

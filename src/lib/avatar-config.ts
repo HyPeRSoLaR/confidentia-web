@@ -1,7 +1,7 @@
 /**
  * lib/avatar-config.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * Single fixed Confidentia AI companion: Ann Therapist.
+ * Single fixed Confidentia AI companion: Anna.
  *
  * `stillUrl`  → Real LiveAvatar preview image (same face as the video avatar)
  * `heygenId`  → LiveAvatar avatar ID used by /api/heygen-token
@@ -82,7 +82,7 @@ const AVATAR_KEY  = 'confidentia_avatar_id';
 const NAME_KEY    = 'confidentia_avatar_name';
 const PERSONA_KEY = 'confidentia_avatar_persona';
 
-/** Always returns Ann Therapist — the single fixed companion. */
+/** Always returns Anna — the single fixed companion. */
 export function getSavedAvatar(): AvatarConfig {
   return ANN_THERAPIST;
 }

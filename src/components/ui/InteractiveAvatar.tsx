@@ -333,7 +333,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     }
 
     function micText() {
-      if (isSpeaking)            return 'Aria parle…';
+      if (isSpeaking)            return 'Anna parle…';
       if (!micActive)            return 'Activer le micro';
       if (isMuted)               return 'Micro coupé — toucher pour réactiver';
       return 'Micro actif — toucher pour couper';

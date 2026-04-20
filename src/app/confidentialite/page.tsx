@@ -26,7 +26,7 @@ const SECTIONS = [
     title: 'Comment nous utilisons vos données',
     items: [
       "Fournir et améliorer le service Confidentia",
-      "Personnaliser votre expérience avec votre compagnon IA",
+      "Personnaliser votre expérience avec Anna, votre assistant émotionnel IA",
       "Pour les comptes entreprise (B2B) : générer des statistiques agrégées et anonymisées pour votre employeur — aucune donnée individuelle n'est partagée",
       "Respecter nos obligations légales",
       "Vous envoyer des notifications liées à votre compte (pas de marketing sans consentement explicite)",

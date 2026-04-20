@@ -88,7 +88,7 @@ export default function OnboardingPage() {
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">Qu&apos;est-ce qui vous amène ?</h2>
                 <p className="text-muted text-sm leading-relaxed">
-                  Sélectionnez le domaine sur lequel vous souhaitez vous concentrer. Nous adapterons l&apos;approche de votre compagnon IA à vos besoins.
+                  Sélectionnez le domaine sur lequel vous souhaitez vous concentrer. Nous adapterons l&apos;approche d&apos;Anna à vos besoins.
                 </p>
               </div>
               <div className="grid gap-3 mb-8">
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
               <div className="text-center mb-6">
                 <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">
-                  Comment Ann doit-elle vous aborder ?
+                  Comment Anna doit-elle vous aborder ?
                 </h2>
                 <p className="text-muted text-sm">Choisissez le style de personnalité qui vous correspond le mieux.</p>
               </div>
@@ -197,8 +197,8 @@ export default function OnboardingPage() {
               <div className="glass p-4 rounded-2xl flex items-center gap-3 mb-6 text-left">
                 <img src={ANN_THERAPIST.stillUrl} alt={ANN_THERAPIST.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-text">Ann · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
-                  <p className="text-xs text-muted">Votre compagnon IA est prête</p>
+                  <p className="text-sm font-semibold text-text">Anna · {PERSONA_META[selectedPersona].emoji} {PERSONA_META[selectedPersona].label}</p>
+                  <p className="text-xs text-muted">Votre assistant émotionnel IA est prête</p>
                 </div>
               </div>
 
