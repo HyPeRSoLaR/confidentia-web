@@ -9,7 +9,7 @@ import {
   SessionState,
   AgentEventsEnum,
 } from '@heygen/liveavatar-web-sdk';
-import { Loader2, Mic, MicOff, Camera, CameraOff, Zap, Volume2 } from 'lucide-react';
+import { Loader2, Mic, MicOff, Camera, CameraOff, Zap, Volume2, RefreshCw } from 'lucide-react';
 
 export interface InteractiveAvatarRef {
   speak: (text: string) => void;
@@ -43,6 +43,9 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     const [sessionState, setSessionState] = useState<SessionState>(SessionState.INACTIVE);
     const [hasError,     setHasError]     = useState(false);
+    const [retryKey,     setRetryKey]     = useState(0);   // increment → re-runs init effect
+    const [autoRetried,  setAutoRetried]  = useState(false); // only auto-retry once
+    const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
 
     const sessionModeRef = useRef<'LITE' | 'FULL'>('FULL');
     const [sessionMode,  setSessionMode]  = useState<'LITE' | 'FULL'>('FULL');
@@ -119,6 +122,9 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
     // ── Session init ──────────────────────────────────────────────────────────
     useEffect(() => {
       let mounted = true;
+      // Reset error state on each (re)try
+      setHasError(false);
+      setRetryCountdown(null);
 
       async function init() {
         try {
@@ -200,7 +206,25 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
         } catch (err: any) {
           console.error('[LiveAvatar] Init error:', err);
-          if (mounted) { setHasError(true); onErrorRef.current?.(); }
+          if (!mounted) return;
+          setHasError(true);
+          onErrorRef.current?.();
+
+          // Auto-retry once after 5 s — covers transient network/WebRTC glitches
+          if (!autoRetried) {
+            setAutoRetried(true);
+            let secs = 5;
+            setRetryCountdown(secs);
+            const tick = setInterval(() => {
+              secs -= 1;
+              if (!mounted) { clearInterval(tick); return; }
+              setRetryCountdown(secs);
+              if (secs <= 0) {
+                clearInterval(tick);
+                setRetryKey(k => k + 1);
+              }
+            }, 1000);
+          }
         }
       }
 
@@ -211,7 +235,7 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
         sessionRef.current = null;
       };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [retryKey]);
 
     // ── Mic button handler (Zoom-like) ────────────────────────────────────────
     const handleMicClick = useCallback(async () => {
@@ -271,10 +295,29 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
 
     if (hasError) {
       return (
-        <div className="w-full aspect-video bg-surface rounded-2xl border border-border/40 flex flex-col items-center justify-center gap-3 text-muted">
-          <span className="text-2xl">📡</span>
-          <p className="text-xs font-medium">Could not connect to the Avatar service.</p>
-          <p className="text-[10px] text-muted/60">Text and audio modes are fully available.</p>
+        <div className="w-full aspect-video bg-surface rounded-2xl border border-border/40 flex flex-col items-center justify-center gap-4 text-muted px-6 text-center">
+          <span className="text-3xl">📡</span>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-text/80">Connexion à l'avatar impossible</p>
+            <p className="text-[11px] text-muted/70 leading-relaxed max-w-xs">
+              Problème réseau ou WebRTC transitoire.<br />
+              Les modes Texte et Audio restent disponibles.
+            </p>
+          </div>
+          {retryCountdown !== null && retryCountdown > 0 ? (
+            <p className="text-[10px] text-muted/50 flex items-center gap-1">
+              <Loader2 size={10} className="animate-spin" />
+              Nouvelle tentative dans {retryCountdown} s…
+            </p>
+          ) : (
+            <button
+              onClick={() => { setAutoRetried(false); setRetryKey(k => k + 1); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-brand/90 text-white text-xs font-semibold hover:bg-brand transition-colors shadow-brand"
+            >
+              <RefreshCw size={12} />
+              Réessayer
+            </button>
+          )}
         </div>
       );
     }
