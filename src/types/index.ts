@@ -171,6 +171,10 @@ export interface HRSettings {
   weeklyReportEnabled: boolean;
   alertsEnabled: boolean;
   notificationEmail: string;
+  /** Additional notification emails (multi-recipient) */
+  notificationEmails: string[];
+  /** How often reports are sent */
+  reportFrequency: 'daily' | 'weekly' | 'monthly';
 }
 
 // ─── Company & Plans ─────────────────────────────────────────────────────────

@@ -137,18 +137,27 @@ export const MOCK_PLANS: Plan[] = [
 ];
 
 // ── B2B platform (HR SaaS) plans ──────────────────────────────────────────────
+// Toutes les fonctionnalités sont disponibles à tous les paliers.
+// Seul le nombre d'employés éligibles change selon le plan.
+const B2B_SHARED_FEATURES = [
+  'Tableau de bord RH complet',
+  'Analytiques bien-être en temps réel',
+  'Suivi anonymisé des employés',
+  'Alertes critiques automatiques',
+  'Rapports périodiques (fréquence configurable)',
+  'Segmentation par département / pôle',
+  'Export de données RGPD',
+  'k-Anonymat configurable',
+  'SSO inclus',
+];
+
 export const MOCK_B2B_PLATFORM_PLANS: Plan[] = [
   {
     id: 'b2b-smb', name: 'PME', tier: 'standard', audience: 'b2b-platform',
     priceMonthly: 349, priceAnnual: 3351,
     videoMinutes: 0,
     employeeRange: '0–50 employés',
-    features: [
-      'Tableau de bord RH',
-      'Analytiques bien-être',
-      'Suivi anonymisé des employés',
-      'Alertes automatiques',
-    ],
+    features: B2B_SHARED_FEATURES,
   },
   {
     id: 'b2b-mid', name: 'Intermédiaire', tier: 'premium', audience: 'b2b-platform',
@@ -156,12 +165,7 @@ export const MOCK_B2B_PLATFORM_PLANS: Plan[] = [
     videoMinutes: 0,
     employeeRange: '50–200 employés',
     isPopular: true,
-    features: [
-      'Tout ce qui est dans PME',
-      'Rapports hebdomadaires',
-      'Segmentation par département',
-      'Export de données RGPD',
-    ],
+    features: B2B_SHARED_FEATURES,
   },
   {
     id: 'b2b-enterprise', name: 'Entreprise', tier: 'pro', audience: 'b2b-platform',
@@ -169,10 +173,10 @@ export const MOCK_B2B_PLATFORM_PLANS: Plan[] = [
     videoMinutes: 0,
     employeeRange: '200+ employés',
     features: [
-      'Tout ce qui est dans Intermédiaire',
-      'Chargé de compte dédié',
-      'Intégration SIRH personnalisée',
-      'SLA Premium 99,9 %',
+      ...B2B_SHARED_FEATURES,
+      '✦ Account manager dédié',
+      '✦ Intégration SIRH personnalisée',
+      '✦ SLA Premium 99,9 %',
     ],
   },
 ];
@@ -220,10 +224,10 @@ export const MOCK_B2B_EMPLOYEE_PLANS: Plan[] = [
 
 // ── Video credit top-up packs ─────────────────────────────────────────────────
 export const MOCK_VIDEO_CREDIT_PACKS: VideoCreditPack[] = [
-  { id: 'pack-xs', label: 'XS', minutes: 10,  price: 4.99,  color: '#10B981' }, // green
-  { id: 'pack-s',  label: 'S',  minutes: 25,  price: 9.99,  color: '#0EA5E9' }, // blue
-  { id: 'pack-m',  label: 'M',  minutes: 60,  price: 19.99, color: '#9B6FE8' }, // violet
-  { id: 'pack-l',  label: 'L',  minutes: 120, price: 34.99, color: '#F59E0B' }, // amber
+  { id: 'pack-xs', label: 'XS', minutes: 10,  price: 4.90,  color: '#10B981' }, // green
+  { id: 'pack-s',  label: 'S',  minutes: 25,  price: 9.90,  color: '#0EA5E9' }, // blue
+  { id: 'pack-m',  label: 'M',  minutes: 60,  price: 19.90, color: '#9B6FE8' }, // violet
+  { id: 'pack-l',  label: 'L',  minutes: 120, price: 34.90, color: '#F59E0B' }, // amber
 ];
 
 // ─── Resources ───────────────────────────────────────────────────────────────
@@ -587,6 +591,8 @@ export const MOCK_HR_SETTINGS: HRSettings = {
   weeklyReportEnabled: true,
   alertsEnabled: true,
   notificationEmail: 'morgan.hr@techcorp.com',
+  notificationEmails: ['morgan.hr@techcorp.com'],
+  reportFrequency: 'weekly' as 'daily' | 'weekly' | 'monthly',
 };
 
 // ─── Therapist ───────────────────────────────────────────────────────────────

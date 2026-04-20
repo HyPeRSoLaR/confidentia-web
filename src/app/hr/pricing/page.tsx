@@ -143,8 +143,17 @@ export default function HRPricingPage() {
     <div className="max-w-4xl mx-auto space-y-12">
       <PageHeader
         title="Tarifs B2B"
-        subtitle="Des forfaits flexibles pour votre organisation — accès plateforme et licences employés par siège."
+        subtitle="Des forfaits flexibles pour votre organisation. Toutes les fonctionnalités sont incluses à tous les plans — seul le nombre d’employés éligibles change."
       />
+
+      {/* ── Offre 3 mois ── */}
+      <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-400/8 border border-emerald-400/30">
+        <div className="w-10 h-10 rounded-xl bg-emerald-400/15 flex items-center justify-center flex-shrink-0 text-xl">🎁</div>
+        <div>
+          <p className="text-sm font-bold text-emerald-400">3 premiers mois offerts</p>
+          <p className="text-xs text-muted mt-0.5">Plus 1 mois de frais de dossier offert. Engagement sans surprise — résiliable à tout moment.</p>
+        </div>
+      </div>
 
       {/* ── HR Platform ── */}
       <section>

@@ -126,12 +126,19 @@ export function AiChatView({
   // if the same (or very similar) text arrives within 3 s, it is dropped.
   const lastTranscriptRef   = useRef<{ text: string; ts: number }>({ text: '', ts: 0 });
 
-  // ── Voice note (record in text mode) ──────────────────────────────────────
+  // ── Voice note / audio recording ──────────────────────────────────────────
   const [recording,      setRecording]     = useState(false);
   const [recSeconds,     setRecSeconds]    = useState(0);
-  const mediaRecRef = useRef<MediaRecorder | null>(null);
-  const recChunksRef = useRef<Blob[]>([]);
-  const recTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Live transcript state shown to user while mic is open
+  const [liveTranscript, setLiveTranscript] = useState('');
+  // Transcribing spinner shown after mic closes while Whisper is computing
+  const [transcribing,   setTranscribing]  = useState(false);
+  const mediaRecRef      = useRef<MediaRecorder | null>(null);
+  const recChunksRef     = useRef<Blob[]>([]);
+  const recTimerRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Stores the transcript built by the parallel SpeechRecognition session
+  const liveTranscriptRef = useRef('');
+  const speechRecRef      = useRef<any>(null);
 
   // ── File attachments ───────────────────────────────────────────────────────
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
@@ -157,54 +164,127 @@ export function AiChatView({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, mode]);
 
-  // ── Voice note handlers ────────────────────────────────────────────────────
+  // ── Voice recording handlers ───────────────────────────────────────────────
+  //
+  // Strategy: run MediaRecorder (for waveform blob) + SpeechRecognition (for
+  // live text) in PARALLEL.  SpeechRecognition cannot transcribe a blob — it
+  // needs the live mic stream — so we start it at the same time as the recorder.
+  // If the Web Speech API is unavailable (Firefox, some mobile browsers), we
+  // fall back to posting the finished blob to /api/transcribe (Whisper).
 
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      recChunksRef.current = [];
+
+      // ① MediaRecorder — captures raw audio bytes for the waveform player
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : '';
+      const mr = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      recChunksRef.current     = [];
+      liveTranscriptRef.current = '';
+      setLiveTranscript('');
       mr.ondataavailable = e => { if (e.data.size > 0) recChunksRef.current.push(e.data); };
       mr.start(200);
       mediaRecRef.current = mr;
       setRecording(true);
       setRecSeconds(0);
       recTimerRef.current = setInterval(() => setRecSeconds(s => s + 1), 1000);
+
+      // ② SpeechRecognition — runs continuously alongside the recorder
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SR) {
+        const sr = new SR();
+        sr.lang       = 'fr-FR';
+        sr.continuous = true;          // keep listening until we stop it
+        sr.interimResults = true;      // stream partial results for live display
+        let finalText = '';
+        sr.onresult = (e: any) => {
+          let interim = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const t = e.results[i][0].transcript;
+            if (e.results[i].isFinal) { finalText += t + ' '; }
+            else                       { interim    = t; }
+          }
+          const displayed = (finalText + interim).trim();
+          liveTranscriptRef.current = finalText.trim() || displayed;
+          setLiveTranscript(displayed);
+        };
+        sr.onerror = (e: any) => {
+          // Suppress no-speech errors — they fire if there's silence
+          if (e.error !== 'no-speech') console.warn('[SR]', e.error);
+        };
+        try { sr.start(); } catch {}
+        speechRecRef.current = sr;
+      }
     } catch (err) {
       console.warn('[VoiceNote] Mic access denied', err);
     }
   }
 
-  async function stopRecording(fromAudioMode = false) {
+  /**
+   * Stop recording and build the message.
+   * @param fromAudioMode  — true when called from the Audio mode mic toggle
+   * @param cancel         — true when the user explicitly cancels (no message sent)
+   */
+  async function stopRecording(fromAudioMode = false, cancel = false) {
     if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
+
+    // Stop SpeechRecognition first so its final results fire
+    if (speechRecRef.current) {
+      try { speechRecRef.current.stop(); } catch {}
+      speechRecRef.current = null;
+    }
+
     const mr = mediaRecRef.current;
     if (!mr) return;
     mr.stop();
     mr.stream.getTracks().forEach(t => t.stop());
+    mediaRecRef.current = null;
     setRecording(false);
+    setLiveTranscript('');
     if (fromAudioMode) setAudioMicActive(false);
 
-    // Wait a tick for final ondataavailable
-    await new Promise(r => setTimeout(r, 100));
-    const blob = new Blob(recChunksRef.current, { type: 'audio/webm' });
+    if (cancel) { setRecSeconds(0); return; }
+
+    // Give the MediaRecorder's ondataavailable a final tick
+    await new Promise(r => setTimeout(r, 150));
+
+    const blob     = new Blob(recChunksRef.current, { type: mr.mimeType || 'audio/webm' });
     const audioUrl = URL.createObjectURL(blob);
 
-    // Try browser speech recognition for transcript
-    let transcript = '[Note vocale]';
-    try {
-      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SR) {
-        const sr = new SR();
-        sr.lang = 'fr-FR,en-US';
-        sr.maxAlternatives = 1;
-        transcript = await new Promise<string>((resolve) => {
-          sr.onresult = (e: any) => resolve(e.results[0][0].transcript);
-          sr.onerror  = () => resolve('[Note vocale]');
-          sr.start();
-          setTimeout(() => { try { sr.stop(); } catch {} resolve('[Note vocale]'); }, 5000);
-        });
+    // ── Resolve transcript ────────────────────────────────────────────────────
+    // Priority: (1) Web Speech API live result, (2) Whisper server, (3) placeholder
+    let transcript = liveTranscriptRef.current.trim();
+
+    if (!transcript && blob.size > 0) {
+      // Fallback: send blob to /api/transcribe (Whisper) if key is configured
+      setTranscribing(true);
+      try {
+        const fd = new FormData();
+        fd.append('audio', blob, 'audio.webm');
+        fd.append('lang', 'fr');
+        const res = await fetch('/api/transcribe', { method: 'POST', body: fd });
+        if (res.ok) {
+          const data = await res.json();
+          transcript = (data.transcript ?? '').trim();
+        }
+      } catch (e) {
+        console.warn('[Transcribe] Whisper fallback failed', e);
+      } finally {
+        setTranscribing(false);
       }
-    } catch {}
+    }
+
+    // Final fallback label if both methods yield nothing
+    if (!transcript) transcript = '[Note vocale]';
+
+    setRecSeconds(0);
+    liveTranscriptRef.current = '';
 
     const userMsg: Message = {
       id:          `vnote-${Date.now()}`,
@@ -217,13 +297,14 @@ export function AiChatView({
     const updated = [...messagesRef.current, userMsg];
     messagesRef.current = updated;
     setMessages(updated);
-    setPendingVoice(transcript);
+    // Only fire Claude if we have a real transcript
+    if (transcript !== '[Note vocale]') setPendingVoice(transcript);
   }
 
   // ── Audio mode mic toggle ──────────────────────────────────────────────────
   async function toggleAudioMic() {
     if (audioMicActive) {
-      await stopRecording(true);
+      await stopRecording(true, false);
     } else {
       setAudioMicActive(true);
       await startRecording();
@@ -231,11 +312,7 @@ export function AiChatView({
   }
 
   function cancelRecording() {
-    if (recTimerRef.current) { clearInterval(recTimerRef.current); recTimerRef.current = null; }
-    mediaRecRef.current?.stop();
-    mediaRecRef.current?.stream.getTracks().forEach(t => t.stop());
-    setRecording(false);
-    setRecSeconds(0);
+    stopRecording(false, true);
   }
 
   // ── File attachment handler ────────────────────────────────────────────────
@@ -736,22 +813,39 @@ export function AiChatView({
                     : <Mic    size={28} className="text-white" />}
                 </button>
 
-                {/* Live waveform bars during audio-mode recording */}
+                {/* Live waveform bars + transcript during audio-mode recording */}
                 <AnimatePresence>
+                  {transcribing && (
+                    <motion.div
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Loader2 size={13} className="animate-spin text-violet" />
+                      <span className="text-xs text-muted">Transcription…</span>
+                    </motion.div>
+                  )}
                   {audioMicActive && recording && (
                     <motion.div
                       initial={{ opacity: 0, scaleY: 0 }}
                       animate={{ opacity: 1, scaleY: 1 }}
                       exit={{ opacity: 0, scaleY: 0 }}
-                      className="flex items-end gap-0.5 h-6"
+                      className="flex flex-col items-center gap-2"
                     >
-                      {Array.from({ length: 16 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-1 rounded-full bg-red-400 animate-waveform"
-                          style={{ height: `${30 + Math.random() * 70}%`, animationDelay: `${i * 40}ms` }}
-                        />
-                      ))}
+                      <div className="flex items-end gap-0.5 h-6">
+                        {Array.from({ length: 16 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="w-1 rounded-full bg-red-400 animate-waveform"
+                            style={{ height: `${30 + Math.random() * 70}%`, animationDelay: `${i * 40}ms` }}
+                          />
+                        ))}
+                      </div>
+                      {/* Live transcript preview in audio mode */}
+                      {liveTranscript && (
+                        <p className="text-[11px] text-muted/80 italic max-w-[240px] text-center leading-relaxed">
+                          "{liveTranscript}"
+                        </p>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -759,6 +853,8 @@ export function AiChatView({
                 <p className="text-xs text-muted">
                   {audioMicActive
                     ? <span className="text-red-400 font-medium">Micro actif — parlez maintenant · {recFmt(recSeconds)}</span>
+                    : loading
+                    ? <span className="text-violet font-medium flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Traitement…</span>
                     : 'Appuyez pour parler'}
                 </p>
               </div>
@@ -831,31 +927,44 @@ export function AiChatView({
           <div className="glass flex flex-col gap-1 p-3 rounded-2xl">
 
             {/* Recording state */}
-            {recording ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-rec" />
-                <span className="text-xs text-red-400 font-medium">Enregistrement… {recFmt(recSeconds)}</span>
-                  {/* Live waveform bars during recording */}
-                  <div className="flex items-end gap-0.5 h-5">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-1 rounded-full bg-red-400/70 animate-waveform"
-                        style={{ height: `${40 + Math.random() * 60}%`, animationDelay: `${i * 50}ms` }}
-                      />
-                    ))}
+            {transcribing ? (
+              <div className="flex items-center gap-2 py-1">
+                <Loader2 size={14} className="animate-spin text-violet flex-shrink-0" />
+                <span className="text-xs text-muted flex-1">Transcription en cours…</span>
+              </div>
+            ) : recording ? (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-rec flex-shrink-0" />
+                    <span className="text-xs text-red-400 font-medium flex-shrink-0">Enregistrement… {recFmt(recSeconds)}</span>
+                    {/* Live waveform bars during recording */}
+                    <div className="flex items-end gap-0.5 h-5 flex-1">
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 rounded-full bg-red-400/70 animate-waveform"
+                          style={{ height: `${40 + Math.random() * 60}%`, animationDelay: `${i * 50}ms` }}
+                        />
+                      ))}
+                    </div>
                   </div>
+                  <button onClick={cancelRecording} title="Annuler" className="text-muted hover:text-red-400 transition-colors p-1 flex-shrink-0">
+                    <MicOff size={16} />
+                  </button>
+                  <button
+                    onClick={() => stopRecording(false, false)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-xl text-xs font-medium hover:bg-red-600 transition-colors flex-shrink-0"
+                  >
+                    <StopCircle size={13} /> Envoyer
+                  </button>
                 </div>
-                <button onClick={cancelRecording} title="Cancel recording" className="text-muted hover:text-red-400 transition-colors p-1">
-                  <MicOff size={16} />
-                </button>
-                <button
-                  onClick={() => stopRecording(false)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-xl text-xs font-medium hover:bg-red-600 transition-colors"
-                >
-                  <StopCircle size={13} /> Envoyer
-                </button>
+                {/* Live transcript preview while speaking */}
+                {liveTranscript && (
+                  <p className="text-[11px] text-muted/80 italic pl-5 leading-relaxed truncate">
+                    "{liveTranscript}"
+                  </p>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">

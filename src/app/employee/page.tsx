@@ -3,15 +3,16 @@
  * app/employee/page.tsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Employee Dashboard — home landing for B2B employees.
- * Shows: greeting, weekly mood chart, quick actions, featured resource, distress CTA.
+ * Shows: SOS bar, greeting, weekly mood chart, quick actions, featured resource.
  */
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
-  MessageCircle, BookOpen, TrendingUp, AlertCircle,
+  MessageCircle, BookOpen, TrendingUp,
   ChevronRight, Smile, Heart, Zap, Meh, Frown, Star,
+  Phone, AlertTriangle, HeartHandshake,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -30,7 +31,6 @@ const MOOD_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
   sad:      { icon: Frown,  color: 'text-blue-400' },
 };
 
-// Build last-7-days mood scores from mock data
 function buildWeekMood() {
   const today = new Date();
   return WEEK_DAYS.map((label, i) => {
@@ -46,9 +46,10 @@ const weekMood = buildWeekMood();
 const maxScore = 10;
 
 const QUICK_ACTIONS = [
-  { label: 'Démarrer une session IA', href: '/employee/chat',      icon: MessageCircle, color: 'text-violet bg-violet/10',  desc: 'Parlez à votre compagnon IA' },
-  { label: 'Ressources',             href: '/employee/resources', icon: BookOpen,       color: 'text-cyan   bg-cyan/10',    desc: 'Guides, articles & exercices' },
-  { label: 'Ma progression',         href: '/employee/chat',      icon: TrendingUp,     color: 'text-emerald-400 bg-emerald-400/10', desc: 'Votre bien-être dans le temps' },
+  { label: 'Session IA',       href: '/employee/chat',     icon: MessageCircle, color: 'text-violet bg-violet/10',           desc: 'Parlez à Anna, votre confidente IA' },
+  { label: 'Ressources',       href: '/employee/resources', icon: BookOpen,       color: 'text-cyan bg-cyan/10',               desc: 'Guides, articles & exercices' },
+  { label: 'Ma progression',   href: '/employee/progress',  icon: TrendingUp,     color: 'text-emerald-400 bg-emerald-400/10', desc: 'Votre bien-être dans le temps' },
+  { label: 'Thérapeutes',      href: '/marketplace',        icon: Phone,          color: 'text-pink bg-pink/10',               desc: 'Diplômés & vérifiés' },
 ];
 
 const featuredResource = MOCK_RESOURCES.find(r => r.isFeatured) ?? MOCK_RESOURCES[0];
@@ -59,29 +60,50 @@ export default function EmployeeDashboardPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-8">
 
-      {/* Distress modal */}
       <DistressRequestModal open={distressOpen} onClose={() => setDistressOpen(false)} />
+
+      {/* ── SOS / Urgence Bar — toujours visible, très prominent ── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+      >
+        <button
+          onClick={() => setDistressOpen(true)}
+          id="btn-support"
+          className="flex items-center justify-center gap-2.5 px-4 py-4 rounded-2xl bg-violet/10 border-2 border-violet/40 text-violet font-semibold text-sm hover:bg-violet/20 hover:border-violet hover:scale-[1.02] active:scale-100 transition-all duration-200 shadow-sm"
+        >
+          <HeartHandshake size={20} />
+          J&apos;ai besoin de soutien
+        </button>
+
+        <Link
+          href="/marketplace"
+          id="btn-therapist"
+          className="flex items-center justify-center gap-2.5 px-4 py-4 rounded-2xl bg-pink/10 border-2 border-pink/40 text-pink font-semibold text-sm hover:bg-pink/20 hover:border-pink hover:scale-[1.02] active:scale-100 transition-all duration-200 shadow-sm"
+        >
+          <Phone size={20} />
+          Parler à un thérapeute
+        </Link>
+
+        <a
+          href="tel:3114"
+          id="btn-sos"
+          className="flex items-center justify-center gap-2.5 px-4 py-4 rounded-2xl bg-red-500/10 border-2 border-red-400/50 text-red-400 font-bold text-sm hover:bg-red-500/20 hover:border-red-400 hover:scale-[1.02] active:scale-100 transition-all duration-200 shadow-sm"
+        >
+          <AlertTriangle size={20} />
+          Urgence · 3114
+        </a>
+      </motion.div>
 
       {/* ── Greeting ── */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-text">Bonjour 👋</h1>
-            <p className="text-sm text-muted mt-0.5">Comment vous sentez-vous aujourd’hui ? Votre espace est prêt.</p>
-          </div>
-          {/* Distress CTA — prominent but not alarming */}
-          <button
-            onClick={() => setDistressOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-red-400/40 bg-red-400/5 text-red-400 text-xs font-medium hover:bg-red-400/10 hover:border-red-400/60 transition-all duration-200"
-          >
-            <AlertCircle size={13} />
-             J’ai besoin de soutien
-          </button>
-        </div>
+        <h1 className="text-2xl font-serif font-bold text-text">Bonjour 👋</h1>
+        <p className="text-sm text-muted mt-0.5">Comment vous sentez-vous aujourd&apos;hui ? Anna est prête à vous écouter.</p>
       </motion.div>
 
       {/* ── Quick actions ── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {QUICK_ACTIONS.map((a, idx) => {
           const Icon = a.icon;
           return (

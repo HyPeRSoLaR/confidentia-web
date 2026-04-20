@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Zap, Star, Shield, Building2, Edit, X, Save } from 'lucide-react';
+import { Check, Zap, Star, Shield, Building2, Edit, X, Save, PlusCircle, CreditCard } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -15,9 +15,12 @@ const TIER_ICON = { free: Shield, pro: Zap, premium: Star, enterprise: Building2
 const TIER_COLOR = { free: 'text-muted', pro: 'text-violet', premium: 'text-amber-400', enterprise: 'text-cyan' } as const;
 
 export default function AdminPlansPage() {
-  const [editing,  setEditing]  = useState<Plan | null>(null);
-  const [plans,    setPlans]    = useState<Plan[]>(MOCK_PLANS);
-  const [saving,   setSaving]   = useState(false);
+  const [editing,       setEditing]       = useState<Plan | null>(null);
+  const [plans,         setPlans]         = useState<Plan[]>(MOCK_PLANS);
+  const [saving,        setSaving]        = useState(false);
+  const [addingCredits, setAddingCredits] = useState(false);
+  const [creditForm,    setCreditForm]    = useState({ companyId: MOCK_COMPANIES[0].id, minutes: 60, reason: '' });
+  const [creditSaved,   setCreditSaved]   = useState(false);
 
   async function handleSave() {
     if (!editing) return;
@@ -26,6 +29,14 @@ export default function AdminPlansPage() {
     setPlans(ps => ps.map(p => p.id === editing.id ? editing : p));
     setSaving(false);
     setEditing(null);
+  }
+
+  async function handleAddCredits() {
+    setSaving(true);
+    await new Promise(r => setTimeout(r, 700));
+    setSaving(false);
+    setCreditSaved(true);
+    setTimeout(() => { setCreditSaved(false); setAddingCredits(false); }, 1800);
   }
 
   // MRR calc
@@ -39,7 +50,18 @@ export default function AdminPlansPage() {
       <PageHeader
         title="Plan Management"
         subtitle="Pricing is config-driven — changes apply immediately to new signups"
-        actions={<Badge variant="success">MRR ${mrr.toLocaleString()}</Badge>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Badge variant="success">MRR ${mrr.toLocaleString()}</Badge>
+            <button
+              onClick={() => setAddingCredits(true)}
+              id="btn-add-credits"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet/10 border border-violet/30 text-violet text-xs font-semibold hover:bg-violet/20 transition-colors"
+            >
+              <PlusCircle size={13} /> Ajouter des crédits
+            </button>
+          </div>
+        }
       />
 
       {/* Org plan overview */}
@@ -140,6 +162,58 @@ export default function AdminPlansPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ── Add Credits Modal ── */}
+      <Modal open={addingCredits} onClose={() => setAddingCredits(false)} title="Ajouter des crédits vidéo" size="sm">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-violet/5 border border-violet/20">
+            <CreditCard size={16} className="text-violet flex-shrink-0" />
+            <p className="text-xs text-muted">Ajoutez des minutes vidéo directement sur le compte d&apos;une organisation.</p>
+          </div>
+          <div>
+            <label className="text-xs text-muted mb-1 block">Organisation</label>
+            <select
+              value={creditForm.companyId}
+              onChange={e => setCreditForm(f => ({ ...f, companyId: e.target.value }))}
+              className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50"
+              aria-label="Organisation"
+            >
+              {MOCK_COMPANIES.map(c => (
+                <option key={c.id} value={c.id}>{c.name} — {c.activeEmployees} sièges</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-muted mb-1 block">Minutes vidéo à ajouter</label>
+            <input
+              type="number" min={1} max={10000} step={10}
+              value={creditForm.minutes}
+              onChange={e => setCreditForm(f => ({ ...f, minutes: Number(e.target.value) }))}
+              className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50"
+              aria-label="Minutes à ajouter"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted mb-1 block">Raison (optionnel)</label>
+            <input
+              type="text"
+              value={creditForm.reason}
+              onChange={e => setCreditForm(f => ({ ...f, reason: e.target.value }))}
+              placeholder="Ex: Geste commercial, compensation, promotion..."
+              className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50"
+              aria-label="Raison de l'ajout"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setAddingCredits(false)} className="px-4" aria-label="Annuler">
+              <X size={13} /> Annuler
+            </Button>
+            <Button onClick={handleAddCredits} loading={saving} fullWidth className="shadow-brand">
+              {creditSaved ? <><Check size={13} /> Crédits ajoutés !</> : <><PlusCircle size={13} /> Ajouter {creditForm.minutes} min</>}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

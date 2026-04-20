@@ -1,19 +1,44 @@
 'use client';
 import { useState } from 'react';
-import { Save, CheckCircle, Bell, Mail } from 'lucide-react';
+import { Save, CheckCircle, Bell, Mail, Plus, X, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StaggerList, StaggerItem } from '@/components/layout/StaggerList';
 import { MOCK_HR_SETTINGS } from '@/lib/mock-data';
 
+type ReportFrequency = 'daily' | 'weekly' | 'monthly';
+
+const FREQUENCY_OPTIONS: { value: ReportFrequency; label: string; desc: string }[] = [
+  { value: 'daily',   label: 'Quotidien',  desc: 'Un rapport chaque matin' },
+  { value: 'weekly',  label: 'Hebdomadaire', desc: 'Récapitulatif chaque lundi' },
+  { value: 'monthly', label: 'Mensuel',    desc: 'Bilan en début de mois' },
+];
+
 export default function HRSettingsPage() {
-  const [settings,  setSettings]  = useState({ ...MOCK_HR_SETTINGS });
+  const [settings,  setSettings]  = useState({
+    ...MOCK_HR_SETTINGS,
+    notificationEmails: MOCK_HR_SETTINGS.notificationEmails ?? [MOCK_HR_SETTINGS.notificationEmail],
+    reportFrequency: (MOCK_HR_SETTINGS.reportFrequency ?? 'weekly') as ReportFrequency,
+  });
+  const [newEmail,  setNewEmail]  = useState('');
   const [saving,    setSaving]    = useState(false);
   const [saved,     setSaved]     = useState(false);
 
   function toggle(key: 'weeklyReportEnabled' | 'alertsEnabled') {
     setSettings(s => ({ ...s, [key]: !s[key] }));
+  }
+
+  function addEmail() {
+    const email = newEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) return;
+    if (settings.notificationEmails.includes(email)) return;
+    setSettings(s => ({ ...s, notificationEmails: [...s.notificationEmails, email] }));
+    setNewEmail('');
+  }
+
+  function removeEmail(email: string) {
+    setSettings(s => ({ ...s, notificationEmails: s.notificationEmails.filter(e => e !== email) }));
   }
 
   async function handleSave() {
@@ -29,7 +54,7 @@ export default function HRSettingsPage() {
       <PageHeader title="Paramètres RH" subtitle="Configurer la surveillance du bien-être à l'échelle de l'organisation" />
 
       <StaggerList className="space-y-5">
-        {/* Notifications */}
+        {/* Notifications toggles */}
         <StaggerItem>
           <Card>
             <h3 className="font-semibold text-text text-sm mb-4 flex items-center gap-2">
@@ -39,8 +64,8 @@ export default function HRSettingsPage() {
             {[
               {
                 key: 'weeklyReportEnabled' as const,
-                label: 'Rapport hebdomadaire',
-                desc: 'Recevez un résumé hebdomadaire des tendances de bien-être anonymisées chaque lundi',
+                label: 'Rapport activé',
+                desc: 'Recevez un résumé des tendances de bien-être anonymisées selon la fréquence choisie',
               },
               {
                 key: 'alertsEnabled' as const,
@@ -67,21 +92,75 @@ export default function HRSettingsPage() {
           </Card>
         </StaggerItem>
 
-        {/* Notification email */}
+        {/* Report frequency */}
+        <StaggerItem>
+          <Card>
+            <h3 className="font-semibold text-text text-sm mb-4 flex items-center gap-2">
+              <Clock size={14} className="text-violet" /> Fréquence des rapports
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {FREQUENCY_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSettings(s => ({ ...s, reportFrequency: opt.value }))}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all duration-200 ${
+                    settings.reportFrequency === opt.value
+                      ? 'border-violet bg-violet/10 text-violet'
+                      : 'border-border text-muted hover:border-violet/40 hover:text-text'
+                  }`}
+                >
+                  <p className="text-sm font-semibold">{opt.label}</p>
+                  <p className="text-[10px] leading-snug">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </StaggerItem>
+
+        {/* Multi-email notification */}
         <StaggerItem>
           <Card>
             <h3 className="font-semibold text-text text-sm mb-3 flex items-center gap-2">
-              <Mail size={14} className="text-cyan" /> E-mail de notification
+              <Mail size={14} className="text-cyan" /> Adresses e-mail de notification
             </h3>
-            <input
-              type="email"
-              value={settings.notificationEmail}
-              onChange={e => setSettings(s => ({ ...s, notificationEmail: e.target.value }))}
-              className="w-full bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50 transition-all"
-              aria-label="Adresse e-mail de notification"
-              placeholder="rh@votreentreprise.com"
-            />
-            <p className="text-[10px] text-muted mt-2">Les rapports et alertes sont envoyés exclusivement à cette adresse — jamais aux employés individuels.</p>
+
+            {/* Existing emails */}
+            <div className="space-y-2 mb-3">
+              {settings.notificationEmails.map(email => (
+                <div key={email} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-bg border border-border">
+                  <span className="text-sm text-text truncate">{email}</span>
+                  <button
+                    onClick={() => removeEmail(email)}
+                    aria-label={`Supprimer ${email}`}
+                    className="text-muted hover:text-red-400 transition-colors flex-shrink-0"
+                    disabled={settings.notificationEmails.length <= 1}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add new email */}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={e => setNewEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addEmail()}
+                className="flex-1 bg-bg border border-border rounded-xl px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                aria-label="Nouvelle adresse e-mail"
+                placeholder="nouveau@entreprise.com"
+              />
+              <button
+                onClick={addEmail}
+                aria-label="Ajouter l'adresse e-mail"
+                className="px-3 py-2 rounded-xl bg-brand/10 border border-brand/30 text-brand hover:bg-brand/20 transition-colors flex items-center gap-1 text-sm font-medium"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            <p className="text-[10px] text-muted mt-2">Les rapports et alertes sont envoyés à toutes ces adresses — jamais aux employés individuels.</p>
           </Card>
         </StaggerItem>
 
@@ -90,7 +169,7 @@ export default function HRSettingsPage() {
           <Card>
             <h3 className="font-semibold text-sm text-text mb-1">Seuil de confidentialité (k-Anonymat)</h3>
             <p className="text-xs text-muted mb-3 leading-relaxed">
-              Les statistiques agrégées ne sont affichées que lorsqu'au moins <strong>{settings.kAnonymityThreshold}</strong> employés ont contribué. Cela empêche de rétro-ingénierer les réponses individuelles.
+              Les statistiques agrégées ne sont affichées que lorsqu&apos;au moins <strong>{settings.kAnonymityThreshold}</strong> employés ont contribué. Cela empêche de rétro-ingénierer les réponses individuelles.
             </p>
             <input
               type="range" min={3} max={20} step={1}
@@ -110,7 +189,7 @@ export default function HRSettingsPage() {
         {/* Save */}
         <StaggerItem>
           <Button onClick={handleSave} loading={saving} fullWidth className="shadow-brand">
-            {saved ? <><CheckCircle size={14} />Enregistré !</> : <><Save size={14} />Enregistrer</>}
+            {saved ? <><CheckCircle size={14} />Enregistré !</> : <><Save size={14} />Enregistrer les paramètres</>}
           </Button>
         </StaggerItem>
       </StaggerList>

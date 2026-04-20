@@ -57,40 +57,63 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
     <motion.aside
       animate={{ width: collapsed ? 68 : 240 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex flex-col h-screen bg-surface border-r border-border flex-shrink-0 overflow-hidden"
+      className="relative flex flex-col h-screen bg-surface border-r border-border flex-shrink-0 overflow-visible"
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
-        <div className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center flex-shrink-0">
-          {/* Shield-heart logo mark */}
-          <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-            <path d="M12 2L4 5.5V11c0 4.5 3.4 8.7 8 9.9 4.6-1.2 8-5.4 8-9.9V5.5L12 2z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
-            <path d="M9 12c0-1.1.9-2 2-2s2 .9 2 2-2 3-2 3-2-1.9-2-3z" fill="white"/>
-          </svg>
-        </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="font-bold font-serif text-text text-lg whitespace-nowrap overflow-hidden"
-            >
-              Confidentia
-            </motion.span>
-          )}
-        </AnimatePresence>
-        
-        <div className={cn("ml-auto flex items-center gap-2", collapsed && "mx-auto flex-col-reverse mt-2")}>
-          <ThemeToggle />
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            className="w-8 h-8 rounded-full text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center flex-shrink-0"
-            title={collapsed ? "Déplier le menu" : "Replier le menu"}
+      {/* ── Floating reopen tab (visible only when collapsed) ── */}
+      <AnimatePresence>
+        {collapsed && (
+          <motion.button
+            key="reopen-tab"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onClick={() => setCollapsed(false)}
+            title="Ouvrir le menu"
+            className="absolute top-1/2 -translate-y-1/2 -right-4 z-50 flex items-center justify-center w-4 h-12 rounded-r-full bg-brand shadow-brand text-white hover:w-6 hover:-right-6 transition-all duration-200 cursor-pointer"
+            aria-label="Ouvrir le menu"
           >
-            {collapsed ? <ChevronRight size={16}/> : <ChevronLeft size={16}/>}
-          </button>
-        </div>
+            <ChevronRight size={12} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Logo */}
+      <div className={cn(
+        'flex items-center gap-3 px-4 py-5 border-b border-border overflow-hidden',
+        collapsed && 'flex-col gap-2 px-0 py-4 items-center'
+      )}>
+        {/* Logo cliquable → accueil */}
+        <Link href="/" title="Retour à l'accueil" className={cn('flex items-center gap-3 group', collapsed ? 'justify-center' : 'flex-1 min-w-0')}>
+          <div className="w-8 h-8 rounded-xl bg-brand flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+            {/* Shield-heart logo mark */}
+            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+              <path d="M12 2L4 5.5V11c0 4.5 3.4 8.7 8 9.9 4.6-1.2 8-5.4 8-9.9V5.5L12 2z" stroke="white" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M9 12c0-1.1.9-2 2-2s2 .9 2 2-2 3-2 3-2-1.9-2-3z" fill="white"/>
+            </svg>
+          </div>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                className="font-bold font-serif text-text text-lg whitespace-nowrap overflow-hidden group-hover:text-brand transition-colors duration-200"
+              >
+                Confidentia
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+
+        {/* Collapse toggle (always visible) */}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="flex-shrink-0 w-7 h-7 rounded-full text-muted hover:text-text hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center"
+          title={collapsed ? 'Déplier le menu' : 'Replier le menu'}
+        >
+          {collapsed ? <ChevronRight size={15}/> : <ChevronLeft size={15}/>}
+        </button>
       </div>
 
       {/* Nav items */}
@@ -140,7 +163,7 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
         'border-t border-border p-3',
         `bg-gradient-to-br ${ROLE_COLORS[userRole]}`
       )}>
-        <div className="flex items-center gap-3">
+        <div className={cn('flex items-center gap-3', collapsed && 'flex-col gap-2')}>
           <Avatar name={userName} src={userAvatarUrl} size="sm" online />
           <AnimatePresence>
             {!collapsed && (
@@ -155,16 +178,16 @@ export function Sidebar({ navItems, userName, userRole, userAvatarUrl }: Sidebar
               </motion.div>
             )}
           </AnimatePresence>
-          <button
-            onClick={handleLogout}
-            className={cn(
-              'text-muted hover:text-coral transition-colors flex-shrink-0',
-              collapsed && 'mx-auto'
-            )}
-            title="Déconnexion"
-          >
-            <LogOut size={16} />
-          </button>
+          <div className={cn('flex items-center gap-1', collapsed && 'flex-col gap-1')}>
+            <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className="text-muted hover:text-coral transition-colors flex-shrink-0"
+              title="Déconnexion"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </motion.aside>

@@ -28,17 +28,17 @@ export interface AvatarConfig {
   tagline: string;
 }
 
-/** The one fixed AI companion — Ann Therapist */
+/** The one fixed AI companion — Anna */
 export const ANN_THERAPIST: AvatarConfig = {
-  id: 'av-ann',
-  name: 'Ann',
+  id: 'av-anna',
+  name: 'Anna',
   gender: 'female',
   ethnicity: 'white',
   persona: 'warm',
   // Real LiveAvatar preview — exact same face as the video avatar
   stillUrl: 'https://files2.heygen.ai/avatar/v3/75e0a87b7fd94f0981ff398b593dd47f_45570/preview_talk_4.webp',
   heygenId: '513fd1b7-7ef9-466d-9af2-344e51eeb833',
-  tagline: 'Chaleureuse, présente et sans jugement.',
+  tagline: 'Votre assistant émotionnel IA — chaleureuse, présente, sans jugement.',
 };
 
 /** Keep AVATARS as a single-element array for any legacy references */
