@@ -3,23 +3,22 @@ import { NextResponse } from 'next/server';
 /**
  * LiveAvatar session token endpoint
  * ─────────────────────────────────────────────────────────────────────────────
- * Supports two modes:
+ * Mode FULL — LiveAvatar handles the full pipeline (STT → LLM → TTS).
  *
- * LITE mode (preferred) — ElevenLabs Conversational AI agent drives audio.
- *   Each avatar has its own ElevenLabs agent with a unique French Parisian voice.
- *   LiveAvatar only handles video lip-sync. Requires:
- *     - ELEVEN_LABS_SECRET_ID (registered via LiveAvatar /v1/secrets)
- *     - elevenLabsAgentId per avatar (from avatar-config.ts)
+ * LITE mode (ElevenLabs agents) was tested but the audio bridge between
+ * the LiveAvatar worker and ElevenLabs agents never successfully connects.
+ * (Token generates fine, but no audio flows — 0 conversations on ElevenLabs.)
  *
- * FULL mode (fallback) — LiveAvatar handles everything with Ingrid voice.
- *   Used when ELEVEN_LABS_SECRET_ID is not configured or no agent ID provided.
+ * Current approach: FULL mode with the best French voice available.
+ * The ElevenLabs integration remains available for the text/audio chat modes
+ * via /api/synthesize and /api/chat routes.
  */
 
 const LIVEAVATAR_API     = 'https://api.liveavatar.com/v1';
 const DEFAULT_AVATAR_ID  = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Anna
 const DEFAULT_NAME       = 'Anna';
 
-// FULL mode fallback voice
+// Ingrid — warm, calm, authentic French voice (UUID format accepted by LiveAvatar)
 const INGRID_VOICE_ID    = '85420b7d-7d8a-4f3e-80af-d7771026f1d6';
 const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0';
 
@@ -28,8 +27,7 @@ function makeGreeting(name: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey   = process.env.LIVEAVATAR_API_KEY;
-  const secretId = process.env.ELEVEN_LABS_SECRET_ID;
+  const apiKey = process.env.LIVEAVATAR_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
@@ -39,51 +37,27 @@ export async function POST(req: Request) {
   }
 
   // Accept optional params from request body
-  let avatarId           = DEFAULT_AVATAR_ID;
-  let avatarName         = DEFAULT_NAME;
-  let elevenLabsAgentId: string | undefined;
-
+  let avatarId   = DEFAULT_AVATAR_ID;
+  let avatarName = DEFAULT_NAME;
   try {
     const body = await req.json();
-    if (body?.avatarId)          avatarId          = body.avatarId;
-    if (body?.avatarName)        avatarName        = body.avatarName;
-    if (body?.elevenLabsAgentId) elevenLabsAgentId = body.elevenLabsAgentId;
+    if (body?.avatarId)   avatarId   = body.avatarId;
+    if (body?.avatarName) avatarName = body.avatarName;
   } catch {} // empty body is fine — use defaults
 
-  // ── Decide mode ───────────────────────────────────────────────────────────
-  // LITE if we have both a secret_id AND an agent_id for this avatar
-  const useLite = !!(secretId && elevenLabsAgentId);
+  console.log(`[LiveAvatar] Mode: FULL | Avatar: ${avatarName} (${avatarId}) | Voice: Ingrid (${INGRID_VOICE_ID})`);
 
   try {
-    let requestBody: Record<string, unknown>;
-
-    if (useLite) {
-      // ── LITE mode — ElevenLabs agent drives audio (unique French voice) ──
-      console.log(`[LiveAvatar] Mode: LITE | Avatar: ${avatarName} (${avatarId}) | Agent: ${elevenLabsAgentId}`);
-
-      requestBody = {
-        mode:      'LITE',
-        avatar_id: avatarId,
-        elevenlabs: {
-          agent_id:  elevenLabsAgentId,
-          secret_id: secretId,
-        },
-      };
-    } else {
-      // ── FULL mode — Ingrid voice fallback ────────────────────────────────
-      console.log(`[LiveAvatar] Mode: FULL (fallback) | Avatar: ${avatarName} (${avatarId}) | Voice: Ingrid`);
-
-      requestBody = {
-        mode:      'FULL',
-        avatar_id: avatarId,
-        avatar_persona: {
-          voice_id:   INGRID_VOICE_ID,
-          language:   'fr',
-          context_id: CONTEXT_ID_WELCOME,
-          greeting:   makeGreeting(avatarName),
-        },
-      };
-    }
+    const requestBody = {
+      mode:      'FULL',
+      avatar_id: avatarId,
+      avatar_persona: {
+        voice_id:   INGRID_VOICE_ID,
+        language:   'fr',
+        context_id: CONTEXT_ID_WELCOME,
+        greeting:   makeGreeting(avatarName),
+      },
+    };
 
     const tokenRes = await fetch(`${LIVEAVATAR_API}/sessions/token`, {
       method:  'POST',
@@ -98,41 +72,6 @@ export async function POST(req: Request) {
     if (!tokenRes.ok) {
       const text = await tokenRes.text();
       console.error('[LiveAvatar] Token error:', text);
-
-      // If LITE failed, retry with FULL as fallback
-      if (useLite) {
-        console.warn('[LiveAvatar] LITE failed — retrying with FULL mode...');
-        const fallbackBody = {
-          mode:      'FULL',
-          avatar_id: avatarId,
-          avatar_persona: {
-            voice_id:   INGRID_VOICE_ID,
-            language:   'fr',
-            context_id: CONTEXT_ID_WELCOME,
-            greeting:   makeGreeting(avatarName),
-          },
-        };
-
-        const fallbackRes = await fetch(`${LIVEAVATAR_API}/sessions/token`, {
-          method:  'POST',
-          headers: {
-            'X-API-KEY':    apiKey,
-            'Content-Type': 'application/json',
-            'accept':       'application/json',
-          },
-          body: JSON.stringify(fallbackBody),
-        });
-
-        if (fallbackRes.ok) {
-          const fbData  = await fallbackRes.json();
-          const fbToken = fbData?.data?.session_token ?? fbData?.session_token;
-          if (fbToken) {
-            console.log('[LiveAvatar] FULL fallback succeeded.');
-            return NextResponse.json({ token: fbToken, mode: 'FULL' });
-          }
-        }
-      }
-
       return NextResponse.json(
         { error: 'LiveAvatar token generation failed', details: text },
         { status: tokenRes.status },
@@ -148,7 +87,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ token, mode: useLite ? 'LITE' : 'FULL' });
+    return NextResponse.json({ token, mode: 'FULL' });
   } catch (error: any) {
     console.error('[LiveAvatar] Unexpected error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
