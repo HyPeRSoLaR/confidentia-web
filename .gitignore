@@ -33,3 +33,6 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+test_lite_all_avatars.js  
+test_lite_mode.js  
+test_signed_urls.js  
