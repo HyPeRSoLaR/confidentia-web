@@ -769,6 +769,7 @@ export function AiChatView({
               avatarId={avatarConfig.heygenId}
               avatarName={avatarConfig.name}
               voiceId={avatarConfig.voiceId}
+              elevenLabsAgentId={avatarConfig.elevenLabsAgentId}
               onReady={() => setAvatarStatus('ready')}
               onError={() => setAvatarStatus('error')}
               onVoiceTranscript={handleVoiceTranscript}
