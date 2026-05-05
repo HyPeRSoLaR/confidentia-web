@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PERSONA_META, AVATARS, ANN_THERAPIST, saveAvatarPrefs } from '@/lib/avatar-config';
+import { saveUsageContext, incrementSessionCount } from '@/lib/user-memory';
 import type { AvatarPersona, AvatarConfig } from '@/lib/avatar-config';
+import type { UsageContext } from '@/lib/user-memory';
 
 const USAGE_CONTEXTS = [
   { id: 'stress',      label: 'Surcharge de travail',  icon: Coffee,       desc: 'Se sentir submergé par les tâches quotidiennes et la pression professionnelle.' },
@@ -35,6 +37,8 @@ export default function OnboardingPage() {
   const completeOnboarding = async () => {
     setLoading(true);
     saveAvatarPrefs(selectedAvatar.id, selectedAvatar.name, selectedPersona);
+    if (selectedContext) saveUsageContext(selectedContext as UsageContext);
+    incrementSessionCount();
     await new Promise(r => setTimeout(r, 1200));
     router.push('/consumer/chat');
   };

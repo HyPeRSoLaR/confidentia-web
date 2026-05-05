@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EMOTION_EMOJI, EMOTION_COLORS } from '@/lib/utils';
+import { saveCheckIn } from '@/lib/user-memory';
 import type { EmotionLabel } from '@/types';
 
 const EMOTIONS: EmotionLabel[] = ['calm','happy','anxious','stressed','angry','sad','energized','neutral'];
@@ -26,7 +27,17 @@ export default function CheckInPage() {
   const [note, setNote] = useState('');
   const [done, setDone] = useState(false);
 
-  function submit() { setDone(true); }
+  function submit() {
+    if (selected) {
+      saveCheckIn({
+        emotion:    selected,
+        intensity,
+        note:       note.trim() || undefined,
+        recordedAt: new Date().toISOString(),
+      });
+    }
+    setDone(true);
+  }
   function reset() { setDone(false); setSelected(null); setIntensity(5); setNote(''); }
 
   return (

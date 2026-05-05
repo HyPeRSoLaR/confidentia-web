@@ -33,7 +33,7 @@ import { InteractiveAvatar, type InteractiveAvatarRef } from '@/components/ui/In
 import { WaveformPlayer } from '@/components/ui/WaveformPlayer';
 import { INITIAL_MESSAGES } from '@/lib/mock-data';
 import { MOCK_THERAPISTS } from '@/lib/mock-data';
-import { getSavedAvatar, getSavedAvatarName } from '@/lib/avatar-config';
+import { getSavedAvatar, getSavedAvatarName, getSavedPersona } from '@/lib/avatar-config';
 import type { Message, ConversationMode, MessageAttachment } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -99,6 +99,8 @@ export function AiChatView({
     setAvatarConfig(a);
     setAvatarDisplayName(getSavedAvatarName(a));
   }, []);
+
+  const savedPersona = getSavedPersona();
 
   // ── Core state ─────────────────────────────────────────────────────────────
   const messagesRef = useRef<Message[]>([...INITIAL_MESSAGES]);
@@ -769,6 +771,7 @@ export function AiChatView({
               avatarId={avatarConfig.heygenId}
               avatarName={avatarConfig.name}
               voiceId={avatarConfig.voiceId}
+              persona={savedPersona}
               elevenLabsAgentId={avatarConfig.elevenLabsAgentId}
               onReady={() => setAvatarStatus('ready')}
               onError={() => setAvatarStatus('error')}

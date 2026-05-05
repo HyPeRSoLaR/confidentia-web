@@ -10,6 +10,7 @@ import {
   AgentEventsEnum,
 } from '@heygen/liveavatar-web-sdk';
 import { Loader2, Mic, MicOff, Camera, CameraOff, Zap, Volume2, RefreshCw } from 'lucide-react';
+import { buildSessionContext, incrementSessionCount } from '@/lib/user-memory';
 
 export interface InteractiveAvatarRef {
   speak: (text: string) => void;
@@ -19,6 +20,7 @@ interface Props {
   avatarId?:          string;
   avatarName?:        string;
   voiceId?:           string;
+  persona?:           string;
   elevenLabsAgentId?: string;
   onReady?:           () => void;
   onError?:           () => void;
@@ -34,7 +36,7 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
 }
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
-  ({ avatarId, avatarName, voiceId, elevenLabsAgentId, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
+  ({ avatarId, avatarName, voiceId, persona, elevenLabsAgentId, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
 
     const mediaRef   = useRef<HTMLVideoElement>(null);
     const sessionRef = useRef<LiveAvatarSession | null>(null);
@@ -139,6 +141,8 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
               avatarId:           avatarId           || undefined,
               avatarName:         avatarName         || undefined,
               voiceId:            voiceId            || undefined,
+              persona:            persona            || undefined,
+              sessionContext:     buildSessionContext(avatarName || 'Anna', persona || 'warm'),
               elevenLabsAgentId:  elevenLabsAgentId  || undefined,
             }),
           });
