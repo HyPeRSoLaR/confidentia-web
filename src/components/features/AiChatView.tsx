@@ -36,6 +36,7 @@ import { MOCK_THERAPISTS } from '@/lib/mock-data';
 import { getSavedAvatar, getSavedAvatarName, getSavedPersona } from '@/lib/avatar-config';
 import { submitDistressRequest } from '@/lib/distress-store';
 import { getSession } from '@/lib/session';
+import { incrementSessionCount } from '@/lib/user-memory';
 import type { Message, ConversationMode, MessageAttachment } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -54,6 +55,22 @@ const DISTRESS_KEYWORDS_USER = [
 const DISTRESS_KEYWORDS_AI = ['3114', '112', 'prévention du suicide', 'urgences'];
 
 function detectDistress(text: string, keywords: string[]): boolean {
+  const lower = text.toLowerCase();
+  return keywords.some(kw => lower.includes(kw));
+}
+
+// ── Farewell detection (auto-end session) ────────────────────────────────────
+const FAREWELL_KEYWORDS_USER = [
+  'au revoir', 'session terminée', 'bonne soirée', 'bonne journée',
+  'merci et au revoir', 'à bientôt', 'je dois y aller', 'on se dit au revoir',
+  'c\'est tout pour aujourd\'hui', 'fin de session', 'bye', 'adieu',
+];
+const FAREWELL_KEYWORDS_AI = [
+  'au revoir', 'bonne soirée', 'bonne journée', 'à bientôt',
+  'prenez soin de vous', 'bonne continuation',
+];
+
+function detectFarewell(text: string, keywords: string[]): boolean {
   const lower = text.toLowerCase();
   return keywords.some(kw => lower.includes(kw));
 }
@@ -436,11 +453,16 @@ export function AiChatView({
   }, [pendingVoice]);
 
   const handleAvatarResponse = useCallback((_text: string) => {
-    // Check AI response for distress indicators (mentions 3114, urgences, etc.)
+    // Check AI response for distress indicators
     if (!distressAlertedRef.current && detectDistress(_text, DISTRESS_KEYWORDS_AI)) {
       triggerDistressAlert(_text);
     }
-  }, []);
+    // Check AI response for farewell (avatar saying goodbye → end session)
+    if (!sessionEnded && detectFarewell(_text, FAREWELL_KEYWORDS_AI)) {
+      // Wait for the avatar to finish speaking before ending
+      setTimeout(() => handleSessionEnd(), 4000);
+    }
+  }, [sessionEnded]);
 
   // ── Distress alert trigger ────────────────────────────────────────────────
 
@@ -466,6 +488,20 @@ export function AiChatView({
     }
   }
 
+  // ── Session end handler ────────────────────────────────────────────────────
+
+  function handleSessionEnd() {
+    if (sessionEnded) return;
+    setSessionEnded(true);
+    // Disconnect the LiveAvatar stream
+    if (avatarRef.current) {
+      try { avatarRef.current.disconnect(); } catch {}
+    }
+    // Increment session count for next time
+    try { incrementSessionCount(); } catch {}
+    console.log('[Session] Auto-ended via farewell detection');
+  }
+
   // ── Send message ───────────────────────────────────────────────────────────
 
   async function sendMessage() {
@@ -474,6 +510,12 @@ export function AiChatView({
     // Check user message for distress signals
     if (!distressAlertedRef.current && detectDistress(input, DISTRESS_KEYWORDS_USER)) {
       triggerDistressAlert(input);
+    }
+
+    // Check user message for farewell
+    if (detectFarewell(input, FAREWELL_KEYWORDS_USER)) {
+      // Let the message send, then end after avatar responds
+      setTimeout(() => handleSessionEnd(), 6000);
     }
 
     const userMsg: Message = {
@@ -761,7 +803,7 @@ export function AiChatView({
           <div className="flex items-center gap-2">
             {mode === 'video' && <AvatarStatusBadge />}
             {!sessionEnded && (
-              <Button onClick={() => setSessionEnded(true)} variant="danger" size="sm" aria-label="Terminer cette session">
+              <Button onClick={handleSessionEnd} variant="danger" size="sm" aria-label="Terminer cette session">
                 Terminer
               </Button>
             )}

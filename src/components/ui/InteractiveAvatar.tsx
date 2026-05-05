@@ -14,6 +14,7 @@ import { buildSessionContext, incrementSessionCount } from '@/lib/user-memory';
 
 export interface InteractiveAvatarRef {
   speak: (text: string) => void;
+  disconnect: () => void;
 }
 
 interface Props {
@@ -25,6 +26,7 @@ interface Props {
   onReady?:           () => void;
   onError?:           () => void;
   onDisconnected?:    () => void;
+  onSessionEnd?:      () => void;
   onVoiceTranscript?: (text: string) => void;
   onAvatarResponse?:  (text: string) => void;
 }
@@ -36,7 +38,7 @@ function useCallbackRef<T extends ((...args: any[]) => any) | undefined>(fn: T) 
 }
 
 export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
-  ({ avatarId, avatarName, voiceId, persona, elevenLabsAgentId, onReady, onError, onDisconnected, onVoiceTranscript, onAvatarResponse }, ref) => {
+  ({ avatarId, avatarName, voiceId, persona, elevenLabsAgentId, onReady, onError, onDisconnected, onSessionEnd, onVoiceTranscript, onAvatarResponse }, ref) => {
 
     const mediaRef   = useRef<HTMLVideoElement>(null);
     const sessionRef = useRef<LiveAvatarSession | null>(null);
@@ -306,6 +308,13 @@ export const InteractiveAvatar = forwardRef<InteractiveAvatarRef, Props>(
         if (!isSpeakingRef.current) stopVAD();
         try { session.message(text); } catch (e) {
           console.warn('[LiveAvatar] speak error', e);
+        }
+      },
+      disconnect: () => {
+        const session = sessionRef.current;
+        if (session) {
+          session.stop().catch(console.error);
+          sessionRef.current = null;
         }
       },
     }), [isConnected]);
