@@ -5,15 +5,15 @@
  *
  * `stillUrl`  → Real LiveAvatar preview image (same face as the video avatar)
  * `heygenId`  → LiveAvatar avatar ID used by /api/heygen-token
- * `voiceId`   → HeyGen French (France) voice ID — unique per avatar
+ * `voiceId`   → ElevenLabs voice imported into LiveAvatar — unique per avatar
  * `persona`   → Default personality style (can be overridden in onboarding)
  * `elevenLabsAgentId` → ElevenLabs Conversational AI agent (LITE mode, currently unused)
  *
- * Voice mapping (all French-France from HeyGen /v2/voices):
- *   Anna    → Yvette (Warm)          | Judy    → Josephine (Calm)
- *   June    → Ariane (Natural)        | Elenora → Charline (Natural)
- *   Shawn   → Claude (Friendly)       | Dexter  → Alain (Professional)
- *   Silas   → Henri (Natural)         | Bryan   → Fabrice (Friendly)
+ * Voice mapping (ElevenLabs voices imported into LiveAvatar):
+ *   Anna    → Ingrid (Warm, Calm)     | Judy    → Lise (Mediation Coach)
+ *   June    → Marine (Conversational) | Elenora → Victoria (Warm & Calm)
+ *   Shawn   → Paul K (E-Learning FR)  | Dexter  → Adrien Clairon (Podcast)
+ *   Silas   → Paul K (Deep French)    | Bryan   → Brian (Deep, Resonant)
  */
 
 export type AvatarPersona =
@@ -51,7 +51,7 @@ export const ANN_THERAPIST: AvatarConfig = {
   persona: 'warm',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/75e0a87b7fd94f0981ff398b593dd47f_45570/preview_talk_4.webp',
   heygenId: '513fd1b7-7ef9-466d-9af2-344e51eeb833',
-  voiceId:  '255f8e3f207d4cf58632f0ee48ea75ef', // Yvette — Warm (FR)
+  voiceId:  '85420b7d-7d8a-4f3e-80af-d7771026f1d6', // Ingrid — Warm, Calm (ElevenLabs)
   elevenLabsAgentId: 'agent_6001kp3x42wse7e96gxgb06w8w9x', // Aria FR
   tagline: 'Votre assistant émotionnel IA — chaleureuse, présente, sans jugement.',
 };
@@ -65,7 +65,7 @@ const JUDY_LAWYER: AvatarConfig = {
   persona: 'calm',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/a7c86cb77b3144948bf8020f6e734bbf_45640/preview_talk_1.webp',
   heygenId: '6e32f90a-f566-45be-9ec7-a5f6999ee606',
-  voiceId:  'ba61b3b0a56d463dbff10eeccd3a899a', // Josephine — Calm (FR)
+  voiceId:  '59f6ab94-c2d6-4101-b68e-31495c3219c7', // Lise — Mediation Coach (ElevenLabs)
   elevenLabsAgentId: 'agent_6501kpt8pjrdfjfvh2zrd720hxc9', // Victoria FR
   tagline: 'Analyse posée et structurée — elle vous aide à voir clair.',
 };
@@ -79,7 +79,7 @@ const JUNE_HR: AvatarConfig = {
   persona: 'energetic',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/74447a27859a456c955e01f21ef18216_45620/preview_talk_1.webp',
   heygenId: '65f9e3c9-d48b-4118-b73a-4ae2e3cbb8f0',
-  voiceId:  '0e051caf8e0947a18870ee24bbbfce36', // Ariane — Natural (FR)
+  voiceId:  'c14d5048-f0c1-4238-a243-d135a78f8c42', // Marine — Conversational (ElevenLabs)
   elevenLabsAgentId: 'agent_8501kpta97jae2zrvg5mr04c3zpm', // Marine FR
   tagline: 'Dynamique et accessible — un échange positif garanti.',
 };
@@ -93,7 +93,7 @@ const ELENORA_EXPERT: AvatarConfig = {
   persona: 'gentle',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/cbd4a69890a040e6a0d54088e606a559_45610/preview_talk_3.webp',
   heygenId: '8175dfc2-7858-49d6-b5fa-0c135d1c4bad',
-  voiceId:  'feca19f2a24943b3898e8b87f1696edf', // Charline — Natural (FR)
+  voiceId:  'db8b4c66-9b6c-434d-b7d6-6608d918b596', // Victoria — Warm & Calm (ElevenLabs)
   elevenLabsAgentId: 'agent_2501kptayxx2f9a92agyc33vmtyx', // Sarah FR
   tagline: 'Douce et bienveillante — elle prend le temps qu\'il faut.',
 };
@@ -107,7 +107,7 @@ const SHAWN_THERAPIST: AvatarConfig = {
   persona: 'warm',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/db2fb7fd0d044b908395a011166ab22d_45680/preview_target.webp',
   heygenId: '7b888024-f8c9-4205-95e1-78ce01497bda',
-  voiceId:  'b9953cd27740417c950f2f0db34243ad', // Claude — Friendly (FR)
+  voiceId:  '2eccd66b-9ddc-45a9-a44b-6723ad222fbe', // Paul K — French E-Learning (ElevenLabs)
   elevenLabsAgentId: 'agent_4301kpt4z2cyfgcbqy1165s39hrn', // Adrien Clairon FR
   tagline: 'Chaleureux et rassurant — il écoute sans juger.',
 };
@@ -121,7 +121,7 @@ const DEXTER_LAWYER: AvatarConfig = {
   persona: 'calm',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/e20ac0c902184ff793e75ae4e139b7dc_45600/preview_target.webp',
   heygenId: '0930fd59-c8ad-434d-ad53-b391a1768720',
-  voiceId:  '8aaaed31d9d6407f950d67715c19bcf4', // Alain — Professional (FR)
+  voiceId:  '50e4f651-c083-47ee-b46f-b85ff6ad18d9', // Adrien Clairon — Podcast (ElevenLabs)
   elevenLabsAgentId: 'agent_0001kpt5vsccetgbrrnxngpekgj0', // Paul K FR
   tagline: 'Calme et analytique — il vous aide à structurer vos pensées.',
 };
@@ -135,7 +135,7 @@ const SILAS_HR: AvatarConfig = {
   persona: 'gentle',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/582ee8fe072a48fda3bc68241aeff660_45660/preview_target.webp',
   heygenId: '9650a758-1085-4d49-8bf3-f347565ec229',
-  voiceId:  'b32ea9471bb74ee688b75dde1e2ae6d7', // Henri — Natural (FR)
+  voiceId:  '1b8d67c1-e5f7-481d-82ac-1d2838617ab1', // Paul K — Deep French (ElevenLabs)
   elevenLabsAgentId: 'agent_5701kpt66g32e8zaz4beb369h25f', // Logan FR
   tagline: 'Doux et patient — il accompagne à votre rythme.',
 };
@@ -149,7 +149,7 @@ const BRYAN_EXPERT: AvatarConfig = {
   persona: 'energetic',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/33c9ac4aead44dfc8bc0082a35062a70_45580/preview_talk_3.webp',
   heygenId: '64b526e4-741c-43b6-a918-4e40f3261c7a',
-  voiceId:  'ced64f6c3e56455692a04e6106db9dde', // Fabrice — Friendly (FR)
+  voiceId:  '4810a470-e586-42a4-b08b-1affd18b7a3f', // Brian — Deep, Resonant (ElevenLabs)
   elevenLabsAgentId: 'agent_9501kpt73m3tezsa1tmjkrwz15cb', // Nicolas FR
   tagline: 'Dynamique et motivant — il vous pousse à avancer.',
 };
