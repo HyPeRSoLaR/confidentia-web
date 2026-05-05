@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { PERSONA_META, AVATARS, ANN_THERAPIST, saveAvatarPrefs } from '@/lib/avatar-config';
 import { saveUsageContext, incrementSessionCount } from '@/lib/user-memory';
+import { MoodCheckIn } from '@/components/features/MoodCheckIn';
 import type { AvatarPersona, AvatarConfig } from '@/lib/avatar-config';
 import type { UsageContext } from '@/lib/user-memory';
 
@@ -21,7 +22,7 @@ const USAGE_CONTEXTS = [
   { id: 'burnout',    label: 'Burn-out précoce',       icon: BrainCircuit, desc: 'Épuisement émotionnel et cynisme vis-à-vis du travail ou de la vie.' },
 ];
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function OnboardingPage() {
 
   const handleNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
+  const [moodDone, setMoodDone] = useState(false);
 
   const completeOnboarding = async () => {
     setLoading(true);
@@ -126,8 +128,25 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 3 : Choix d'avatar ── */}
+          {/* ── ÉTAPE 3 : Check-in d'humeur ── */}
           {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <MoodCheckIn
+                mode="inline"
+                greeting="Comment vous sentez-vous en ce moment ?"
+                onComplete={() => {
+                  setMoodDone(true);
+                  handleNext();
+                }}
+              />
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary" onClick={handleBack} className="rounded-2xl px-6">Retour</Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── ÉTAPE 4 : Choix d'avatar ── */}
+          {step === 4 && (
             <motion.div key="step3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-serif font-bold text-text mb-2">
@@ -189,8 +208,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 4 : Personnalité ── */}
-          {step === 4 && (
+          {/* ── ÉTAPE 5 : Personnalité ── */}
+          {step === 5 && (
             <motion.div key="step4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="text-center mb-6">
                 <img src={selectedAvatar.stillUrl} alt={selectedAvatar.name} className="w-16 h-16 rounded-2xl object-cover mx-auto mb-3 ring-2 ring-border shadow-brand" />
@@ -229,8 +248,8 @@ export default function OnboardingPage() {
             </motion.div>
           )}
 
-          {/* ── ÉTAPE 5 : Consentement confidentialité ── */}
-          {step === 5 && (
+          {/* ── ÉTAPE 6 : Consentement confidentialité ── */}
+          {step === 6 && (
             <motion.div key="step5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center">
               <div className="w-16 h-16 bg-surface border border-border rounded-2xl mx-auto flex items-center justify-center mb-6">
                 <Lock className="w-8 h-8 text-violet" />

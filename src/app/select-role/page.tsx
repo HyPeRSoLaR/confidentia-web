@@ -1,10 +1,12 @@
 'use client';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   MessageCircle, Briefcase, BarChart2, Stethoscope, ShieldCheck
 } from 'lucide-react';
 import { startDemoSession, ROLE_HOME } from '@/lib/session';
+import { MoodCheckIn } from '@/components/features/MoodCheckIn';
 import type { UserRole } from '@/types';
 
 const ROLES: { role: UserRole; label: string; subtitle: string; icon: React.ElementType; gradient: string }[] = [
@@ -30,12 +32,39 @@ const ROLES: { role: UserRole; label: string; subtitle: string; icon: React.Elem
   },
 ];
 
+// Roles that get a mood check-in before entering
+const MOOD_ROLES: UserRole[] = ['consumer', 'employee'];
+
 export default function SelectRolePage() {
   const router = useRouter();
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
 
   function handleSelect(role: UserRole) {
     startDemoSession(role);
-    router.push(ROLE_HOME[role]);
+
+    if (MOOD_ROLES.includes(role)) {
+      // Show mood check-in before redirecting
+      setPendingRole(role);
+    } else {
+      router.push(ROLE_HOME[role]);
+    }
+  }
+
+  function handleMoodDone() {
+    if (pendingRole) {
+      router.push(ROLE_HOME[pendingRole]);
+    }
+  }
+
+  // If a mood-eligible role was selected, show the check-in
+  if (pendingRole) {
+    return (
+      <MoodCheckIn
+        mode="overlay"
+        greeting="Bonjour 👋 Comment vous sentez-vous aujourd'hui ?"
+        onComplete={handleMoodDone}
+      />
+    );
   }
 
   return (
