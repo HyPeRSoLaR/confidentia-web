@@ -34,6 +34,8 @@ import { WaveformPlayer } from '@/components/ui/WaveformPlayer';
 import { INITIAL_MESSAGES } from '@/lib/mock-data';
 import { MOCK_THERAPISTS } from '@/lib/mock-data';
 import { getSavedAvatar, getSavedAvatarName, getSavedPersona } from '@/lib/avatar-config';
+import { submitDistressRequest } from '@/lib/distress-store';
+import { getSession } from '@/lib/session';
 import type { Message, ConversationMode, MessageAttachment } from '@/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -41,6 +43,20 @@ import type { Message, ConversationMode, MessageAttachment } from '@/types';
 const MAX_INPUT  = 2000;
 const BANNER_KEY = 'confidentia_privacy_banner_ts';
 const BANNER_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// ── Distress detection keywords ──────────────────────────────────────────────
+const DISTRESS_KEYWORDS_USER = [
+  'me suicider', 'en finir', 'me tuer', 'mourir', 'plus envie de vivre',
+  'automutilation', 'me faire du mal', 'me couper',
+  'violé', 'violée', 'agressé', 'agressée', 'battu', 'battue', 'harcèlement',
+  'je vais craquer', 'je ne peux plus', 'au secours',
+];
+const DISTRESS_KEYWORDS_AI = ['3114', '112', 'prévention du suicide', 'urgences'];
+
+function detectDistress(text: string, keywords: string[]): boolean {
+  const lower = text.toLowerCase();
+  return keywords.some(kw => lower.includes(kw));
+}
 
 const MODES: { id: ConversationMode; label: string; icon: React.ElementType }[] = [
   { id: 'text',  label: 'Texte', icon: MessageCircle },
@@ -114,6 +130,9 @@ export function AiChatView({
   const [bannerVisible,  setBannerVisible]  = useState(false);
   const [avatarStatus,   setAvatarStatus]  = useState<AvatarStatus>('connecting');
   const [pendingVoice,   setPendingVoice]  = useState<string | null>(null);
+  // Distress detection
+  const [distressDetected, setDistressDetected] = useState(false);
+  const distressAlertedRef = useRef(false);
   // Audio mode — mic active toggle
   const [audioMicActive, setAudioMicActive] = useState(false);
   // Timestamp (ms) of when audio mode was *activated*.
@@ -416,12 +435,46 @@ export function AiChatView({
       });
   }, [pendingVoice]);
 
-  const handleAvatarResponse = useCallback((_text: string) => {}, []);
+  const handleAvatarResponse = useCallback((_text: string) => {
+    // Check AI response for distress indicators (mentions 3114, urgences, etc.)
+    if (!distressAlertedRef.current && detectDistress(_text, DISTRESS_KEYWORDS_AI)) {
+      triggerDistressAlert(_text);
+    }
+  }, []);
+
+  // ── Distress alert trigger ────────────────────────────────────────────────
+
+  function triggerDistressAlert(triggerText: string) {
+    if (distressAlertedRef.current) return;
+    distressAlertedRef.current = true;
+    setDistressDetected(true);
+
+    // Auto-submit to HR distress store
+    try {
+      const session = getSession();
+      const user    = session.user;
+      submitDistressRequest({
+        employeeId:    user?.id    ?? 'anonymous',
+        employeeName:  user?.name  ?? 'Utilisateur',
+        employeeEmail: user?.email ?? 'non-renseigné',
+        category:      'urgent',
+        note:          `[ALERTE AUTO] Détresse détectée pendant la session IA. L'avatar a déclenché le protocole d'urgence.`,
+      });
+      console.warn('[Distress] Auto-alerte HR envoyée');
+    } catch (e) {
+      console.error('[Distress] Erreur envoi alerte:', e);
+    }
+  }
 
   // ── Send message ───────────────────────────────────────────────────────────
 
   async function sendMessage() {
     if ((!input.trim() && pendingAttachments.length === 0) || loading) return;
+
+    // Check user message for distress signals
+    if (!distressAlertedRef.current && detectDistress(input, DISTRESS_KEYWORDS_USER)) {
+      triggerDistressAlert(input);
+    }
 
     const userMsg: Message = {
       id:          Date.now().toString(),
@@ -776,7 +829,46 @@ export function AiChatView({
               onReady={() => setAvatarStatus('ready')}
               onError={() => setAvatarStatus('error')}
               onVoiceTranscript={handleVoiceTranscript}
+              onAvatarResponse={handleAvatarResponse}
             />
+
+            {/* Emergency distress banner */}
+            <AnimatePresence>
+              {distressDetected && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="mt-3 p-4 rounded-2xl bg-red-500/10 border-2 border-red-500/40 backdrop-blur-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-red-300 mb-2">
+                        Vous n&apos;êtes pas seul(e). De l&apos;aide est disponible.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href="tel:3114"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors"
+                        >
+                          📞 3114 — Prévention du suicide
+                        </a>
+                        <a
+                          href="tel:112"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white font-semibold text-sm hover:bg-amber-600 transition-colors"
+                        >
+                          🚨 112 — Urgences
+                        </a>
+                      </div>
+                      <p className="text-xs text-muted mt-2">
+                        Gratuit, confidentiel, 24h/24. Votre responsable RH a été notifié automatiquement.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Audio mode companion display */}
