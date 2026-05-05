@@ -149,7 +149,7 @@ const BRYAN_EXPERT: AvatarConfig = {
   persona: 'energetic',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/33c9ac4aead44dfc8bc0082a35062a70_45580/preview_talk_3.webp',
   heygenId: '64b526e4-741c-43b6-a918-4e40f3261c7a',
-  voiceId:  '4810a470-e586-42a4-b08b-1affd18b7a3f', // Brian — Deep, Resonant (ElevenLabs)
+  voiceId:  'd46dcf5e-6eaa-461f-a35a-511b76d575a7', // Logan — Documentary Narrator (ElevenLabs)
   elevenLabsAgentId: 'agent_9501kpt73m3tezsa1tmjkrwz15cb', // Nicolas FR
   tagline: 'Dynamique et motivant — il vous pousse à avancer.',
 };
