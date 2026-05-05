@@ -107,7 +107,7 @@ const SHAWN_THERAPIST: AvatarConfig = {
   persona: 'warm',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/db2fb7fd0d044b908395a011166ab22d_45680/preview_target.webp',
   heygenId: '7b888024-f8c9-4205-95e1-78ce01497bda',
-  voiceId:  '2eccd66b-9ddc-45a9-a44b-6723ad222fbe', // Paul K — French E-Learning (ElevenLabs)
+  voiceId:  '1b8d67c1-e5f7-481d-82ac-1d2838617ab1', // Paul K — Deep French (ElevenLabs)
   elevenLabsAgentId: 'agent_4301kpt4z2cyfgcbqy1165s39hrn', // Adrien Clairon FR
   tagline: 'Chaleureux et rassurant — il écoute sans juger.',
 };
@@ -135,7 +135,7 @@ const SILAS_HR: AvatarConfig = {
   persona: 'gentle',
   stillUrl: 'https://files2.heygen.ai/avatar/v3/582ee8fe072a48fda3bc68241aeff660_45660/preview_target.webp',
   heygenId: '9650a758-1085-4d49-8bf3-f347565ec229',
-  voiceId:  '1b8d67c1-e5f7-481d-82ac-1d2838617ab1', // Paul K — Deep French (ElevenLabs)
+  voiceId:  '2eccd66b-9ddc-45a9-a44b-6723ad222fbe', // Paul K — French E-Learning (ElevenLabs)
   elevenLabsAgentId: 'agent_5701kpt66g32e8zaz4beb369h25f', // Logan FR
   tagline: 'Doux et patient — il accompagne à votre rythme.',
 };
