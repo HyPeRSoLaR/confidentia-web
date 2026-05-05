@@ -50,8 +50,8 @@ export async function POST(req: Request) {
   // Use client-built session context or fallback
   const greeting = sessionContext || defaultGreeting(avatarName);
 
-  // Read context_id from env (set after creating context on dashboard)
-  const contextId = process.env.LIVEAVATAR_CONTEXT_ID || undefined;
+  // Therapeutic context created on LiveAvatar dashboard
+  const contextId = '7083f9f1-2a41-456f-97a9-a917a7d0cc7e';
 
   console.log(`[LiveAvatar] FULL | ${avatarName} | Voice: ${voiceId.slice(0,8)}… | Context: ${contextId ? 'custom' : 'default'} | Greeting: ${greeting.slice(0, 80)}…`);
 
