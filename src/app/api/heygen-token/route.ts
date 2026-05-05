@@ -5,30 +5,26 @@ import { NextResponse } from 'next/server';
  * ─────────────────────────────────────────────────────────────────────────────
  * Mode FULL — LiveAvatar handles the full pipeline (STT → LLM → TTS).
  *
- * Voice strategy: Use HeyGen French (France) voices from /v2/voices catalog.
- * Each avatar has a unique French voice_id passed via avatar-config.ts → client.
+ * CONFIRMED: Only certain voices work in LiveAvatar WebRTC streaming.
+ * HeyGen /v2/voices French catalog voices (Yvette, Claude, etc.) generate
+ * valid tokens but CRASH the WebRTC stream — the streaming engine cannot
+ * load them at runtime.
  *
- * The client sends `voiceId` in the request body (from avatar-config.ts).
- * This voice_id is passed to the LiveAvatar API within `avatar_persona`.
+ * Ingrid (85420b7d) is the only French voice proven to work in streaming.
+ * She is NOT in the native /v1/voices list (20 English voices only), but
+ * she's accepted by the streaming engine — likely a HeyGen v1 voice.
  *
- * Note: Previous attempts with these voices failed due to credit exhaustion.
- * With credit overage now enabled, these should work in WebRTC streaming.
- *
- * Voice mapping (HeyGen French-France voices):
- *   Anna    → Yvette (Warm)          255f8e3f
- *   Judy    → Josephine (Calm)       ba61b3b0
- *   June    → Ariane (Natural)       0e051caf
- *   Elenora → Charline (Natural)     feca19f2
- *   Shawn   → Claude (Friendly)      b9953cd2
- *   Dexter  → Alain (Professional)   8aaaed31
- *   Silas   → Henri (Natural)        b32ea947
- *   Bryan   → Fabrice (Friendly)     ced64f6c
+ * For J-Day launch: All 8 avatars use Ingrid (stable French voice).
+ * Post-launch: Investigate per-project API keys on HeyGen dashboard
+ *              to enable unique French voices per avatar.
  */
 
 const LIVEAVATAR_API     = 'https://api.liveavatar.com/v1';
 const DEFAULT_AVATAR_ID  = '513fd1b7-7ef9-466d-9af2-344e51eeb833'; // Anna
 const DEFAULT_NAME       = 'Anna';
-const DEFAULT_VOICE_ID   = '255f8e3f207d4cf58632f0ee48ea75ef';     // Yvette — Warm (FR)
+
+// Ingrid — the ONLY French voice confirmed working in LiveAvatar WebRTC streaming
+const INGRID_VOICE_ID    = '85420b7d-7d8a-4f3e-80af-d7771026f1d6';
 const CONTEXT_ID_WELCOME = '98eff136-665c-48ab-a322-0ad3c8c769e0';
 
 function makeGreeting(name: string) {
@@ -48,22 +44,20 @@ export async function POST(req: Request) {
   // Accept optional params from request body
   let avatarId   = DEFAULT_AVATAR_ID;
   let avatarName = DEFAULT_NAME;
-  let voiceId    = DEFAULT_VOICE_ID;
   try {
     const body = await req.json();
     if (body?.avatarId)   avatarId   = body.avatarId;
     if (body?.avatarName) avatarName = body.avatarName;
-    if (body?.voiceId)    voiceId    = body.voiceId;
   } catch {} // empty body is fine — use defaults
 
-  console.log(`[LiveAvatar] FULL | Avatar: ${avatarName} (${avatarId}) | Voice: ${voiceId}`);
+  console.log(`[LiveAvatar] FULL | Avatar: ${avatarName} (${avatarId}) | Voice: Ingrid`);
 
   try {
     const requestBody = {
       mode:      'FULL',
       avatar_id: avatarId,
       avatar_persona: {
-        voice_id:   voiceId,
+        voice_id:   INGRID_VOICE_ID,
         language:   'fr',
         context_id: CONTEXT_ID_WELCOME,
         greeting:   makeGreeting(avatarName),
